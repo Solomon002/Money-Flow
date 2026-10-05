@@ -298,7 +298,7 @@ export default function LandingPage() {
       <section className="relative">
         <div className="absolute inset-x-0 top-0 -z-10 h-150 bg-linear-to-b from-emerald-50 via-slate-50 to-slate-50" />
 
-        <div className="mx-auto max-w-7xl px-6 pb-20 pt-16 lg:px-8 lg:pb-28 lg:pt-28">
+        <div className="mx-auto max-w-7xl px-6 pb-20 pt-28 lg:px-8 lg:pb-28 lg:pt-28">
           <div className="grid items-center gap-14 lg:grid-cols-2 lg:gap-20">
             <FadeUp>
               <div>
