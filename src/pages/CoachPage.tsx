@@ -480,7 +480,7 @@ function CoachPage() {
                     )}
 
                     <div
-                      className={`min-w-0 max-w-[calc(100%-2.5rem)] rounded-2xl px-3.5 py-3 text-sm leading-6 break-words sm:max-w-[80%] sm:px-4 ${
+                      className={`min-w-0 max-w-[calc(100%-2.5rem)] rounded-2xl px-3.5 py-3 text-sm leading-6 wrap-break-word sm:max-w-[80%] sm:px-4 ${
                         isUser
                           ? "bg-slate-900 text-white"
                           : "bg-white text-slate-700 shadow-sm ring-1 ring-slate-200"
