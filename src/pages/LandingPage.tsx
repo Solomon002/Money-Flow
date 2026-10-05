@@ -4,6 +4,7 @@ import FadeLeft from "../components/animations/FadeLeft.js";
 import FadeRight from "../components/animations/FadeRight.js";
 import FadeUp from "../components/animations/FadeUp.js";
 import Stagger from "../components/animations/Stagger.js";
+import { apiRequest } from "../api/client.js";
 import {
   ArrowRight,
   BarChart3,
@@ -118,23 +119,14 @@ export default function LandingPage() {
     setFeedbackError("");
 
     try {
-      const response = await fetch("http://localhost:5000/api/feedback", {
+      await apiRequest("/api/feedback", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
         body: JSON.stringify({
           feedbackType,
           feedback,
           email: feedbackEmail,
         }),
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Unable to submit feedback");
-      }
 
       setFeedbackSent(true);
     } catch (error) {
