@@ -104,9 +104,15 @@ export async function resetPassword(
     }),
   });
 }
+
 export function getGoogleSignInUrl() {
-  return "http://localhost:5000/api/auth/google";
+  const apiBaseUrl =
+    import.meta.env.VITE_API_BASE_URL ||
+    'http://localhost:5000';
+
+  return `${apiBaseUrl}/api/auth/google`;
 }
+
 export async function exchangeGoogleAuthCode(
   code: string,
 ) {
