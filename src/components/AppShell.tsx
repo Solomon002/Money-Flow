@@ -105,14 +105,18 @@ export default function AppShell() {
             </div>
           </div>
 
-          <button
-            type="button"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="rounded-lg p-2 text-slate-600 md:hidden"
-            aria-label="Toggle menu"
-          >
-            {mobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
-          </button>
+          <div className="flex items-center gap-2 md:hidden">
+            <NotificationBell />
+
+            <button
+              type="button"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="rounded-lg p-2 text-slate-600"
+              aria-label="Toggle menu"
+            >
+              {mobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
+            </button>
+          </div>
         </div>
       </header>
 

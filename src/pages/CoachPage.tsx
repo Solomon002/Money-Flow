@@ -21,23 +21,14 @@ import {
 
 function CoachPage() {
   const [chats, setChats] = useState<CoachChat[]>([]);
-
   const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
-
   const [messages, setMessages] = useState<CoachMessage[]>([]);
-
   const [question, setQuestion] = useState("");
-
   const [loadingChats, setLoadingChats] = useState(true);
-
   const [loadingChat, setLoadingChat] = useState(false);
-
   const [sending, setSending] = useState(false);
-
   const [creatingChat, setCreatingChat] = useState(false);
-
   const [deletingChat, setDeletingChat] = useState(false);
-
   const [error, setError] = useState<string | null>(null);
 
   async function loadChats() {
@@ -54,7 +45,6 @@ function CoachPage() {
       }
     } catch (error) {
       console.error("Failed to load Coach chats:", error);
-
       setError("Unable to load your Coach chats.");
     } finally {
       setLoadingChats(false);
@@ -71,7 +61,6 @@ function CoachPage() {
       setMessages(result.messages);
     } catch (error) {
       console.error("Failed to load Coach chat:", error);
-
       setError("Unable to load this Coach chat.");
     } finally {
       setLoadingChat(false);
@@ -105,7 +94,6 @@ function CoachPage() {
       setQuestion("");
     } catch (error) {
       console.error("Failed to create Coach chat:", error);
-
       setError("Unable to create a new chat.");
     } finally {
       setCreatingChat(false);
@@ -141,7 +129,6 @@ function CoachPage() {
       }
     } catch (error) {
       console.error("Failed to delete Coach chat:", error);
-
       setError("Unable to delete this chat.");
     } finally {
       setDeletingChat(false);
@@ -221,11 +208,11 @@ function CoachPage() {
   const selectedChat = chats.find((chat) => chat.id === selectedChatId) ?? null;
 
   return (
-    <div className="flex h-[calc(100vh-0px)] min-h-150 bg-slate-50 text-slate-900">
-      {/* Sidebar */}
-      <aside className="flex w-80 flex-col border-r border-slate-200 bg-white">
+    <div className="flex h-[calc(100dvh-0px)] min-h-0 flex-col overflow-hidden bg-slate-50 text-slate-900 lg:flex-row">
+      {/* Desktop sidebar */}
+      <aside className="hidden w-80 shrink-0 flex-col border-r border-slate-200 bg-white lg:flex">
         <div className="flex items-center justify-between border-b border-slate-200 p-4">
-          <div>
+          <div className="min-w-0">
             <h1 className="text-lg font-semibold">MoneyFlow Coach</h1>
 
             <p className="text-xs text-slate-500">
@@ -239,7 +226,7 @@ function CoachPage() {
               void handleNewChat();
             }}
             disabled={creatingChat}
-            className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-900 text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-900 text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
             title="New chat"
           >
             {creatingChat ? (
@@ -321,15 +308,81 @@ function CoachPage() {
         </div>
       </aside>
 
-      {/* Main chat */}
-      <main className="flex min-w-0 flex-1 flex-col">
-        <header className="flex items-center justify-between border-b border-slate-200 bg-white px-6 py-4">
+      {/* Mobile Coach header */}
+      <div className="shrink-0 border-b border-slate-200 bg-white lg:hidden">
+        <div className="flex items-center justify-between gap-3 px-4 py-3">
           <div className="min-w-0">
-            <h2 className="truncate text-base font-semibold text-slate-900">
+            <h1 className="truncate text-base font-semibold">
+              MoneyFlow Coach
+            </h1>
+
+            <p className="text-xs text-slate-500">
+              Your financial AI assistant
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => {
+              void handleNewChat();
+            }}
+            disabled={creatingChat}
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-900 text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
+            title="New chat"
+          >
+            {creatingChat ? (
+              <Loader2 size={18} className="animate-spin" />
+            ) : (
+              <Plus size={18} />
+            )}
+          </button>
+        </div>
+
+        <div className="border-t border-slate-100 px-4 py-2">
+          {loadingChats ? (
+            <div className="flex h-10 items-center justify-center text-slate-400">
+              <Loader2 size={18} className="animate-spin" />
+            </div>
+          ) : chats.length === 0 ? (
+            <p className="py-2 text-xs text-slate-400">
+              No previous chats yet.
+            </p>
+          ) : (
+            <div className="flex gap-2 overflow-x-auto pb-1">
+              {chats.map((chat) => (
+                <button
+                  key={chat.id}
+                  type="button"
+                  onClick={() => setSelectedChatId(chat.id)}
+                  className={`max-w-55 shrink-0 rounded-lg border px-3 py-2 text-left transition ${
+                    selectedChatId === chat.id
+                      ? "border-slate-900 bg-slate-900 text-white"
+                      : "border-slate-200 bg-white text-slate-700"
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    <MessageSquare size={15} className="shrink-0" />
+
+                    <span className="truncate text-xs font-medium">
+                      {chat.title}
+                    </span>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Main chat */}
+      <main className="flex min-h-0 min-w-0 flex-1 flex-col">
+        <header className="flex shrink-0 items-center justify-between gap-3 border-b border-slate-200 bg-white px-4 py-3 sm:px-6 sm:py-4">
+          <div className="min-w-0">
+            <h2 className="truncate text-sm font-semibold text-slate-900 sm:text-base">
               {selectedChat?.title ?? "MoneyFlow Coach"}
             </h2>
 
-            <p className="text-xs text-slate-500">
+            <p className="truncate text-xs text-slate-500">
               Ask questions about your finances.
             </p>
           </div>
@@ -341,7 +394,8 @@ function CoachPage() {
                 void handleDeleteChat();
               }}
               disabled={deletingChat}
-              className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
+              className="flex h-9 shrink-0 items-center justify-center gap-2 rounded-lg px-2 text-sm text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50 sm:px-3"
+              title="Delete chat"
             >
               {deletingChat ? (
                 <Loader2 size={17} className="animate-spin" />
@@ -355,18 +409,19 @@ function CoachPage() {
         </header>
 
         {error && (
-          <div className="border-b border-red-200 bg-red-50 px-6 py-3 text-sm text-red-700">
+          <div className="shrink-0 border-b border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 sm:px-6">
             {error}
           </div>
         )}
 
-        <div className="flex-1 overflow-y-auto">
+        {/* Messages */}
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
           {loadingChat ? (
-            <div className="flex h-full items-center justify-center">
+            <div className="flex h-full items-center justify-center px-4">
               <Loader2 size={28} className="animate-spin text-slate-400" />
             </div>
           ) : !selectedChatId ? (
-            <div className="flex h-full items-center justify-center px-6">
+            <div className="flex h-full items-center justify-center px-5">
               <div className="max-w-md text-center">
                 <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-slate-100">
                   <Bot size={28} className="text-slate-500" />
@@ -393,7 +448,7 @@ function CoachPage() {
               </div>
             </div>
           ) : messages.length === 0 ? (
-            <div className="flex h-full items-center justify-center px-6">
+            <div className="flex h-full items-center justify-center px-5">
               <div className="max-w-md text-center">
                 <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-slate-100">
                   <Bot size={28} className="text-slate-500" />
@@ -407,14 +462,14 @@ function CoachPage() {
               </div>
             </div>
           ) : (
-            <div className="mx-auto w-full max-w-4xl space-y-6 px-6 py-8">
+            <div className="mx-auto w-full max-w-4xl space-y-5 px-3 py-5 sm:space-y-6 sm:px-6 sm:py-8">
               {messages.map((message, index) => {
                 const isUser = message.role === "user";
 
                 return (
                   <div
                     key={message.id ?? `${message.role}-${index}`}
-                    className={`flex gap-3 ${
+                    className={`flex min-w-0 gap-2 sm:gap-3 ${
                       isUser ? "justify-end" : "justify-start"
                     }`}
                   >
@@ -425,13 +480,15 @@ function CoachPage() {
                     )}
 
                     <div
-                      className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm leading-6 ${
+                      className={`min-w-0 max-w-[calc(100%-2.5rem)] rounded-2xl px-3.5 py-3 text-sm leading-6 break-words sm:max-w-[80%] sm:px-4 ${
                         isUser
                           ? "bg-slate-900 text-white"
                           : "bg-white text-slate-700 shadow-sm ring-1 ring-slate-200"
                       }`}
                     >
-                      <p className="whitespace-pre-wrap">{message.content}</p>
+                      <p className="whitespace-pre-wrap wrap-break-word">
+                        {message.content}
+                      </p>
                     </div>
 
                     {isUser && (
@@ -444,7 +501,7 @@ function CoachPage() {
               })}
 
               {sending && (
-                <div className="flex gap-3">
+                <div className="flex gap-2 sm:gap-3">
                   <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-900 text-white">
                     <Bot size={17} />
                   </div>
@@ -461,10 +518,11 @@ function CoachPage() {
           )}
         </div>
 
-        <div className="border-t border-slate-200 bg-white p-4">
+        {/* Composer */}
+        <div className="shrink-0 border-t border-slate-200 bg-white px-3 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:p-4">
           <form
             onSubmit={handleSubmit}
-            className="mx-auto flex max-w-4xl items-end gap-3"
+            className="mx-auto flex w-full max-w-4xl items-end gap-2 sm:gap-3"
           >
             <textarea
               value={question}
@@ -480,7 +538,7 @@ function CoachPage() {
               rows={1}
               maxLength={1000}
               disabled={sending}
-              className="min-h-11 flex-1 resize-none rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-slate-500 focus:ring-2 focus:ring-slate-100 disabled:bg-slate-50"
+              className="min-h-11 min-w-0 flex-1 resize-none rounded-xl border border-slate-300 bg-white px-3.5 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-slate-500 focus:ring-2 focus:ring-slate-100 disabled:bg-slate-50 sm:px-4"
             />
 
             <button
@@ -497,7 +555,7 @@ function CoachPage() {
             </button>
           </form>
 
-          <p className="mx-auto mt-2 max-w-4xl text-xs text-slate-400">
+          <p className="mx-auto mt-2 hidden max-w-4xl text-xs text-slate-400 sm:block">
             MoneyFlow Coach uses your financial records to provide context-aware
             responses.
           </p>
