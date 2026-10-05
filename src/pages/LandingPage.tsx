@@ -292,7 +292,7 @@ export default function LandingPage() {
                 <Link
                   to="/register"
                   onClick={closeMobileMenu}
-                  className="flex items-center justify-center rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
+                  className="flex items-center justify-center rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white! transition hover:bg-slate-800"
                 >
                   Get started
                 </Link>
