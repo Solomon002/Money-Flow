@@ -20,9 +20,12 @@ import googleAuthRoutes from "./routes/googleAuthRoutes.js";
 const app = express();
 const PORT = 5000;
 
-const allowedOrigins = [
+const allowedOrigins: string[] = [
   "http://localhost:5173",
-];
+  process.env.FRONTEND_URL,
+].filter(
+  (origin): origin is string => Boolean(origin),
+);
 
 app.use(
   cors({
@@ -61,9 +64,7 @@ app.use("/api/auth", googleAuthRoutes);
 
 app.get("/api/health", async (_req, res) => {
   try {
-    const result = await pool.query(
-      "SELECT NOW()",
-    );
+    const result = await pool.query("SELECT NOW()");
 
     return res.status(200).json({
       status: "ok",
@@ -71,10 +72,7 @@ app.get("/api/health", async (_req, res) => {
       databaseTime: result.rows[0].now,
     });
   } catch (error) {
-    console.error(
-      "Database connection failed:",
-      error,
-    );
+    console.error("Database connection failed:", error);
 
     return res.status(500).json({
       status: "error",
@@ -83,8 +81,12 @@ app.get("/api/health", async (_req, res) => {
   }
 });
 
-app.listen(PORT, () => {
-  console.log(
-    `MoneyFlow backend running on http://localhost:${PORT}`,
-  );
-});
+if (process.env.NODE_ENV !== "production") {
+  app.listen(PORT, () => {
+    console.log(
+      `MoneyFlow backend running on http://localhost:${PORT}`,
+    );
+  });
+}
+
+export default app;
