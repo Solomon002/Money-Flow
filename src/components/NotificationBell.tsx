@@ -26,6 +26,9 @@ function getNotificationIcon(type: Notification["type"]) {
     case "goal_reminder":
       return "🎯";
 
+    case "goal_completed":
+      return "🎉";
+
     case "monthly_insight":
       return "📊";
 

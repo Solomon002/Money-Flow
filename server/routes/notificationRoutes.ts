@@ -27,15 +27,12 @@ router.get(
       if (!req.userId) {
         return res.status(401).json({
           status: "error",
-          message:
-            "Authentication required",
+          message: "Authentication required",
         });
       }
 
       try {
-        await checkGoalReminders(
-          req.userId,
-        );
+        await checkGoalReminders(req.userId);
       } catch (error) {
         console.error(
           "Checking goal reminders failed:",
@@ -44,9 +41,7 @@ router.get(
       }
 
       const notifications =
-        await getNotifications(
-          req.userId,
-        );
+        await getNotifications(req.userId);
 
       const unreadCount =
         await getUnreadNotificationCount(
@@ -66,8 +61,7 @@ router.get(
 
       return res.status(500).json({
         status: "error",
-        message:
-          "Unable to load notifications",
+        message: "Unable to load notifications",
       });
     }
   },
@@ -84,8 +78,7 @@ router.get(
       if (!req.userId) {
         return res.status(401).json({
           status: "error",
-          message:
-            "Authentication required",
+          message: "Authentication required",
         });
       }
 
@@ -124,27 +117,24 @@ router.patch(
       if (!req.userId) {
         return res.status(401).json({
           status: "error",
-          message:
-            "Authentication required",
+          message: "Authentication required",
         });
       }
 
-      const notificationId =
-        String(
-          req.params.notificationId,
-        );
+      const notificationId = String(
+        req.params.notificationId,
+      );
 
       const notification =
-        await markNotificationAsRead({
-          userId: req.userId,
+        await markNotificationAsRead(
+          req.userId,
           notificationId,
-        });
+        );
 
       if (!notification) {
         return res.status(404).json({
           status: "error",
-          message:
-            "Notification not found",
+          message: "Notification not found",
         });
       }
 
@@ -178,19 +168,17 @@ router.patch(
       if (!req.userId) {
         return res.status(401).json({
           status: "error",
-          message:
-            "Authentication required",
+          message: "Authentication required",
         });
       }
 
-      const updatedCount =
-        await markAllNotificationsAsRead(
-          req.userId,
-        );
+      await markAllNotificationsAsRead(
+        req.userId,
+      );
 
       return res.json({
         status: "success",
-        updatedCount,
+        updatedCount: 0,
       });
     } catch (error) {
       console.error(
@@ -218,34 +206,30 @@ router.delete(
       if (!req.userId) {
         return res.status(401).json({
           status: "error",
-          message:
-            "Authentication required",
+          message: "Authentication required",
         });
       }
 
-      const notificationId =
-        String(
-          req.params.notificationId,
-        );
+      const notificationId = String(
+        req.params.notificationId,
+      );
 
       const deleted =
-        await deleteNotification({
-          userId: req.userId,
+        await deleteNotification(
+          req.userId,
           notificationId,
-        });
+        );
 
       if (!deleted) {
         return res.status(404).json({
           status: "error",
-          message:
-            "Notification not found",
+          message: "Notification not found",
         });
       }
 
       return res.json({
         status: "success",
-        message:
-          "Notification deleted",
+        message: "Notification deleted",
       });
     } catch (error) {
       console.error(

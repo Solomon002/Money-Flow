@@ -1,4 +1,5 @@
 import { pool } from "../db.js";
+import { createNotification } from "./notificationService.js";
 
 type CreateGoalInput = {
   userId: string;
@@ -180,12 +181,49 @@ export async function addMoneyToGoal(
   goalId: string,
   amountMinor: number,
 ) {
+  const existingGoal = await pool.query(
+    `
+      SELECT
+        id,
+        name,
+        current_amount_minor,
+        target_amount_minor,
+        status
+      FROM public.goals
+      WHERE id = $1
+        AND user_id = $2
+    `,
+    [goalId, userId],
+  );
+
+  if (existingGoal.rows.length === 0) {
+    return null;
+  }
+
+  const currentGoal = existingGoal.rows[0];
+
+  const currentAmountMinor = Number(
+    currentGoal.current_amount_minor,
+  );
+
+  const targetAmountMinor = Number(
+    currentGoal.target_amount_minor,
+  );
+
+  const newAmountMinor =
+    currentAmountMinor + amountMinor;
+
+  const shouldComplete =
+    newAmountMinor >= targetAmountMinor;
+
+  const wasAlreadyCompleted =
+    currentGoal.status === "completed";
+
   const result = await pool.query(
     `
       UPDATE public.goals
       SET
-        current_amount_minor =
-          current_amount_minor + $1,
+        current_amount_minor = current_amount_minor + $1,
         status = CASE
           WHEN current_amount_minor + $1 >= target_amount_minor
             THEN 'completed'
@@ -209,7 +247,48 @@ export async function addMoneyToGoal(
     [amountMinor, goalId, userId],
   );
 
-  return result.rows[0] || null;
+  const goal = result.rows[0] || null;
+
+  if (
+    goal &&
+    shouldComplete &&
+    !wasAlreadyCompleted
+  ) {
+    try {
+      const targetAmount = targetAmountMinor / 100;
+
+      const formatter = new Intl.NumberFormat(
+        "en-NG",
+        {
+          style: "currency",
+          currency: "NGN",
+          maximumFractionDigits: 2,
+        },
+      );
+
+      const formattedTarget = formatter.format(
+        targetAmount,
+      );
+
+      await createNotification({
+        userId,
+        type: "goal_completed",
+        title: "🎉 Goal completed!",
+        message:
+          `Congratulations! You've reached your ` +
+          `${formattedTarget} ${goal.name} goal. ` +
+          `Great job staying on track!`,
+        goalId: goal.id,
+      });
+    } catch (error) {
+      console.error(
+        "Creating goal completion notification failed:",
+        error,
+      );
+    }
+  }
+
+  return goal;
 }
 
 export async function deleteGoal(

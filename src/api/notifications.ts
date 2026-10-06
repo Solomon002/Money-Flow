@@ -4,7 +4,8 @@ export type NotificationType =
   | "budget_warning"
   | "goal_reminder"
   | "monthly_insight"
-  | "recurring_payment";
+  | "recurring_payment"
+  | "goal_completed";
 
 export type Notification = {
   id: string;
