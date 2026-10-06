@@ -50,14 +50,100 @@ export default function NotificationBell() {
 
   const containerRef = useRef<HTMLDivElement>(null);
 
-  async function loadNotifications() {
+  const hasLoadedNotificationsRef = useRef(false);
+
+  const knownNotificationIdsRef = useRef<Set<string>>(new Set());
+
+  const audioContextRef = useRef<AudioContext | null>(null);
+
+  function playNotificationSound() {
     try {
-      setIsLoading(true);
+      const AudioContextClass =
+        window.AudioContext ||
+        (
+          window as typeof window & {
+            webkitAudioContext?: typeof AudioContext;
+          }
+        ).webkitAudioContext;
+
+      if (!AudioContextClass) {
+        return;
+      }
+
+      if (!audioContextRef.current) {
+        audioContextRef.current = new AudioContextClass();
+      }
+
+      const audioContext = audioContextRef.current;
+
+      if (audioContext.state === "suspended") {
+        void audioContext.resume();
+      }
+
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+
+      oscillator.type = "sine";
+      oscillator.frequency.setValueAtTime(880, audioContext.currentTime);
+
+      oscillator.frequency.setValueAtTime(988, audioContext.currentTime + 0.08);
+
+      gainNode.gain.setValueAtTime(0.0001, audioContext.currentTime);
+
+      gainNode.gain.exponentialRampToValueAtTime(
+        0.12,
+        audioContext.currentTime + 0.01,
+      );
+
+      gainNode.gain.exponentialRampToValueAtTime(
+        0.0001,
+        audioContext.currentTime + 0.25,
+      );
+
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+
+      oscillator.start();
+
+      oscillator.stop(audioContext.currentTime + 0.25);
+    } catch (error) {
+      console.error("Failed to play notification sound:", error);
+    }
+  }
+
+  async function loadNotifications(
+    showLoading = true,
+    playSoundForNewNotifications = false,
+  ) {
+    try {
+      if (showLoading) {
+        setIsLoading(true);
+      }
+
       setError("");
 
       const result = await getNotifications();
 
-      setNotifications(result.notifications);
+      const incomingNotifications = result.notifications;
+
+      if (playSoundForNewNotifications && hasLoadedNotificationsRef.current) {
+        const hasNewNotification = incomingNotifications.some(
+          (notification) =>
+            !knownNotificationIdsRef.current.has(notification.id),
+        );
+
+        if (hasNewNotification) {
+          playNotificationSound();
+        }
+      }
+
+      knownNotificationIdsRef.current = new Set(
+        incomingNotifications.map((notification) => notification.id),
+      );
+
+      hasLoadedNotificationsRef.current = true;
+
+      setNotifications(incomingNotifications);
 
       setUnreadCount(result.unreadCount);
     } catch (error) {
@@ -65,12 +151,36 @@ export default function NotificationBell() {
 
       setError("Unable to load notifications.");
     } finally {
-      setIsLoading(false);
+      if (showLoading) {
+        setIsLoading(false);
+      }
     }
   }
 
   useEffect(() => {
-    loadNotifications();
+    void loadNotifications(true, false);
+
+    const interval = window.setInterval(() => {
+      void loadNotifications(false, true);
+    }, 5000);
+
+    return () => {
+      window.clearInterval(interval);
+    };
+  }, []);
+
+  useEffect(() => {
+    function handleVisibilityChange() {
+      if (document.visibilityState === "visible") {
+        void loadNotifications(false, true);
+      }
+    }
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
   }, []);
 
   useEffect(() => {
@@ -137,6 +247,8 @@ export default function NotificationBell() {
         current.filter((item) => item.id !== notificationId),
       );
 
+      knownNotificationIdsRef.current.delete(notificationId);
+
       if (notification && !notification.read_at) {
         setUnreadCount((current) => Math.max(0, current - 1));
       }
@@ -149,7 +261,13 @@ export default function NotificationBell() {
     <div ref={containerRef} className="relative">
       <button
         type="button"
-        onClick={() => setIsOpen((current) => !current)}
+        onClick={() => {
+          setIsOpen((current) => !current);
+
+          if (!isOpen) {
+            void loadNotifications(false, false);
+          }
+        }}
         className="relative flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-700 transition hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-gray-800"
         aria-label="Notifications"
       >
@@ -163,9 +281,9 @@ export default function NotificationBell() {
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 z-50 mt-3 w-[360px] max-w-[calc(100vw-2rem)] overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-xl dark:border-gray-700 dark:bg-gray-900">
+        <div className="fixed left-4 right-4 top-20 z-50 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-xl dark:border-gray-700 dark:bg-gray-900 sm:absolute sm:left-auto sm:right-0 sm:top-auto sm:mt-3 sm:w-90">
           <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3 dark:border-gray-700">
-            <div>
+            <div className="min-w-0">
               <h3 className="font-semibold text-gray-900 dark:text-white">
                 Notifications
               </h3>
@@ -181,14 +299,14 @@ export default function NotificationBell() {
               <button
                 type="button"
                 onClick={handleMarkAllAsRead}
-                className="text-xs font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400"
+                className="shrink-0 text-xs font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400"
               >
                 Mark all as read
               </button>
             )}
           </div>
 
-          <div className="max-h-[420px] overflow-y-auto">
+          <div className="max-h-[70vh] overflow-y-auto sm:max-h-105">
             {isLoading && (
               <div className="px-4 py-8 text-center text-sm text-gray-500">
                 Loading notifications...
@@ -233,25 +351,25 @@ export default function NotificationBell() {
 
                     <div className="min-w-0 flex-1">
                       <div className="flex items-start justify-between gap-2">
-                        <h4 className="text-sm font-semibold text-gray-900 dark:text-white">
+                        <h4 className="min-w-0 wrap-break-word text-sm font-semibold text-gray-900 dark:text-white">
                           {notification.title}
                         </h4>
 
                         <button
                           type="button"
                           onClick={() => handleDelete(notification.id)}
-                          className="text-xs text-gray-400 hover:text-red-500"
+                          className="shrink-0 text-xs text-gray-400 hover:text-red-500"
                           aria-label="Delete notification"
                         >
                           ✕
                         </button>
                       </div>
 
-                      <p className="mt-1 text-sm leading-5 text-gray-600 dark:text-gray-300">
+                      <p className="mt-1 wrap-break-word text-sm leading-5 text-gray-600 dark:text-gray-300">
                         {notification.message}
                       </p>
 
-                      <div className="mt-2 flex items-center justify-between gap-2">
+                      <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
                         <span className="text-xs text-gray-400">
                           {formatNotificationTime(notification.created_at)}
                         </span>
