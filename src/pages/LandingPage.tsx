@@ -1,4 +1,5 @@
 import { useState } from "react";
+import ScrollProgressBar from "../components/ScrollProgressBar.js";
 import { Link } from "react-router";
 import FadeLeft from "../components/animations/FadeLeft.js";
 import FadeRight from "../components/animations/FadeRight.js";
@@ -163,6 +164,9 @@ export default function LandingPage() {
 
   return (
     <main className="min-h-screen overflow-hidden bg-slate-50 text-slate-900">
+      <ScrollProgressBar />
+
+      {/* Navigation */}
       {/* Navigation */}
       <header className="fixed inset-x-0 top-0 z-50 border-b border-slate-200/80 bg-white/90 backdrop-blur">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6 lg:px-8">

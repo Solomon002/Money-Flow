@@ -18,16 +18,6 @@ type UpdateBudgetInput = {
   year: number;
 };
 
-function getBudgetDate(
-  year: number,
-  month: number,
-) {
-  return `${year}-${String(month).padStart(
-    2,
-    "0",
-  )}-01`;
-}
-
 export async function createBudget({
   userId,
   categoryId,
@@ -67,14 +57,10 @@ export async function createBudget({
   const budget = result.rows[0];
 
   try {
-    await checkBudgetAlert({
+    await checkBudgetAlert(
       userId,
-      categoryId,
-      transactionDate: getBudgetDate(
-        year,
-        month,
-      ),
-    });
+      budget.id,
+    );
   } catch (error) {
     console.error(
       "Checking budget alert after creation failed:",
@@ -160,14 +146,10 @@ export async function updateBudget({
   }
 
   try {
-    await checkBudgetAlert({
+    await checkBudgetAlert(
       userId,
-      categoryId,
-      transactionDate: getBudgetDate(
-        year,
-        month,
-      ),
-    });
+      budget.id,
+    );
   } catch (error) {
     console.error(
       "Checking budget alert after update failed:",

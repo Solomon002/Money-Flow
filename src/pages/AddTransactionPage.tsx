@@ -12,6 +12,7 @@ export default function AddTransactionPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [type, setType] = useState<"income" | "expense">("expense");
   const [categoryId, setCategoryId] = useState("");
+  const [subcategoryId, setSubcategoryId] = useState("");
   const [amount, setAmount] = useState("");
   const [description, setDescription] = useState("");
   const [transactionDate, setTransactionDate] = useState(
@@ -63,12 +64,25 @@ export default function AddTransactionPage() {
   }, []);
 
   const availableCategories = categories.filter(
-    (category) => category.kind === type,
+    (category) => category.kind === type && category.parent_id === null,
+  );
+
+  const selectedCategory = categories.find(
+    (category) => category.id === categoryId,
+  );
+
+  const availableSubcategories = categories.filter(
+    (category) => category.kind === type && category.parent_id === categoryId,
   );
 
   useEffect(() => {
     setCategoryId("");
+    setSubcategoryId("");
   }, [type]);
+
+  useEffect(() => {
+    setSubcategoryId("");
+  }, [categoryId]);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -98,7 +112,7 @@ export default function AddTransactionPage() {
       const result = await apiRequest("/api/transactions", {
         method: "POST",
         body: JSON.stringify({
-          categoryId,
+          categoryId: subcategoryId || categoryId,
           type,
           amount: amountNumber,
           description: description.trim(),
@@ -144,7 +158,7 @@ export default function AddTransactionPage() {
         </div>
       </div>
 
-      <section className="rounded-2xl border border-slate-200 bg-white p-6">
+      <section className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-6">
         <form onSubmit={handleSubmit} className="space-y-5">
           {errorMessage && (
             <div
@@ -215,6 +229,32 @@ export default function AddTransactionPage() {
               ))}
             </select>
           </div>
+
+          {selectedCategory && availableSubcategories.length > 0 && (
+            <div>
+              <label
+                htmlFor="subcategory"
+                className="block text-sm font-medium text-slate-700"
+              >
+                Subcategory
+              </label>
+
+              <select
+                id="subcategory"
+                value={subcategoryId}
+                onChange={(event) => setSubcategoryId(event.target.value)}
+                className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-slate-900"
+              >
+                <option value="">No subcategory</option>
+
+                {availableSubcategories.map((subcategory) => (
+                  <option key={subcategory.id} value={subcategory.id}>
+                    {subcategory.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
 
           <div>
             <label

@@ -6,6 +6,7 @@ import {
 import {
   getReportSummary,
   getSpendingByCategory,
+  getSpendingBreakdown,
 } from "../services/reportService.js";
 
 const router = Router();
@@ -78,19 +79,27 @@ router.get(
         });
       }
 
-      const [summary, spendingByCategory] =
-        await Promise.all([
-          getReportSummary(
-            req.userId,
-            startDate,
-            endDate,
-          ),
-          getSpendingByCategory(
-            req.userId,
-            startDate,
-            endDate,
-          ),
-        ]);
+      const [
+        summary,
+        spendingByCategory,
+        spendingBreakdown,
+      ] = await Promise.all([
+        getReportSummary(
+          req.userId,
+          startDate,
+          endDate,
+        ),
+        getSpendingByCategory(
+          req.userId,
+          startDate,
+          endDate,
+        ),
+        getSpendingBreakdown(
+          req.userId,
+          startDate,
+          endDate,
+        ),
+      ]);
 
       return res.json({
         status: "success",
@@ -99,6 +108,7 @@ router.get(
           endDate,
           summary,
           spendingByCategory,
+          spendingBreakdown,
         },
       });
     } catch (error) {

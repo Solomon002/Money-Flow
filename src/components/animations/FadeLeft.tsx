@@ -1,5 +1,5 @@
-import { motion } from "motion/react";
 import type { ReactNode } from "react";
+import { useScrollReveal } from "../../hooks/useScrollReveal.js";
 
 type FadeLeftProps = {
   children: ReactNode;
@@ -12,32 +12,20 @@ type FadeLeftProps = {
 export default function FadeLeft({
   children,
   delay = 0,
-  duration = 0.6,
+  duration = 0.9,
   distance = 50,
   className,
 }: FadeLeftProps) {
+  const { ref, style } = useScrollReveal({
+    direction: "left",
+    delay,
+    duration,
+    distance,
+  });
+
   return (
-    <motion.div
-      initial={{
-        opacity: 0,
-        x: -distance,
-      }}
-      whileInView={{
-        opacity: 1,
-        x: 0,
-      }}
-      viewport={{
-        once: true,
-        amount: 0.2,
-      }}
-      transition={{
-        duration,
-        delay,
-        ease: "easeOut",
-      }}
-      className={className}
-    >
+    <div ref={ref} style={style} className={className}>
       {children}
-    </motion.div>
+    </div>
   );
 }

@@ -1,11 +1,13 @@
 import { pool } from "../db.js";
+import { sendEmail } from "./emailService.js";
 
 export type NotificationType =
   | "budget_warning"
   | "goal_reminder"
   | "goal_completed"
   | "monthly_insight"
-  | "recurring_payment";
+  | "recurring_payment"
+  | "subscription_expiring";
 
 type CreateNotificationInput = {
   userId: string;
@@ -173,7 +175,7 @@ export async function checkBudgetAlert(
       SELECT
         b.id,
         b.category_id,
-        b.amount_minor,
+        b.monthly_amount_minor,
         b.year,
         b.month,
         c.name AS category_name
@@ -219,11 +221,21 @@ export async function checkBudgetAlert(
       SELECT
         COALESCE(SUM(t.amount_minor), 0)::bigint AS spent
       FROM public.transactions t
+      INNER JOIN public.categories transaction_category
+        ON transaction_category.id = t.category_id
+       AND transaction_category.user_id = t.user_id
       WHERE t.user_id = $1
-        AND t.category_id = $2
+        AND (
+          transaction_category.id = $2
+          OR transaction_category.parent_id = $2
+        )
         AND t.type = 'expense'
-        AND EXTRACT(YEAR FROM t.transaction_date) = $3
-        AND EXTRACT(MONTH FROM t.transaction_date) = $4
+        AND EXTRACT(
+          YEAR FROM t.transaction_date
+        ) = $3
+        AND EXTRACT(
+          MONTH FROM t.transaction_date
+        ) = $4
     `,
     [
       userId,
@@ -237,7 +249,9 @@ export async function checkBudgetAlert(
     spendingResult.rows[0]?.spent || 0,
   );
 
-  const budgetMinor = Number(budget.amount_minor);
+  const budgetMinor = Number(
+    budget.monthly_amount_minor,
+  );
 
   if (budgetMinor <= 0) {
     return null;
@@ -424,4 +438,158 @@ export async function checkGoalReminders(
   }
 
   return createdNotification;
+}
+
+const SUBSCRIPTION_REMINDER_WINDOW_DAYS = 7;
+
+export async function checkSubscriptionReminder(
+  userId: string,
+) {
+  const subscriptionResult = await pool.query<{
+    plan: string;
+    status: string;
+    current_period_end: string | null;
+  }>(
+    `
+      SELECT
+        plan,
+        status,
+        current_period_end
+      FROM public.subscriptions
+      WHERE user_id = $1
+      LIMIT 1
+    `,
+    [userId],
+  );
+
+  if (subscriptionResult.rows.length === 0) {
+    return null;
+  }
+
+  const subscription = subscriptionResult.rows[0];
+
+  const isPro =
+    subscription.plan === "pro" &&
+    (subscription.status === "active" ||
+      subscription.status === "trialing");
+
+  if (!isPro || !subscription.current_period_end) {
+    return null;
+  }
+
+  const expiry = new Date(
+    subscription.current_period_end,
+  ).getTime();
+
+  const now = Date.now();
+  const diffMs = expiry - now;
+
+  const daysUntilExpiry = Math.ceil(
+    diffMs / (1000 * 60 * 60 * 24),
+  );
+
+  if (
+    daysUntilExpiry < 0 ||
+    daysUntilExpiry > SUBSCRIPTION_REMINDER_WINDOW_DAYS
+  ) {
+    return null;
+  }
+
+  const formattedExpiry = new Date(
+    subscription.current_period_end,
+  ).toLocaleDateString("en-NG", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+
+  const dayWord =
+    daysUntilExpiry === 0
+      ? "today"
+      : daysUntilExpiry === 1
+        ? "tomorrow"
+        : `in ${daysUntilExpiry} days`;
+
+  const message =
+    `Your MoneyFlow Pro subscription expires ${dayWord} ` +
+    `(${formattedExpiry}). Renew now to keep your Pro features.`;
+
+  const existingNotification = await pool.query(
+    `
+      SELECT id
+      FROM public.notifications
+      WHERE user_id = $1
+        AND type = 'subscription_expiring'
+        AND message = $2
+      LIMIT 1
+    `,
+    [userId, message],
+  );
+
+  if (existingNotification.rows.length > 0) {
+    return null;
+  }
+
+  const notification = await createNotification({
+    userId,
+    type: "subscription_expiring",
+    title: "Your MoneyFlow Pro subscription is expiring soon",
+    message,
+  });
+
+  try {
+    const userResult = await pool.query<{
+      email: string;
+    }>(
+      `
+        SELECT email
+        FROM public.users
+        WHERE id = $1
+        LIMIT 1
+      `,
+      [userId],
+    );
+
+    const userEmail = userResult.rows[0]?.email;
+
+    if (userEmail) {
+      await sendEmail({
+        to: userEmail,
+        subject: "Your MoneyFlow Pro subscription is expiring soon",
+        html: `
+          <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 560px; margin: 0 auto; padding: 24px;">
+            <h1 style="font-size: 22px; color: #0f172a; margin: 0 0 16px;">
+              Your MoneyFlow Pro subscription is expiring soon
+            </h1>
+
+            <p style="font-size: 15px; color: #334155; line-height: 1.6; margin: 0 0 16px;">
+              ${message}
+            </p>
+
+            <p style="font-size: 15px; color: #334155; line-height: 1.6; margin: 0 0 24px;">
+              Renew now to keep access to advanced reports, deeper insights, and all MoneyFlow Pro features.
+            </p>
+
+            <a
+              href="${process.env.FRONTEND_URL || "http://localhost:5173"}/app/pro"
+              style="display: inline-block; background-color: #0f172a; color: #ffffff; text-decoration: none; padding: 12px 20px; border-radius: 10px; font-weight: 600; font-size: 15px;"
+            >
+              Renew MoneyFlow Pro
+            </a>
+
+            <p style="font-size: 13px; color: #64748b; line-height: 1.6; margin: 32px 0 0;">
+              You're receiving this email because you have an active MoneyFlow Pro subscription.
+            </p>
+          </div>
+        `,
+      });
+    }
+  } catch (error) {
+    console.error(
+      "Sending subscription reminder email failed:",
+      error,
+    );
+  }
+
+  return notification;
 }

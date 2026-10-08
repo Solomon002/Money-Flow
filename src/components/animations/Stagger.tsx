@@ -1,5 +1,5 @@
-import { motion } from "motion/react";
 import type { ReactNode } from "react";
+import { useStaggerReveal } from "../../hooks/useScrollReveal.js";
 
 type StaggerProps = {
   children: ReactNode;
@@ -13,53 +13,27 @@ type StaggerProps = {
 export default function Stagger({
   children,
   delay = 0,
-  staggerDelay = 0.08,
-  duration = 0.5,
+  staggerDelay = 0.12,
+  duration = 0.9,
   distance = 30,
   className,
 }: StaggerProps) {
+  const { ref, getChildStyle } = useStaggerReveal({
+    delay,
+    staggerDelay,
+    duration,
+    distance,
+  });
+
   return (
-    <motion.div
-      initial="hidden"
-      whileInView="visible"
-      viewport={{
-        once: true,
-        amount: 0.2,
-      }}
-      variants={{
-        hidden: {},
-        visible: {
-          transition: {
-            delayChildren: delay,
-            staggerChildren: staggerDelay,
-          },
-        },
-      }}
-      className={className}
-    >
+    <div ref={ref} className={className}>
       {Array.isArray(children)
         ? children.map((child, index) => (
-            <motion.div
-              key={index}
-              variants={{
-                hidden: {
-                  opacity: 0,
-                  y: distance,
-                },
-                visible: {
-                  opacity: 1,
-                  y: 0,
-                  transition: {
-                    duration,
-                    ease: "easeOut",
-                  },
-                },
-              }}
-            >
+            <div key={index} style={getChildStyle(index)}>
               {child}
-            </motion.div>
+            </div>
           ))
         : children}
-    </motion.div>
+    </div>
   );
 }

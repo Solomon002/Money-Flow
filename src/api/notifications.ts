@@ -5,7 +5,8 @@ export type NotificationType =
   | "goal_reminder"
   | "monthly_insight"
   | "recurring_payment"
-  | "goal_completed";
+  | "goal_completed"
+  | "subscription_expiring";
 
 export type Notification = {
   id: string;

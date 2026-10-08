@@ -11,6 +11,8 @@ export type Transaction = {
   user_id: string;
   category_id: string;
   category_name: string;
+  parent_category_id: string | null;
+  parent_category_name: string | null;
   type: "income" | "expense";
   amount_minor: number;
   description: string;

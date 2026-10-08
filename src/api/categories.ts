@@ -4,6 +4,7 @@ export type Category = {
   id: string;
   name: string;
   kind: "income" | "expense";
+  parent_id: string | null;
   is_default: boolean;
   is_active: boolean;
 };

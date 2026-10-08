@@ -141,9 +141,9 @@ export default function TransactionsPage() {
                 key={transaction.id}
                 className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between"
               >
-                <div className="flex items-center gap-4">
+                <div className="flex min-w-0 items-center gap-4">
                   <div
-                    className={`rounded-xl p-3 ${
+                    className={`shrink-0 rounded-xl p-3 ${
                       transaction.type === "income"
                         ? "bg-emerald-50 text-emerald-600"
                         : "bg-red-50 text-red-600"
@@ -156,20 +156,29 @@ export default function TransactionsPage() {
                     )}
                   </div>
 
-                  <div>
-                    <p className="font-semibold text-slate-900">
+                  <div className="min-w-0">
+                    <p className="truncate font-semibold text-slate-900">
                       {transaction.description}
                     </p>
 
                     <p className="mt-1 text-sm text-slate-500">
-                      {transaction.category_name} ·{" "}
+                      {transaction.category_name}
+
+                      {transaction.parent_category_name && (
+                        <>
+                          <span className="mx-1">·</span>
+                          {transaction.parent_category_name}
+                        </>
+                      )}
+
+                      <span className="mx-1">·</span>
                       {formatDate(transaction.transaction_date)}
                     </p>
                   </div>
                 </div>
 
                 <p
-                  className={`text-base font-semibold ${
+                  className={`shrink-0 text-base font-semibold ${
                     transaction.type === "income"
                       ? "text-emerald-600"
                       : "text-red-600"

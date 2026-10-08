@@ -12,11 +12,21 @@ export type SpendingByCategory = {
   totalMinor: number;
 };
 
+export type SpendingBreakdown = {
+  parentCategoryId: string;
+  parentCategoryName: string;
+  categoryId: string;
+  categoryName: string;
+  parentId: string | null;
+  totalMinor: number;
+};
+
 export type Report = {
   startDate: string;
   endDate: string;
   summary: ReportSummary;
   spendingByCategory: SpendingByCategory[];
+  spendingBreakdown: SpendingBreakdown[];
 };
 
 export async function getReport(

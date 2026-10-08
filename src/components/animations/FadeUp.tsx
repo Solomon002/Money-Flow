@@ -1,5 +1,5 @@
-import { motion } from "motion/react";
 import type { ReactNode } from "react";
+import { useScrollReveal } from "../../hooks/useScrollReveal.js";
 
 type FadeUpProps = {
   children: ReactNode;
@@ -12,32 +12,20 @@ type FadeUpProps = {
 export default function FadeUp({
   children,
   delay = 0,
-  duration = 0.6,
+  duration = 0.9,
   distance = 40,
   className,
 }: FadeUpProps) {
+  const { ref, style } = useScrollReveal({
+    direction: "up",
+    delay,
+    duration,
+    distance,
+  });
+
   return (
-    <motion.div
-      initial={{
-        opacity: 0,
-        y: distance,
-      }}
-      whileInView={{
-        opacity: 1,
-        y: 0,
-      }}
-      viewport={{
-        once: true,
-        amount: 0.2,
-      }}
-      transition={{
-        duration,
-        delay,
-        ease: "easeOut",
-      }}
-      className={className}
-    >
+    <div ref={ref} style={style} className={className}>
       {children}
-    </motion.div>
+    </div>
   );
 }

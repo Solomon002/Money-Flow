@@ -21,6 +21,38 @@ import {
 import { getOnboardingPreferences } from "../api/onboarding.js";
 import type { AuthUser, LoginInput } from "../api/auth.js";
 
+/*
+ * ⚠️  CRITICAL INVARIANT — DO NOT BREAK
+ *
+ * This provider has a subtle race condition that historically caused
+ * direct navigation to any /app/* route (e.g. /app/pro?reference=...) to
+ * be silently redirected to /app. The bug was:
+ *
+ *   1. On mount, `user` is null and `onboardingLoading` starts true.
+ *   2. The `useEffect([user])` below ran with `user = null` and set
+ *      `onboardingLoading = false` immediately.
+ *   3. Between the session restore completing and
+ *      `loadOnboardingPreferences()` running, guards saw the state as
+ *      "authenticated user with no onboarding preferences" and rendered
+ *      <Navigate to="/onboarding" replace />.
+ *   4. `OnboardingAccessGuard` then saw the (already-loaded) preferences
+ *      and rendered <Navigate to="/app" replace />, discarding the
+ *      original URL — including Paystack's ?reference=... parameter.
+ *
+ * The fix, which must be preserved:
+ *
+ *   - `onboardingLoading` MUST stay true until preferences are actually
+ *     fetched for the authenticated user.
+ *   - The `useEffect([user])` below MUST NOT set `onboardingLoading` to
+ *     false when `user` is null.
+ *   - `restoreSession()` is the only place that may set
+ *     `onboardingLoading` to false during the "no token" path.
+ *
+ * If you refactor this file, verify that navigating directly to
+ * /app/pro?reference=TEST still renders ProPage with the reference intact
+ * and does NOT redirect to /app or /onboarding.
+ */
+
 export type OnboardingPreferences = {
   user_id: string;
   currency_code: string;
@@ -66,7 +98,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   useEffect(() => {
     if (!user) {
       setOnboardingPreferences(null);
-      setOnboardingLoading(false);
+      // ⚠️  Do NOT set onboardingLoading to false here — see invariant above.
       return;
     }
 
@@ -119,6 +151,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     if (!accessToken || !refreshToken) {
       setUser(null);
+      setOnboardingLoading(false);
       setIsLoading(false);
       return;
     }

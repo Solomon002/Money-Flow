@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router";
 
 import {
   deleteNotification,
@@ -35,12 +36,17 @@ function getNotificationIcon(type: Notification["type"]) {
     case "recurring_payment":
       return "🔁";
 
+    case "subscription_expiring":
+      return "💳";
+
     default:
       return "🔔";
   }
 }
 
 export default function NotificationBell() {
+  const navigate = useNavigate();
+
   const [notifications, setNotifications] = useState<Notification[]>([]);
 
   const [unreadCount, setUnreadCount] = useState(0);
@@ -260,6 +266,29 @@ export default function NotificationBell() {
     }
   }
 
+  async function handleNotificationClick(notification: Notification) {
+    if (notification.type === "subscription_expiring") {
+      if (!notification.read_at) {
+        try {
+          const result = await markNotificationAsRead(notification.id);
+
+          setNotifications((current) =>
+            current.map((item) =>
+              item.id === notification.id ? result.notification : item,
+            ),
+          );
+
+          setUnreadCount((current) => Math.max(0, current - 1));
+        } catch (error) {
+          console.error("Failed to mark notification as read:", error);
+        }
+      }
+
+      setIsOpen(false);
+      navigate("/app/pro");
+    }
+  }
+
   return (
     <div ref={containerRef} className="relative">
       <button
@@ -338,59 +367,76 @@ export default function NotificationBell() {
 
             {!isLoading &&
               !error &&
-              notifications.map((notification) => (
-                <div
-                  key={notification.id}
-                  className={`border-b border-gray-100 px-4 py-4 last:border-b-0 dark:border-gray-800 ${
-                    notification.read_at
-                      ? "bg-white dark:bg-gray-900"
-                      : "bg-blue-50/60 dark:bg-blue-950/20"
-                  }`}
-                >
-                  <div className="flex gap-3">
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800">
-                      {getNotificationIcon(notification.type)}
-                    </div>
+              notifications.map((notification) => {
+                const isSubscriptionExpiring =
+                  notification.type === "subscription_expiring";
 
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-start justify-between gap-2">
-                        <h4 className="min-w-0 wrap-break-word text-sm font-semibold text-gray-900 dark:text-white">
-                          {notification.title}
-                        </h4>
-
-                        <button
-                          type="button"
-                          onClick={() => handleDelete(notification.id)}
-                          className="shrink-0 text-xs text-gray-400 hover:text-red-500"
-                          aria-label="Delete notification"
-                        >
-                          ✕
-                        </button>
+                return (
+                  <div
+                    key={notification.id}
+                    className={`border-b border-gray-100 px-4 py-4 last:border-b-0 dark:border-gray-800 ${
+                      notification.read_at
+                        ? "bg-white dark:bg-gray-900"
+                        : "bg-blue-50/60 dark:bg-blue-950/20"
+                    }`}
+                  >
+                    <div className="flex gap-3">
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800">
+                        {getNotificationIcon(notification.type)}
                       </div>
 
-                      <p className="mt-1 wrap-break-word text-sm leading-5 text-gray-600 dark:text-gray-300">
-                        {notification.message}
-                      </p>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-start justify-between gap-2">
+                          <h4 className="min-w-0 wrap-break-word text-sm font-semibold text-gray-900 dark:text-white">
+                            {notification.title}
+                          </h4>
 
-                      <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
-                        <span className="text-xs text-gray-400">
-                          {formatNotificationTime(notification.created_at)}
-                        </span>
-
-                        {!notification.read_at && (
                           <button
                             type="button"
-                            onClick={() => handleMarkAsRead(notification.id)}
-                            className="text-xs font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400"
+                            onClick={() => handleDelete(notification.id)}
+                            className="shrink-0 text-xs text-gray-400 hover:text-red-500"
+                            aria-label="Delete notification"
                           >
-                            Mark as read
+                            ✕
+                          </button>
+                        </div>
+
+                        <p className="mt-1 wrap-break-word text-sm leading-5 text-gray-600 dark:text-gray-300">
+                          {notification.message}
+                        </p>
+
+                        {isSubscriptionExpiring && (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              handleNotificationClick(notification)
+                            }
+                            className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-400"
+                          >
+                            Renew Pro →
                           </button>
                         )}
+
+                        <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
+                          <span className="text-xs text-gray-400">
+                            {formatNotificationTime(notification.created_at)}
+                          </span>
+
+                          {!notification.read_at && (
+                            <button
+                              type="button"
+                              onClick={() => handleMarkAsRead(notification.id)}
+                              className="text-xs font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400"
+                            >
+                              Mark as read
+                            </button>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
           </div>
         </div>
       )}

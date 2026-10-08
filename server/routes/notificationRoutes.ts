@@ -7,6 +7,7 @@ import {
   markAllNotificationsAsRead,
   deleteNotification,
   checkGoalReminders,
+  checkSubscriptionReminder,
 } from "../services/notificationService.js";
 
 import {
@@ -36,6 +37,15 @@ router.get(
       } catch (error) {
         console.error(
           "Checking goal reminders failed:",
+          error,
+        );
+      }
+
+      try {
+        await checkSubscriptionReminder(req.userId);
+      } catch (error) {
+        console.error(
+          "Checking subscription reminder failed:",
           error,
         );
       }

@@ -61,16 +61,49 @@ export async function createTransaction({
     ],
   );
 
-  const transaction =
-    result.rows[0];
+  const transaction = result.rows[0];
 
   if (type === "expense") {
     try {
-      await checkBudgetAlert({
-        userId,
-        categoryId,
-        transactionDate,
-      });
+      const budgetResult = await pool.query(
+        `
+          SELECT
+            b.id
+          FROM public.budgets b
+          INNER JOIN public.categories budget_category
+            ON budget_category.id = b.category_id
+           AND budget_category.user_id = b.user_id
+          INNER JOIN public.categories transaction_category
+            ON transaction_category.id = $2
+           AND transaction_category.user_id = $1
+          WHERE b.user_id = $1
+            AND (
+              budget_category.id = transaction_category.id
+              OR budget_category.id = transaction_category.parent_id
+            )
+            AND b.year = EXTRACT(
+              YEAR FROM $3::date
+            )::int
+            AND b.month = EXTRACT(
+              MONTH FROM $3::date
+            )::int
+          LIMIT 1
+        `,
+        [
+          userId,
+          categoryId,
+          transactionDate,
+        ],
+      );
+
+      const budget = budgetResult.rows[0];
+
+      if (budget) {
+        await checkBudgetAlert(
+          userId,
+          budget.id,
+        );
+      }
     } catch (error) {
       console.error(
         "Creating budget notification failed:",
@@ -92,6 +125,8 @@ export async function getTransactions(
         t.user_id,
         t.category_id,
         c.name AS category_name,
+        parent.id AS parent_category_id,
+        parent.name AS parent_category_name,
         t.type,
         t.amount_minor,
         t.description,
@@ -103,6 +138,9 @@ export async function getTransactions(
       INNER JOIN public.categories c
         ON c.id = t.category_id
        AND c.user_id = t.user_id
+      LEFT JOIN public.categories parent
+        ON parent.id = c.parent_id
+       AND parent.user_id = c.user_id
       WHERE t.user_id = $1
       ORDER BY
         t.transaction_date DESC,

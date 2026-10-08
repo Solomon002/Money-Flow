@@ -1,5 +1,13 @@
 import { FormEvent, useEffect, useState } from "react";
-import { Check, CheckCircle2, Circle, Lock, Save, Shield } from "lucide-react";
+import {
+  Check,
+  CheckCircle2,
+  Circle,
+  Crown,
+  Lock,
+  Save,
+  Shield,
+} from "lucide-react";
 
 import {
   changePassword,
@@ -7,6 +15,14 @@ import {
   updateSettings,
   type Settings,
 } from "../api/settings.js";
+import { useNavigate } from "react-router";
+
+import {
+  cancelSubscription,
+  getSubscription,
+  reactivateSubscription,
+  type Subscription,
+} from "../api/subscription.js";
 
 function NotificationOption({
   label,
@@ -70,6 +86,12 @@ function PasswordRequirement({
 export default function SettingsPage() {
   const [settings, setSettings] = useState<Settings | null>(null);
 
+  const [subscription, setSubscription] = useState<Subscription | null>(null);
+
+  const [subscriptionLoading, setSubscriptionLoading] = useState(true);
+
+  const [subscriptionError, setSubscriptionError] = useState("");
+
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
 
@@ -97,12 +119,18 @@ export default function SettingsPage() {
 
   const [changingPassword, setChangingPassword] = useState(false);
 
+  const [cancelling, setCancelling] = useState(false);
+  const [reactivating, setReactivating] = useState(false);
+  const [cancelError, setCancelError] = useState("");
+  const [cancelSuccess, setCancelSuccess] = useState("");
+
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
   const [passwordError, setPasswordError] = useState("");
 
   const [showPasswordSuccess, setShowPasswordSuccess] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     async function loadSettings() {
@@ -158,6 +186,35 @@ export default function SettingsPage() {
     }
 
     loadSettings();
+  }, []);
+
+  useEffect(() => {
+    async function loadSubscription() {
+      try {
+        setSubscriptionLoading(true);
+        setSubscriptionError("");
+
+        const response = await getSubscription();
+
+        if (!response.response.ok) {
+          throw new Error(
+            response.data.message || "Unable to load subscription",
+          );
+        }
+
+        setSubscription(response.data.subscription);
+      } catch (err) {
+        console.error("Loading subscription failed:", err);
+
+        setSubscriptionError(
+          err instanceof Error ? err.message : "Unable to load subscription",
+        );
+      } finally {
+        setSubscriptionLoading(false);
+      }
+    }
+
+    loadSubscription();
   }, []);
 
   async function saveSettings() {
@@ -322,6 +379,72 @@ export default function SettingsPage() {
     }
   }
 
+  async function handleCancelSubscription() {
+    try {
+      setCancelling(true);
+      setCancelError("");
+      setCancelSuccess("");
+
+      const response = await cancelSubscription();
+
+      if (!response.response.ok) {
+        throw new Error(
+          response.data.message || "Unable to cancel subscription",
+        );
+      }
+
+      if (response.data.subscription) {
+        setSubscription(response.data.subscription);
+      }
+
+      setCancelSuccess(
+        "Your subscription has been cancelled. You'll keep Pro until the end of your current period.",
+      );
+    } catch (err) {
+      console.error(err);
+
+      setCancelError(
+        err instanceof Error ? err.message : "Unable to cancel subscription",
+      );
+    } finally {
+      setCancelling(false);
+    }
+  }
+
+  async function handleReactivateSubscription() {
+    try {
+      setReactivating(true);
+      setCancelError("");
+      setCancelSuccess("");
+
+      const response = await reactivateSubscription();
+
+      if (!response.response.ok) {
+        throw new Error(
+          response.data.message || "Unable to reactivate subscription",
+        );
+      }
+
+      if (response.data.subscription) {
+        setSubscription(response.data.subscription);
+      }
+
+      setCancelSuccess(
+        "Your subscription has been reactivated. Your Pro access will continue.",
+      );
+    } catch (err) {
+      console.error(err);
+
+      setCancelError(
+        err instanceof Error
+          ? err.message
+          : "Unable to reactivate subscription",
+      );
+    } finally {
+      setReactivating(false);
+    }
+  }
+
   function handleContinueToSignIn() {
     window.location.href = "/login";
   }
@@ -365,9 +488,37 @@ export default function SettingsPage() {
 
   const currencyIsLocked = settings.has_financial_records;
 
+  const isPro =
+    subscription?.plan === "pro" &&
+    (subscription.status === "active" ||
+      subscription.status === "trialing" ||
+      subscription.status === "cancelled");
+
+  const isCancelled = subscription?.status === "cancelled";
+
+  const isExpired = subscription?.status === "expired";
+
+  const formattedExpiryDate =
+    isExpired && subscription?.current_period_end
+      ? new Date(subscription.current_period_end).toLocaleDateString("en-NG", {
+          day: "numeric",
+          month: "long",
+          year: "numeric",
+        })
+      : null;
+
+  const formattedCancellationDate =
+    isCancelled && subscription?.current_period_end
+      ? new Date(subscription.current_period_end).toLocaleDateString("en-NG", {
+          day: "numeric",
+          month: "long",
+          year: "numeric",
+        })
+      : null;
+
   return (
     <>
-      <div className="p-6">
+      <div className="p-4 sm:p-6">
         <div className="mx-auto max-w-4xl space-y-6">
           <div>
             <h1 className="text-2xl font-bold text-slate-900">Settings</h1>
@@ -392,7 +543,7 @@ export default function SettingsPage() {
           {/* Profile */}
           <form
             onSubmit={handleSaveProfile}
-            className="rounded-2xl border border-slate-200 bg-white p-6"
+            className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-6"
           >
             <div>
               <h2 className="text-lg font-semibold text-slate-900">Profile</h2>
@@ -445,7 +596,7 @@ export default function SettingsPage() {
           {/* Financial preferences */}
           <form
             onSubmit={handleSaveFinancial}
-            className="rounded-2xl border border-slate-200 bg-white p-6"
+            className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-6"
           >
             <div className="flex items-center justify-between gap-4">
               <div>
@@ -559,11 +710,12 @@ export default function SettingsPage() {
                 />
               </div>
             </div>
+
             <div className="mt-6 flex justify-end">
               <button
                 type="submit"
                 disabled={savingFinancial}
-                className="inline-flex tems-center gap-2 rounded-xl bg-slate-900 px-5 py-3 text-sm font-medium text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-5 py-3 text-sm font-medium text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 <Save size={17} />
 
@@ -572,10 +724,297 @@ export default function SettingsPage() {
             </div>
           </form>
 
+          {/* MoneyFlow Pro */}
+          <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+            <div className="border-b border-slate-200 p-4 sm:p-6">
+              <div className="flex items-start gap-3">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-slate-900 text-white">
+                  <Crown size={21} />
+                </div>
+
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h2 className="text-lg font-semibold text-slate-900">
+                      MoneyFlow Pro
+                    </h2>
+
+                    {!subscriptionLoading && subscription && (
+                      <span
+                        className={`rounded-full px-2.5 py-1 text-xs font-medium ${
+                          isPro && !isCancelled
+                            ? "bg-emerald-100 text-emerald-700"
+                            : isCancelled
+                              ? "bg-slate-200 text-slate-700"
+                              : isExpired
+                                ? "bg-amber-100 text-amber-800"
+                                : "bg-slate-100 text-slate-600"
+                        }`}
+                      >
+                        {isPro && !isCancelled
+                          ? "Active"
+                          : isCancelled
+                            ? "Cancelled"
+                            : isExpired
+                              ? "Expired"
+                              : "Free plan"}
+                      </span>
+                    )}
+                  </div>
+
+                  <p className="mt-1 text-sm text-slate-500">
+                    Go deeper into your finances with advanced analysis and
+                    insights.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {subscriptionLoading ? (
+              <div className="p-4 sm:p-6">
+                <p className="text-sm text-slate-500">
+                  Loading subscription...
+                </p>
+              </div>
+            ) : subscriptionError ? (
+              <div className="p-4 sm:p-6">
+                <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+                  {subscriptionError}
+                </div>
+              </div>
+            ) : isPro ? (
+              <div className="p-4 sm:p-6">
+                {isCancelled ? (
+                  <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 sm:p-5">
+                    <div className="flex items-start gap-3">
+                      <Crown
+                        size={21}
+                        className="mt-0.5 shrink-0 text-slate-500"
+                      />
+
+                      <div>
+                        <p className="font-semibold text-slate-900">
+                          Your subscription is cancelled
+                        </p>
+
+                        <p className="mt-1 text-sm leading-6 text-slate-600">
+                          {formattedCancellationDate
+                            ? `You'll keep MoneyFlow Pro until ${formattedCancellationDate}. After that, your account will return to the Free plan.`
+                            : "You'll keep MoneyFlow Pro until the end of your current period. After that, your account will return to the Free plan."}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 sm:p-5">
+                    <div className="flex items-start gap-3">
+                      <CheckCircle2
+                        size={21}
+                        className="mt-0.5 shrink-0 text-emerald-600"
+                      />
+
+                      <div>
+                        <p className="font-semibold text-emerald-900">
+                          You are using MoneyFlow Pro
+                        </p>
+
+                        <p className="mt-1 text-sm leading-6 text-emerald-800">
+                          Your Pro access is active. You can use advanced
+                          reports and other Pro features available in your
+                          account.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                  <div className="rounded-xl border border-slate-200 p-4">
+                    <p className="font-medium text-slate-900">
+                      Advanced reports
+                    </p>
+
+                    <p className="mt-1 text-sm text-slate-500">
+                      Detailed spending and budget analysis.
+                    </p>
+                  </div>
+
+                  <div className="rounded-xl border border-slate-200 p-4">
+                    <p className="font-medium text-slate-900">
+                      Deeper insights
+                    </p>
+
+                    <p className="mt-1 text-sm text-slate-500">
+                      Understand spending patterns beyond the basic dashboard.
+                    </p>
+                  </div>
+                </div>
+
+                {cancelError && (
+                  <div className="mt-4 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+                    {cancelError}
+                  </div>
+                )}
+
+                {cancelSuccess && (
+                  <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-700">
+                    {cancelSuccess}
+                  </div>
+                )}
+
+                <div className="mt-5 flex justify-end">
+                  {isCancelled ? (
+                    <button
+                      type="button"
+                      onClick={handleReactivateSubscription}
+                      disabled={reactivating}
+                      className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {reactivating ? "Reactivating..." : "Reactivate Pro"}
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={handleCancelSubscription}
+                      disabled={cancelling}
+                      className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-600 transition hover:bg-slate-50 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {cancelling ? "Cancelling..." : "Cancel subscription"}
+                    </button>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div className="p-4 sm:p-6">
+                <div
+                  className={`rounded-xl border p-4 sm:p-5 ${
+                    isExpired
+                      ? "border-amber-200 bg-amber-50"
+                      : "border-slate-200 bg-slate-50"
+                  }`}
+                >
+                  <p
+                    className={`font-semibold ${
+                      isExpired ? "text-amber-900" : "text-slate-900"
+                    }`}
+                  >
+                    {isExpired
+                      ? "Your MoneyFlow Pro has expired"
+                      : "Unlock deeper financial insights"}
+                  </p>
+
+                  <p
+                    className={`mt-1 text-sm leading-6 ${
+                      isExpired ? "text-amber-800" : "text-slate-500"
+                    }`}
+                  >
+                    {isExpired && formattedExpiryDate
+                      ? `Your Pro access ended on ${formattedExpiryDate}. Renew to restore advanced reports, insights, and other Pro features.`
+                      : "MoneyFlow Pro gives you advanced financial analysis to help you understand your money more deeply."}
+                  </p>
+
+                  <div className="mt-5 grid gap-3">
+                    <div className="flex items-start gap-3">
+                      <CheckCircle2
+                        size={18}
+                        className="mt-0.5 shrink-0 text-emerald-600"
+                      />
+
+                      <div>
+                        <p className="text-sm font-medium text-slate-900">
+                          Advanced reports
+                        </p>
+
+                        <p className="mt-1 text-xs text-slate-500">
+                          Analyze spending, budgets, and financial performance.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-start gap-3">
+                      <CheckCircle2
+                        size={18}
+                        className="mt-0.5 shrink-0 text-emerald-600"
+                      />
+
+                      <div>
+                        <p className="text-sm font-medium text-slate-900">
+                          Top spending analysis
+                        </p>
+
+                        <p className="mt-1 text-xs text-slate-500">
+                          See exactly where your largest expenses are going.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-start gap-3">
+                      <CheckCircle2
+                        size={18}
+                        className="mt-0.5 shrink-0 text-emerald-600"
+                      />
+
+                      <div>
+                        <p className="text-sm font-medium text-slate-900">
+                          Budget performance
+                        </p>
+
+                        <p className="mt-1 text-xs text-slate-500">
+                          Understand how your actual spending compares with your
+                          budgets.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div
+                    className={`mt-6 rounded-xl border p-4 ${
+                      isExpired
+                        ? "border-amber-200 bg-white"
+                        : "border-slate-200 bg-white"
+                    }`}
+                  >
+                    <div className="flex items-start gap-3">
+                      <Lock
+                        size={18}
+                        className="mt-0.5 shrink-0 text-slate-500"
+                      />
+
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium text-slate-900">
+                          {isExpired
+                            ? "Renew MoneyFlow Pro"
+                            : "Upgrade to MoneyFlow Pro"}
+                        </p>
+
+                        <p className="mt-1 text-xs leading-5 text-slate-500">
+                          {isExpired
+                            ? "Restore access to advanced reports, deeper insights, and all Pro features."
+                            : "Explore advanced reports, deeper insights, and more powerful financial analysis."}
+                        </p>
+
+                        <button
+                          type="button"
+                          onClick={() => navigate("/app/pro")}
+                          className={`mt-4 inline-flex items-center justify-center rounded-xl px-4 py-2.5 text-sm font-medium text-white transition ${
+                            isExpired
+                              ? "bg-amber-900 hover:bg-amber-800"
+                              : "bg-slate-900 hover:bg-slate-800"
+                          }`}
+                        >
+                          {isExpired ? "Renew Pro" : "Explore Pro"}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </section>
+
           {/* Notifications */}
           <form
             onSubmit={handleSaveNotifications}
-            className="rounded-2xl border border-slate-200 bg-white p-6"
+            className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-6"
           >
             <div className="flex items-center justify-between gap-4">
               <div>
@@ -618,6 +1057,7 @@ export default function SettingsPage() {
                 onChange={setRecurringRemindersEnabled}
               />
             </div>
+
             <div className="mt-6 flex justify-end">
               <button
                 type="submit"
@@ -634,7 +1074,7 @@ export default function SettingsPage() {
           {/* Security */}
           <form
             onSubmit={handleChangePassword}
-            className="rounded-2xl border border-slate-200 bg-white p-6"
+            className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-6"
           >
             <div className="flex items-start gap-3">
               <Shield size={22} className="mt-0.5 text-slate-700" />

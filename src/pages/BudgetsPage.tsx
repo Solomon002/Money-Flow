@@ -87,7 +87,11 @@ export default function BudgetsPage() {
           return false;
         }
 
-        if (transaction.category_id !== budget.category_id) {
+        const belongsToBudgetCategory =
+          transaction.category_id === budget.category_id ||
+          transaction.parent_category_id === budget.category_id;
+
+        if (!belongsToBudgetCategory) {
           return false;
         }
 

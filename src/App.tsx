@@ -23,6 +23,7 @@ import OnboardingAccessGuard from "./components/OnboardingAccessGuard.js";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage.js";
 import ResetPasswordPage from "./pages/ResetPasswordPage.js";
 import GoogleAuthCallbackPage from "./pages/GoogleAuthCallbackPage.js";
+import ProPage from "./pages/ProPage.js";
 
 export default function App() {
   return (
@@ -77,6 +78,8 @@ export default function App() {
         <Route path="coach" element={<CoachPage />} />
 
         <Route path="settings" element={<SettingsPage />} />
+
+        <Route path="pro" element={<ProPage />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />
