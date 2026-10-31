@@ -1,14 +1,18 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate, useSearchParams } from "react-router";
 import { ArrowLeft } from "lucide-react";
 import { getCategories, type Category } from "../api/categories.js";
 import { createBudget } from "../api/budgets.js";
 import { useAuth } from "../context/AuthContext.js";
+import { MONTHS, currencySymbol as getCurrencySymbol, monthName } from "../i18n/format.js";
+import { categoryLabel } from "../i18n/categories.js";
 
 export default function AddBudgetPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { onboardingPreferences } = useAuth();
+  const { t } = useTranslation();
 
   const currentDate = new Date();
   const currentMonth = currentDate.getMonth() + 1;
@@ -39,17 +43,9 @@ export default function AddBudgetPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
-  const currencySymbols: Record<string, string> = {
-    NGN: "₦",
-    USD: "$",
-    GBP: "£",
-    EUR: "€",
-  };
-
-  const currencySymbol =
-    currencySymbols[onboardingPreferences?.currency_code || "NGN"] ||
-    onboardingPreferences?.currency_code ||
-    "NGN";
+  const currencySymbol = getCurrencySymbol(
+    onboardingPreferences?.currency_code || "NGN",
+  );
 
   useEffect(() => {
     async function loadCategories() {
@@ -60,7 +56,7 @@ export default function AddBudgetPage() {
         const result = await getCategories();
 
         if (!result.response.ok) {
-          throw new Error(result.data.message || "Unable to load categories");
+          throw new Error(result.data.message || t("transactions.categoriesFailed"));
         }
 
         const expenseCategories = result.data.categories.filter(
@@ -72,7 +68,7 @@ export default function AddBudgetPage() {
         console.error("Loading budget categories failed:", error);
 
         setErrorMessage(
-          error instanceof Error ? error.message : "Unable to load categories",
+          error instanceof Error ? error.message : t("transactions.categoriesFailed"),
         );
       } finally {
         setIsLoadingCategories(false);
@@ -88,14 +84,14 @@ export default function AddBudgetPage() {
     setErrorMessage("");
 
     if (!categoryId) {
-      setErrorMessage("Please select a category.");
+      setErrorMessage(t("transactions.form.selectCategoryError"));
       return;
     }
 
     const amountNumber = Number(monthlyAmount);
 
     if (!Number.isFinite(amountNumber) || amountNumber <= 0) {
-      setErrorMessage("Please enter a budget amount greater than zero.");
+      setErrorMessage(t("budgets.form.amountError"));
       return;
     }
 
@@ -110,7 +106,7 @@ export default function AddBudgetPage() {
       });
 
       if (!result.response.ok) {
-        throw new Error(result.data.message || "Unable to create budget");
+        throw new Error(result.data.message || t("budgets.form.createFailed"));
       }
 
       navigate("/app/budgets");
@@ -118,27 +114,17 @@ export default function AddBudgetPage() {
       console.error("Creating budget failed:", error);
 
       setErrorMessage(
-        error instanceof Error ? error.message : "Unable to create budget",
+        error instanceof Error ? error.message : t("budgets.form.createFailed"),
       );
     } finally {
       setIsSaving(false);
     }
   }
 
-  const monthOptions = [
-    { value: 1, label: "January" },
-    { value: 2, label: "February" },
-    { value: 3, label: "March" },
-    { value: 4, label: "April" },
-    { value: 5, label: "May" },
-    { value: 6, label: "June" },
-    { value: 7, label: "July" },
-    { value: 8, label: "August" },
-    { value: 9, label: "September" },
-    { value: 10, label: "October" },
-    { value: 11, label: "November" },
-    { value: 12, label: "December" },
-  ];
+  const monthOptions = MONTHS.map((value) => ({
+    value,
+    label: monthName(value),
+  }));
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
@@ -147,15 +133,15 @@ export default function AddBudgetPage() {
           type="button"
           onClick={() => navigate("/app/budgets")}
           className="rounded-lg p-2 text-slate-500 transition hover:bg-slate-100"
-          aria-label="Go back"
+          aria-label={t("common.back")}
         >
           <ArrowLeft size={20} />
         </button>
 
         <div>
-          <p className="text-sm text-slate-500">Spending control</p>
+          <p className="text-sm text-slate-500">{t("budgets.eyebrow")}</p>
 
-          <h1 className="mt-1 text-2xl font-bold text-slate-900">Add budget</h1>
+          <h1 className="mt-1 text-2xl font-bold text-slate-900">{t("budgets.add")}</h1>
         </div>
       </div>
 
@@ -175,7 +161,7 @@ export default function AddBudgetPage() {
               htmlFor="budget-category"
               className="block text-sm font-medium text-slate-700"
             >
-              Category
+              {t("common.category")}
             </label>
 
             <select
@@ -187,13 +173,13 @@ export default function AddBudgetPage() {
             >
               <option value="">
                 {isLoadingCategories
-                  ? "Loading categories..."
-                  : "Select a category"}
+                  ? t("transactions.form.loadingCategories")
+                  : t("transactions.form.selectCategory")}
               </option>
 
               {categories.map((category) => (
                 <option key={category.id} value={category.id}>
-                  {category.name}
+                  {categoryLabel(category.name)}
                 </option>
               ))}
             </select>
@@ -204,7 +190,7 @@ export default function AddBudgetPage() {
               htmlFor="monthly-amount"
               className="block text-sm font-medium text-slate-700"
             >
-              Monthly budget
+              {t("budgets.monthly")}
             </label>
 
             <div className="relative mt-2">
@@ -231,7 +217,7 @@ export default function AddBudgetPage() {
                 htmlFor="budget-month"
                 className="block text-sm font-medium text-slate-700"
               >
-                Month
+                {t("common.month")}
               </label>
 
               <select
@@ -253,7 +239,7 @@ export default function AddBudgetPage() {
                 htmlFor="budget-year"
                 className="block text-sm font-medium text-slate-700"
               >
-                Year
+                {t("common.year")}
               </label>
 
               <input
@@ -273,7 +259,7 @@ export default function AddBudgetPage() {
               onClick={() => navigate("/app/budgets")}
               className="rounded-xl border border-slate-300 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
             >
-              Cancel
+              {t("common.cancel")}
             </button>
 
             <button
@@ -281,7 +267,7 @@ export default function AddBudgetPage() {
               disabled={isSaving || isLoadingCategories}
               className="rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {isSaving ? "Saving..." : "Save budget"}
+              {isSaving ? t("common.saving") : t("budgets.form.submit")}
             </button>
           </div>
         </form>

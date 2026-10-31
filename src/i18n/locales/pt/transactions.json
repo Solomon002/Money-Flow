@@ -1,0 +1,26 @@
+{
+  "eyebrow": "Movimentações",
+  "title": "Transações",
+  "subtitle": "Veja suas receitas e despesas.",
+  "add": "Adicionar transação",
+  "import": "Importar transações",
+  "loading": "Carregando transações...",
+  "loadFailed": "Não foi possível carregar as transações",
+  "categoriesFailed": "Não foi possível carregar as categorias",
+  "emptyTitle": "Nenhuma transação ainda",
+  "emptyBody": "Suas receitas e despesas aparecerão aqui depois que você adicionar ou importar sua primeira transação.",
+  "form": {
+    "type": "Tipo de transação",
+    "loadingCategories": "Carregando categorias...",
+    "selectCategory": "Selecione uma categoria",
+    "selectCategoryError": "Selecione uma categoria.",
+    "subcategory": "Subcategoria",
+    "noSubcategory": "Sem subcategoria",
+    "amountError": "Digite um valor maior que zero.",
+    "descriptionError": "Digite uma descrição.",
+    "descriptionPlaceholder": "ex.: Mercado",
+    "notesPlaceholder": "Observações opcionais",
+    "createFailed": "Não foi possível criar a transação",
+    "submit": "Salvar transação"
+  }
+}

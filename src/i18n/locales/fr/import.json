@@ -1,0 +1,71 @@
+{
+  "steps": {
+    "upload": "Envoyer le fichier",
+    "map": "Associer les colonnes",
+    "review": "Vérifier et importer"
+  },
+  "upload": {
+    "title": "Importez votre relevé bancaire (CSV)",
+    "body": "Exportez vos opérations au format CSV depuis l'application ou le site de votre banque, puis choisissez le fichier ici. Jusqu'à 1 000 lignes et 2 Mo.",
+    "choose": "Choisir un fichier CSV",
+    "howTo": "La plupart des banques proposent « Exporter » ou « Télécharger le relevé » en CSV.",
+    "sample": "Télécharger un exemple"
+  },
+  "errors": {
+    "tooLarge": "Ce fichier dépasse 2 Mo. Exportez une période plus courte et réessayez.",
+    "notCsv": "Veuillez choisir un fichier .csv.",
+    "empty": "Aucune ligne avec des en-têtes de colonnes n'a été trouvée dans ce fichier.",
+    "tooManyRows": "Ce fichier contient plus de {{max}} lignes. Exportez une période plus courte et réessayez.",
+    "unreadable": "Impossible de lire ce fichier.",
+    "noValidRows": "Aucune ligne n'a pu être lue avec ces réglages. Vérifiez les colonnes et le format de date.",
+    "failed": "Impossible d'importer les transactions"
+  },
+  "map": {
+    "title": "Associez les colonnes de votre fichier",
+    "body_one": "{{file}} : {{count}} ligne trouvée. Nous avons deviné les colonnes ; vérifiez-les.",
+    "body_other": "{{file}} : {{count}} lignes trouvées. Nous avons deviné les colonnes ; vérifiez-les.",
+    "none": "Absent du fichier",
+    "dateFormat": "Format de date",
+    "formats": {
+      "YMD": "Année-mois-jour (2026-10-31)",
+      "DMY": "Jour/mois/année (31/10/2026)",
+      "MDY": "Mois/jour/année (10/31/2026)"
+    },
+    "dateRange": "Votre fichier couvre du {{from}} au {{to}}. Si ce n'est pas correct, changez le format de date.",
+    "noDates": "Aucune date lisible avec ce format.",
+    "amountLayout": "Comment les montants sont-ils présentés ?",
+    "single": "Une colonne de montant",
+    "singleHint": "Les sorties sont négatives (ex. -5 000).",
+    "split": "Entrées et sorties séparées",
+    "splitHint": "Débit et crédit sont dans des colonnes différentes.",
+    "moneyOut": "Sorties (débit)",
+    "moneyIn": "Entrées (crédit)",
+    "expenseCategory": "Catégorie par défaut pour les sorties",
+    "incomeCategory": "Catégorie par défaut pour les entrées",
+    "fileStart": "Début de votre fichier",
+    "continue": "Continuer vers la vérification"
+  },
+  "chooseAnother": "Choisir un autre fichier",
+  "review": {
+    "title": "Vérifiez avant d'importer",
+    "summary_one": "{{count}} transaction sélectionnée · entrées {{income}} · sorties {{expense}}",
+    "summary_other": "{{count}} transactions sélectionnées · entrées {{income}} · sorties {{expense}}",
+    "skipDuplicates": "Ignorer les transactions déjà présentes",
+    "include": "Inclure cette transaction",
+    "badDate": "Date illisible",
+    "badAmount": "Montant illisible",
+    "noDescription": "Sans description",
+    "importing": "Importation...",
+    "submit_one": "Importer {{count}} transaction",
+    "submit_other": "Importer {{count}} transactions"
+  },
+  "done": {
+    "title_one": "{{count}} transaction importée",
+    "title_other": "{{count}} transactions importées",
+    "skipped_one": "{{count}} a été ignorée car elle existait déjà.",
+    "skipped_other": "{{count}} ont été ignorées car elles existaient déjà.",
+    "another": "Importer un autre fichier",
+    "view": "Voir les transactions"
+  },
+  "privacy": "Votre fichier est lu dans votre navigateur. Seules les transactions que vous choisissez d'importer sont envoyées à MoneyFlow."
+}

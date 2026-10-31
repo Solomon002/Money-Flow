@@ -1,0 +1,71 @@
+{
+  "steps": {
+    "upload": "Subir archivo",
+    "map": "Asignar columnas",
+    "review": "Revisar e importar"
+  },
+  "upload": {
+    "title": "Sube tu extracto bancario (CSV)",
+    "body": "Exporta tus movimientos en CSV desde la app o web de tu banco y elige el archivo aquí. Hasta 1.000 filas y 2 MB.",
+    "choose": "Elegir archivo CSV",
+    "howTo": "La mayoría de bancos ofrecen «Exportar» o «Descargar extracto» en CSV.",
+    "sample": "Descargar archivo de ejemplo"
+  },
+  "errors": {
+    "tooLarge": "El archivo supera los 2 MB. Exporta un periodo más corto e inténtalo de nuevo.",
+    "notCsv": "Elige un archivo .csv.",
+    "empty": "No encontramos filas con encabezados de columna en ese archivo.",
+    "tooManyRows": "El archivo tiene más de {{max}} filas. Exporta un periodo más corto e inténtalo de nuevo.",
+    "unreadable": "No pudimos leer ese archivo.",
+    "noValidRows": "No se pudo leer ninguna fila con esta configuración. Revisa las columnas y el formato de fecha.",
+    "failed": "No se pudieron importar las transacciones"
+  },
+  "map": {
+    "title": "Asigna las columnas de tu archivo",
+    "body_one": "{{file}}: {{count}} fila encontrada. Hemos adivinado las columnas; compruébalas.",
+    "body_other": "{{file}}: {{count}} filas encontradas. Hemos adivinado las columnas; compruébalas.",
+    "none": "No está en mi archivo",
+    "dateFormat": "Formato de fecha",
+    "formats": {
+      "YMD": "Año-mes-día (2026-10-31)",
+      "DMY": "Día/mes/año (31/10/2026)",
+      "MDY": "Mes/día/año (10/31/2026)"
+    },
+    "dateRange": "Tu archivo cubre del {{from}} al {{to}}. Si no es correcto, cambia el formato de fecha.",
+    "noDates": "No se pudo leer ninguna fecha con este formato.",
+    "amountLayout": "¿Cómo aparecen los importes?",
+    "single": "Una columna de importe",
+    "singleHint": "Las salidas son negativas (p. ej. -5.000).",
+    "split": "Entradas y salidas separadas",
+    "splitHint": "Cargo y abono están en columnas distintas.",
+    "moneyOut": "Salidas (cargo)",
+    "moneyIn": "Entradas (abono)",
+    "expenseCategory": "Categoría por defecto para salidas",
+    "incomeCategory": "Categoría por defecto para entradas",
+    "fileStart": "Inicio de tu archivo",
+    "continue": "Continuar a la revisión"
+  },
+  "chooseAnother": "Elegir otro archivo",
+  "review": {
+    "title": "Revisa antes de importar",
+    "summary_one": "{{count}} transacción seleccionada · entradas {{income}} · salidas {{expense}}",
+    "summary_other": "{{count}} transacciones seleccionadas · entradas {{income}} · salidas {{expense}}",
+    "skipDuplicates": "Omitir transacciones que ya tengo",
+    "include": "Incluir esta transacción",
+    "badDate": "Fecha ilegible",
+    "badAmount": "Importe ilegible",
+    "noDescription": "Sin descripción",
+    "importing": "Importando...",
+    "submit_one": "Importar {{count}} transacción",
+    "submit_other": "Importar {{count}} transacciones"
+  },
+  "done": {
+    "title_one": "{{count}} transacción importada",
+    "title_other": "{{count}} transacciones importadas",
+    "skipped_one": "Se omitió {{count}} porque ya la tenías.",
+    "skipped_other": "Se omitieron {{count}} porque ya las tenías.",
+    "another": "Importar otro archivo",
+    "view": "Ver transacciones"
+  },
+  "privacy": "Tu archivo se lee en tu navegador. Solo se envían a MoneyFlow las transacciones que elijas importar."
+}

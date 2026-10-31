@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { formatDate, formatMoney } from "../i18n/format.js";
 import {
   ArrowLeft,
   ArrowRight,
@@ -18,59 +20,43 @@ import {
   type SubscriptionPayment,
 } from "../api/subscription.js";
 
+// Labels: t("pro.features.<key>")
 const proFeatures = [
-  "Advanced reports",
-  "Detailed spending breakdowns",
-  "Top spending analysis",
-  "Budget performance analysis",
-  "Deeper financial insights",
-  "Advanced MoneyFlow Coach insights",
-  "Longer historical analysis",
-  "PDF and CSV exports",
+  "advancedReports",
+  "spendingBreakdowns",
+  "topSpending",
+  "budgetPerformance",
+  "deeperInsights",
+  "coachInsights",
+  "history",
+  "exports",
 ];
 
 const freeFeatures = [
-  "Income and expense tracking",
-  "Budgets and goals",
-  "Basic dashboard",
-  "Basic reports",
-  "Basic notifications",
+  "tracking",
+  "budgetsGoals",
+  "dashboard",
+  "basicReports",
+  "basicNotifications",
 ];
 
 const CHANNEL_LABELS: Record<string, string> = {
-  card: "Card",
-  bank: "Bank",
-  bank_transfer: "Bank Transfer",
   ussd: "USSD",
-  qr: "QR Code",
-  mobile_money: "Mobile Money",
   payattitude: "PayAttitude",
   opay: "OPay",
   zap: "Zap",
 };
 
 function formatPaymentDate(value: string) {
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return "";
-  }
-
-  return date.toLocaleDateString("en-NG", {
+  return formatDate(value, {
     day: "numeric",
     month: "long",
     year: "numeric",
   });
 }
 
-function formatPaymentAmount(amountMinor: string | number) {
-  return `₦${(Number(amountMinor) / 100).toLocaleString("en-NG", {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 2,
-  })}`;
-}
-
 export default function ProPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -100,7 +86,7 @@ export default function ProPage() {
 
         if (!response.response.ok) {
           throw new Error(
-            response.data.message || "Unable to load subscription",
+            response.data.message || t("pro.loadFailed"),
           );
         }
 
@@ -109,7 +95,7 @@ export default function ProPage() {
         console.error("Loading subscription failed:", err);
 
         setError(
-          err instanceof Error ? err.message : "Unable to load subscription",
+          err instanceof Error ? err.message : t("pro.loadFailed"),
         );
       } finally {
         setSubscriptionLoading(false);
@@ -129,7 +115,7 @@ export default function ProPage() {
 
         if (!response.response.ok) {
           throw new Error(
-            response.data.message || "Unable to load payment history",
+            response.data.message || t("pro.paymentsFailed"),
           );
         }
 
@@ -138,7 +124,7 @@ export default function ProPage() {
         console.error("Loading payment history failed:", err);
 
         setPaymentsError(
-          err instanceof Error ? err.message : "Unable to load payment history",
+          err instanceof Error ? err.message : t("pro.paymentsFailed"),
         );
       } finally {
         setPaymentsLoading(false);
@@ -166,7 +152,7 @@ export default function ProPage() {
 
         if (!response.response.ok) {
           throw new Error(
-            response.data.message || "Unable to verify your Pro payment",
+            response.data.message || t("pro.verifyFailed"),
           );
         }
 
@@ -198,7 +184,7 @@ export default function ProPage() {
         setError(
           err instanceof Error
             ? err.message
-            : "Unable to verify your Pro payment",
+            : t("pro.verifyFailed"),
         );
       } finally {
         setVerifyingPayment(false);
@@ -217,14 +203,14 @@ export default function ProPage() {
 
       if (!response.response.ok) {
         throw new Error(
-          response.data.message || "Unable to start Pro checkout",
+          response.data.message || t("pro.checkoutFailed"),
         );
       }
 
       const authorizationUrl = response.data.checkout?.authorization_url;
 
       if (!authorizationUrl) {
-        throw new Error("Paystack checkout URL was not returned");
+        throw new Error(t("pro.checkoutFailed"));
       }
 
       window.location.href = authorizationUrl;
@@ -232,7 +218,7 @@ export default function ProPage() {
       console.error("Starting Pro checkout failed:", err);
 
       setError(
-        err instanceof Error ? err.message : "Unable to start Pro checkout",
+        err instanceof Error ? err.message : t("pro.checkoutFailed"),
       );
     } finally {
       setLoading(false);
@@ -248,13 +234,13 @@ export default function ProPage() {
 
             <p className="mt-4 text-sm font-medium text-slate-700">
               {verifyingPayment
-                ? "Verifying your Pro payment..."
-                : "Loading MoneyFlow Pro..."}
+                ? t("pro.verifying")
+                : t("pro.loading")}
             </p>
 
             {verifyingPayment && (
               <p className="mt-1 text-xs text-slate-500">
-                Please wait while we confirm your payment with Paystack.
+                {t("pro.verifyingBody")}
               </p>
             )}
           </div>
@@ -273,7 +259,7 @@ export default function ProPage() {
           className="inline-flex items-center gap-2 text-sm font-medium text-slate-600 transition hover:text-slate-900"
         >
           <ArrowLeft size={18} />
-          Back to Settings
+          {t("pro.backToSettings")}
         </button>
 
         {/* Header */}
@@ -284,11 +270,11 @@ export default function ProPage() {
           </div>
 
           <h1 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
-            Understand your money at a deeper level.
+            {t("pro.headline")}
           </h1>
 
           <p className="mt-3 text-base leading-7 text-slate-600 sm:text-lg">
-            Track your money for free. Understand it deeply with MoneyFlow Pro.
+            {t("pro.subheadline")}
           </p>
         </div>
 
@@ -306,12 +292,11 @@ export default function ProPage() {
                 </p>
 
                 <h2 className="mt-1 text-2xl font-bold text-slate-900">
-                  Your Pro access is active.
+                  {t("pro.activeTitle")}
                 </h2>
 
                 <p className="mt-2 text-sm leading-6 text-slate-600">
-                  You can now use advanced reports and other Pro features
-                  available in your account.
+                  {t("pro.activeBody")}
                 </p>
               </div>
             </div>
@@ -325,19 +310,19 @@ export default function ProPage() {
             <div className="flex items-start justify-between gap-4">
               <div>
                 <p className="text-sm font-semibold text-slate-500">
-                  MoneyFlow Free
+                  {t("pro.freeName")}
                 </p>
 
-                <h2 className="mt-2 text-2xl font-bold text-slate-900">Free</h2>
+                <h2 className="mt-2 text-2xl font-bold text-slate-900">{t("pro.free")}</h2>
               </div>
 
               <div className="rounded-xl bg-slate-100 px-3 py-1.5 text-sm font-medium text-slate-600">
-                Core features
+                {t("pro.coreFeatures")}
               </div>
             </div>
 
             <p className="mt-4 text-sm leading-6 text-slate-600">
-              Everything you need to start tracking and managing your money.
+              {t("pro.freeBody")}
             </p>
 
             <div className="mt-6 space-y-3">
@@ -350,7 +335,7 @@ export default function ProPage() {
                     size={18}
                     className="mt-0.5 shrink-0 text-emerald-600"
                   />
-                  <span>{feature}</span>
+                  <span>{t(`pro.features.${feature}`)}</span>
                 </div>
               ))}
             </div>
@@ -369,7 +354,7 @@ export default function ProPage() {
                   </div>
 
                   <h2 className="mt-3 text-3xl font-bold">
-                    {isPro ? "You're in." : "Go deeper."}
+                    {isPro ? t("pro.youreIn") : t("pro.goDeeper")}
                   </h2>
                 </div>
 
@@ -380,13 +365,12 @@ export default function ProPage() {
               </div>
 
               <p className="relative mt-4 text-sm leading-6 text-slate-300">
-                Unlock the analysis and insights that help you understand where
-                your money is really going.
+                {t("pro.proBody")}
               </p>
 
               <div className="relative mt-6 rounded-2xl border border-white/10 bg-white/5 p-4">
                 <p className="text-sm font-medium text-slate-300">
-                  Pro includes
+                  {t("pro.includes")}
                 </p>
 
                 <div className="mt-4 space-y-3">
@@ -399,7 +383,7 @@ export default function ProPage() {
                         size={18}
                         className="mt-0.5 shrink-0 text-emerald-400"
                       />
-                      <span>{feature}</span>
+                      <span>{t(`pro.features.${feature}`)}</span>
                     </div>
                   ))}
                 </div>
@@ -412,7 +396,7 @@ export default function ProPage() {
                     onClick={() => navigate("/app/reports")}
                     className="flex w-full items-center justify-center gap-2 rounded-xl bg-white px-5 py-3.5 text-sm font-semibold text-slate-900 transition hover:bg-slate-100"
                   >
-                    View Pro Reports
+                    {t("pro.viewReports")}
                     <ArrowRight size={18} />
                   </button>
                 ) : (
@@ -423,7 +407,7 @@ export default function ProPage() {
                       disabled={loading}
                       className="flex w-full items-center justify-center gap-2 rounded-xl bg-white px-5 py-3.5 text-sm font-semibold text-slate-900 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60"
                     >
-                      {loading ? "Opening checkout..." : "Upgrade to Pro"}
+                      {loading ? t("pro.openingCheckout") : t("pro.upgrade")}
                       {!loading && <ArrowRight size={18} />}
                     </button>
 
@@ -434,7 +418,7 @@ export default function ProPage() {
                     )}
 
                     <p className="mt-3 text-center text-xs text-slate-400">
-                      Secure payment powered by Paystack.
+                      {t("pro.securePayment")}
                     </p>
                   </>
                 )}
@@ -452,11 +436,11 @@ export default function ProPage() {
 
             <div>
               <h2 className="text-lg font-semibold text-slate-900">
-                Payment history
+                {t("pro.paymentHistory")}
               </h2>
 
               <p className="mt-1 text-sm text-slate-500">
-                Your past MoneyFlow Pro payments.
+                {t("pro.paymentHistoryBody")}
               </p>
             </div>
           </div>
@@ -464,7 +448,7 @@ export default function ProPage() {
           {paymentsLoading ? (
             <div className="mt-6 rounded-xl bg-slate-50 p-6 text-center">
               <p className="text-sm text-slate-500">
-                Loading payment history...
+                {t("pro.loadingPayments")}
               </p>
             </div>
           ) : paymentsError ? (
@@ -474,17 +458,17 @@ export default function ProPage() {
           ) : payments.length === 0 ? (
             <div className="mt-6 rounded-xl bg-slate-50 p-6 text-center">
               <p className="text-sm text-slate-500">
-                No payments yet. Your first successful payment will appear here.
+                {t("pro.noPayments")}
               </p>
             </div>
           ) : (
             <div className="mt-6 overflow-hidden rounded-xl border border-slate-200">
               <div className="hidden border-b border-slate-200 bg-slate-50 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500 sm:grid sm:grid-cols-[1.2fr_1fr_1fr_0.8fr_1.4fr] sm:gap-4">
-                <span>Date</span>
-                <span>Amount</span>
-                <span>Channel</span>
-                <span>Status</span>
-                <span>Reference</span>
+                <span>{t("common.date")}</span>
+                <span>{t("common.amount")}</span>
+                <span>{t("pro.channel")}</span>
+                <span>{t("goals.form.status")}</span>
+                <span>{t("pro.reference")}</span>
               </div>
 
               <div className="divide-y divide-slate-200">
@@ -498,23 +482,26 @@ export default function ProPage() {
                     </span>
 
                     <span className="text-slate-700">
-                      {formatPaymentAmount(payment.amount_minor)}
+                      {formatMoney(payment.amount_minor, payment.currency)}
                     </span>
 
                     <span className="text-slate-700">
                       {payment.channel
-                        ? (CHANNEL_LABELS[payment.channel] ?? payment.channel)
+                        ? (CHANNEL_LABELS[payment.channel] ??
+                          t(`pro.channels.${payment.channel}`, {
+                            defaultValue: payment.channel,
+                          }))
                         : "—"}
                     </span>
 
                     <span>
                       {payment.status === "success" ? (
                         <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700">
-                          Success
+                          {t("pro.success")}
                         </span>
                       ) : payment.status === "failed" ? (
                         <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700">
-                          Failed
+                          {t("pro.failed")}
                         </span>
                       ) : (
                         <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700">
@@ -541,11 +528,10 @@ export default function ProPage() {
                 <Sparkles size={20} />
               </div>
 
-              <h3 className="font-semibold text-slate-900">Deeper insights</h3>
+              <h3 className="font-semibold text-slate-900">{t("pro.deeperInsights")}</h3>
 
               <p className="mt-2 text-sm leading-6 text-slate-500">
-                Move beyond simple totals and understand the patterns behind
-                your spending.
+                {t("pro.deeperInsightsBody")}
               </p>
             </div>
 
@@ -555,12 +541,11 @@ export default function ProPage() {
               </div>
 
               <h3 className="font-semibold text-slate-900">
-                Built around your data
+                {t("pro.builtAroundData")}
               </h3>
 
               <p className="mt-2 text-sm leading-6 text-slate-500">
-                MoneyFlow Pro uses the financial information already inside your
-                account to provide more useful analysis.
+                {t("pro.builtAroundDataBody")}
               </p>
             </div>
 
@@ -569,11 +554,10 @@ export default function ProPage() {
                 <Crown size={20} />
               </div>
 
-              <h3 className="font-semibold text-slate-900">More control</h3>
+              <h3 className="font-semibold text-slate-900">{t("pro.moreControl")}</h3>
 
               <p className="mt-2 text-sm leading-6 text-slate-500">
-                Get the extra detail you need to make better day-to-day
-                financial decisions.
+                {t("pro.moreControlBody")}
               </p>
             </div>
           </div>
@@ -582,8 +566,7 @@ export default function ProPage() {
         {/* Footer message */}
         <div className="pb-4 text-center">
           <p className="text-sm text-slate-500">
-            MoneyFlow Pro is designed to help you understand, control, and plan
-            your finances with more confidence.
+            {t("pro.footer")}
           </p>
         </div>
       </div>

@@ -1,0 +1,23 @@
+{
+  "tagline": "Votre assistant financier IA",
+  "newChat": "Nouvelle conversation",
+  "noChats": "Aucune conversation",
+  "noChatsBody": "Commencez une conversation avec le coach MoneyFlow.",
+  "noPreviousChats": "Aucune conversation précédente.",
+  "askAbout": "Posez des questions sur vos finances.",
+  "deleteChat": "Supprimer la conversation",
+  "confirmDelete": "Supprimer cette conversation ?",
+  "intro": "Interrogez-moi sur vos dépenses, budgets, objectifs ou habitudes financières.",
+  "startChat": "Démarrer une conversation",
+  "howCanIHelp": "Comment puis-je vous aider ?",
+  "askAnything": "Posez au coach MoneyFlow n'importe quelle question sur vos données financières.",
+  "placeholder": "Demandez au coach MoneyFlow...",
+  "typing": "Le coach MoneyFlow écrit",
+  "send": "Envoyer le message",
+  "disclaimer": "Le coach MoneyFlow utilise vos données financières pour des réponses adaptées à votre situation.",
+  "loadChatsFailed": "Impossible de charger vos conversations.",
+  "loadChatFailed": "Impossible de charger cette conversation.",
+  "createFailed": "Impossible de créer une conversation.",
+  "deleteFailed": "Impossible de supprimer cette conversation.",
+  "replyFailed": "Impossible d'obtenir une réponse du coach MoneyFlow."
+}

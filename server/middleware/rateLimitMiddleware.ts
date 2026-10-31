@@ -117,6 +117,21 @@ export const coachRateLimiter = rateLimit({
   },
 });
 
+// Imports are heavy (up to 1,000 rows each). Must run after requireAuth.
+export const importRateLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  limit: 20,
+  standardHeaders: "draft-8",
+  legacyHeaders: false,
+  keyGenerator: (req) =>
+    (req as AuthenticatedRequest).userId ??
+    ipKeyGenerator(req.ip ?? ""),
+  message: {
+    status: "error",
+    message: "Too many imports. Please try again later.",
+  },
+});
+
 export const refreshTokenRateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   limit: 30,

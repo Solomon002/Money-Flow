@@ -1,0 +1,176 @@
+{
+  "getStarted": "Get started",
+  "faqTitle": "The answers you need.",
+  "footerTagline": "Understand your money. Control your future.",
+  "nav": {
+    "features": "Features",
+    "howItWorks": "How it works",
+    "questions": "Questions",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu"
+  },
+  "hero": {
+    "badge": "A clearer way to manage your money",
+    "title1": "Understand your money.",
+    "title2": "Control your future.",
+    "body": "MoneyFlow helps you see where your money goes, stay in control of your spending, plan financial goals, and make better decisions every day.",
+    "explore": "Explore MoneyFlow",
+    "track": "Track your money",
+    "budgets": "Build better budgets",
+    "goals": "Reach your goals"
+  },
+  "mock": {
+    "overview": "Your financial overview",
+    "glance": "Your money at a glance",
+    "groceries": "Groceries",
+    "freelanceIncome": "Freelance income",
+    "internet": "Internet",
+    "financialGoal": "Financial goal",
+    "newLaptop": "New Laptop",
+    "saved": "{{amount}} saved",
+    "ofGoal": "60% of your goal"
+  },
+  "core": {
+    "title": "Your money should be easier to understand.",
+    "body": "You shouldn't need a spreadsheet full of numbers to understand what's happening with your money. MoneyFlow brings the important parts together in one place.",
+    "understand": "Understand",
+    "understandBody": "See where your money goes, compare your spending, and understand your financial patterns.",
+    "control": "Control",
+    "controlBody": "Create budgets, monitor your limits, and get alerts before your spending gets away from you.",
+    "plan": "Plan",
+    "planBody": "Set meaningful financial goals and turn them into progress you can actually see."
+  },
+  "features": {
+    "eyebrow": "Everything in one place",
+    "title": "Tools that help you make better money decisions.",
+    "body": "From everyday spending to long-term goals, MoneyFlow gives you a clearer picture of your financial life.",
+    "transactions": "Record income and expenses and keep your financial activity organized.",
+    "budgets": "Set monthly spending limits and know how much you have left.",
+    "goalsTitle": "Financial goals",
+    "goals": "Save toward the things that matter to you and track your progress.",
+    "reports": "Turn your financial activity into useful summaries and trends.",
+    "insights": "Discover spending patterns and changes that are easy to miss.",
+    "coach": "Ask questions about your finances and get helpful, personalized context."
+  },
+  "coach": {
+    "eyebrow": "Meet MoneyFlow Coach",
+    "title1": "Don't just track your money.",
+    "title2": "Talk to it.",
+    "body": "MoneyFlow Coach is your Artificial Intelligence (AI) financial companion. Ask questions about your spending, budgets, goals, and financial activity and get answers based on your MoneyFlow context.",
+    "q1": "Where did I spend the most this month?",
+    "q2": "Why did my spending increase?",
+    "q3": "How can I reach my goal faster?",
+    "q4": "How am I doing financially this month?",
+    "disclaimer": "MoneyFlow Coach is designed to help you understand your financial information. It does not replace professional financial advice.",
+    "contextExplained": "Your financial context, explained",
+    "demoQ1": "Why did my spending increase this month?",
+    "demoA1": "Your spending increased compared with last month. Education and Health were the biggest contributors to the change.",
+    "demoQ2": "How can I save more for my laptop goal?",
+    "demoA2": "You're making progress. Your goal is currently at {{saved}} of {{target}}. I can help you look at your spending and identify areas where you may be able to save."
+  },
+  "free": {
+    "eyebrow": "Start without the risk",
+    "title": "Free to use. No real money required.",
+    "body1": "MoneyFlow is built to help you understand and plan your finances. You don't deposit money into MoneyFlow, transfer money through the app, or put your savings at risk.",
+    "body2": "Start by tracking your numbers, building better habits, and learning how your financial decisions affect your goals.",
+    "cta": "Create your free account",
+    "point1Title": "No deposits",
+    "point1Body": "Your real money stays with you.",
+    "point2Title": "Free to start",
+    "point2Body": "Create an account and get started.",
+    "point3Title": "Track, don't transfer",
+    "point3Body": "MoneyFlow helps you plan your money."
+  },
+  "preview": {
+    "eyebrow": "Inside MoneyFlow",
+    "title": "One place for the full picture.",
+    "body": "Move between your dashboard, transactions, budgets, and goals without losing sight of the bigger picture.",
+    "dashboard": {
+      "label": "Dashboard",
+      "title": "See your financial picture at a glance.",
+      "description": "Understand your income, expenses, budgets, and goals without digging through spreadsheets."
+    },
+    "transactions": {
+      "label": "Transactions",
+      "title": "Know where your money is going.",
+      "description": "Keep your income and expenses organized so you always know what you spent and why."
+    },
+    "budgets": {
+      "label": "Budgets",
+      "title": "Stay ahead of your spending.",
+      "description": "Set monthly limits and see how much you've used before your spending gets out of hand."
+    },
+    "goals": {
+      "label": "Goals",
+      "title": "Turn plans into progress.",
+      "description": "Set financial goals, track your progress, and see how much more you need to reach them."
+    }
+  },
+  "how": {
+    "title": "Start simple. Build better habits.",
+    "body": "MoneyFlow is built around a simple cycle: track your money, understand it, take control, and plan what comes next.",
+    "step1": "Track your money",
+    "step1Body": "Record the income and expenses that make up your everyday financial life.",
+    "step2": "Understand your spending",
+    "step2Body": "See your spending patterns and discover where your money is really going.",
+    "step3": "Take control",
+    "step3Body": "Set budgets, watch your limits, and make more intentional spending decisions.",
+    "step4": "Plan what comes next",
+    "step4Body": "Set goals and turn the money you save today into progress toward tomorrow."
+  },
+  "statement": {
+    "title": "Stop wondering where your money went.",
+    "body": "Whether you're managing a monthly income, saving for something important, or simply trying to spend more intentionally, MoneyFlow gives you the clarity to make your next decision with confidence."
+  },
+  "final": {
+    "title": "Start understanding your money today.",
+    "body": "Take the first step toward clearer spending, better control, and financial goals you can actually see yourself reaching."
+  },
+  "faq": {
+    "uses": {
+      "question": "What can I use MoneyFlow for?",
+      "answer": "MoneyFlow helps you track income and expenses, manage budgets, set financial goals, understand spending patterns, and make better day-to-day financial decisions."
+    },
+    "skills": {
+      "question": "Do I need to be good with money to use MoneyFlow?",
+      "answer": "Not at all. MoneyFlow is designed to make your finances easier to understand. You can start with the basics and build better habits as you go."
+    },
+    "realMoney": {
+      "question": "Do I need to put real money into MoneyFlow?",
+      "answer": "No. MoneyFlow does not require you to deposit or transfer real money. You use the app to track and understand your finances without putting your money at risk."
+    },
+    "goals": {
+      "question": "Can I create savings goals?",
+      "answer": "Yes. You can create goals for things you want to save for, set a target amount and date, add money toward the goal, and track your progress."
+    },
+    "coach": {
+      "question": "What is MoneyFlow Coach?",
+      "answer": "MoneyFlow Coach is an Artificial Intelligence (AI) assistant that can answer questions using your MoneyFlow financial context, helping you understand your spending and make more informed decisions."
+    }
+  },
+  "feedback": {
+    "failed": "Unable to submit feedback. Please try again.",
+    "ctaTitle": "Help us make MoneyFlow better.",
+    "ctaBody": "MoneyFlow is being built with real people in mind. Tell us what you like, what we can improve, and what features you'd love to see next.",
+    "cta": "Give feedback",
+    "title": "Help us improve MoneyFlow",
+    "subtitle": "Your feedback can shape what we build next.",
+    "thanks": "Thank you for your feedback.",
+    "thanksBody": "Your thoughts will help us improve MoneyFlow and decide what we should build next.",
+    "done": "Done",
+    "type": "What would you like to tell us?",
+    "label": "Your feedback",
+    "placeholder": "What should we improve? What feature would you like to see?",
+    "emailHint": "Leave your email if you'd like us to follow up with you.",
+    "send": "Send feedback",
+    "sending": "Sending feedback...",
+    "footer": "We use feedback to improve MoneyFlow and decide which features to build next.",
+    "types": {
+      "general": "General feedback",
+      "like": "Something I like",
+      "improve": "Something to improve",
+      "feature": "Feature request",
+      "bug": "Bug or problem"
+    }
+  }
+}

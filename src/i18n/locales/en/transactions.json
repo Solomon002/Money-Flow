@@ -1,0 +1,26 @@
+{
+  "eyebrow": "Money activity",
+  "title": "Transactions",
+  "subtitle": "View your income and expenses.",
+  "add": "Add transaction",
+  "import": "Import transactions",
+  "loading": "Loading transactions...",
+  "loadFailed": "Unable to load transactions",
+  "categoriesFailed": "Unable to load categories",
+  "emptyTitle": "No transactions yet",
+  "emptyBody": "Your income and expenses will appear here after you add or import your first transaction.",
+  "form": {
+    "type": "Transaction type",
+    "loadingCategories": "Loading categories...",
+    "selectCategory": "Select a category",
+    "selectCategoryError": "Please select a category.",
+    "subcategory": "Subcategory",
+    "noSubcategory": "No subcategory",
+    "amountError": "Please enter an amount greater than zero.",
+    "descriptionError": "Please enter a description.",
+    "descriptionPlaceholder": "e.g. Groceries",
+    "notesPlaceholder": "Optional notes",
+    "createFailed": "Unable to create transaction",
+    "submit": "Save transaction"
+  }
+}

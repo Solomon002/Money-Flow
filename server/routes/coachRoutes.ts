@@ -20,6 +20,7 @@ import {
 import { coachRateLimiter } from "../middleware/rateLimitMiddleware.js";
 
 import { isValidUuid } from "../utils/validation.js";
+import { resolveLanguage } from "../utils/language.js";
 
 const router = Router();
 
@@ -300,6 +301,9 @@ router.post(
           chatId,
           question:
             question.trim(),
+          language: resolveLanguage(
+            req.headers["accept-language"],
+          ),
         });
 
       if (!result.success) {
@@ -459,6 +463,7 @@ router.post(
           req.userId,
           question.trim(),
           cleanedConversation,
+          resolveLanguage(req.headers["accept-language"]),
         );
 
       return res.json({

@@ -1,4 +1,8 @@
 import { GoogleGenAI } from "@google/genai";
+import {
+  SUPPORTED_LANGUAGES,
+  type LanguageCode,
+} from "../utils/language.js";
 import { pool } from "../db.js";
 
 export type CoachMessage = {
@@ -502,6 +506,7 @@ async function buildFinancialContext(
 
 function buildSystemInstruction(
   financialData: FinancialContext,
+  language: LanguageCode,
 ): string {
   return `
 You are MoneyFlow Coach, the AI financial assistant inside the MoneyFlow personal finance application.
@@ -557,6 +562,8 @@ IMPORTANT RULES:
 13. If the user asks about their finances, use their actual MoneyFlow data.
 
 14. If the user asks for advice, provide useful financial reasoning while making clear that the final decision belongs to the user.
+
+15. Reply in ${SUPPORTED_LANGUAGES[language]}, the language the user has chosen in MoneyFlow, unless the user writes to you in a different language, in which case reply in the language they wrote in. Format amounts and dates the way they are normally written in that language.
 `;
 }
 
@@ -609,6 +616,7 @@ export async function askMoneyFlowCoach(
   userId: string,
   question: string,
   conversation: CoachMessage[] = [],
+  language: LanguageCode = "en",
 ) {
   const ai = new GoogleGenAI({
     apiKey: getGeminiApiKey(),
@@ -622,6 +630,7 @@ export async function askMoneyFlowCoach(
   const systemInstruction =
     buildSystemInstruction(
       financialData,
+      language,
     );
 
   const input =

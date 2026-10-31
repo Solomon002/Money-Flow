@@ -11,7 +11,27 @@ export const MAX_NAME_LENGTH = 120;
 export const MAX_SHORT_TEXT_LENGTH = 120;
 export const MAX_LONG_TEXT_LENGTH = 2_000;
 
-export const ALLOWED_CURRENCIES = ["NGN", "USD", "GBP", "EUR"];
+// Must match CURRENCIES in src/i18n/currencies.ts. All use 2 decimal places.
+export const ALLOWED_CURRENCIES = [
+  "NGN",
+  "USD",
+  "EUR",
+  "GBP",
+  "CHF",
+  "CAD",
+  "AUD",
+  "BRL",
+  "MXN",
+  "ZAR",
+  "KES",
+  "GHS",
+  "INR",
+  "SEK",
+  "NOK",
+  "DKK",
+  "PLN",
+  "AED",
+];
 
 export function isValidUuid(value: unknown): value is string {
   return (

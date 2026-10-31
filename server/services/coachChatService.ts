@@ -1,4 +1,5 @@
 import { pool } from "../db.js";
+import type { LanguageCode } from "../utils/language.js";
 import {
   askMoneyFlowCoach,
   type CoachMessage,
@@ -151,10 +152,12 @@ export async function sendCoachMessage({
   userId,
   chatId,
   question,
+  language = "en",
 }: {
   userId: string;
   chatId: string;
   question: string;
+  language?: LanguageCode;
 }) {
   // Use the pool directly: holding a dedicated connection across the slow
   // AI call would let a handful of concurrent chats exhaust the pool.
@@ -242,6 +245,7 @@ export async function sendCoachMessage({
         userId,
         question,
         conversation,
+        language,
       );
     } catch (error) {
       await client.query(

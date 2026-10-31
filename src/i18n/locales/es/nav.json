@@ -1,0 +1,12 @@
+{
+  "dashboard": "Panel",
+  "transactions": "Transacciones",
+  "budgets": "Presupuestos",
+  "goals": "Metas",
+  "reports": "Informes",
+  "insights": "Análisis",
+  "coach": "Coach MoneyFlow",
+  "settings": "Ajustes",
+  "signOut": "Cerrar sesión",
+  "toggleMenu": "Mostrar menú"
+}

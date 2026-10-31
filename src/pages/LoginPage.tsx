@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
+import LanguageSwitcher from "../components/LanguageSwitcher.js";
 import { Link, useLocation, useNavigate } from "react-router";
 import { useAuth } from "../context/AuthContext.js";
 import { getGoogleSignInUrl } from "../api/auth.js";
@@ -13,6 +15,7 @@ export default function LoginPage() {
   const location = useLocation();
 
   const { login } = useAuth();
+  const { t } = useTranslation();
 
   const locationState = location.state as LoginLocationState | null;
 
@@ -37,17 +40,21 @@ export default function LoginPage() {
               to="/"
               className="mb-6 inline-flex items-center text-sm font-medium text-slate-500 transition hover:text-slate-900"
             >
-              ← Back to MoneyFlow
+              ← {t("auth.backToMoneyFlow")}
             </Link>
 
-            <p className="text-sm font-semibold text-slate-500">MoneyFlow</p>
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-semibold text-slate-500">MoneyFlow</p>
+
+              <LanguageSwitcher />
+            </div>
 
             <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-900">
-              Welcome back
+              {t("auth.login.title")}
             </h1>
 
             <p className="mt-2 text-sm text-slate-500">
-              Sign in to continue managing your money.
+              {t("auth.login.subtitle")}
             </p>
           </div>
 
@@ -83,14 +90,14 @@ export default function LoginPage() {
                 d="M12 5.83c1.43 0 2.71.49 3.72 1.45l2.79-2.79C16.84 2.93 14.63 2 12 2a9.75 9.75 0 0 0-8.7 5.33l3.24 2.53C7.31 7.55 9.46 5.83 12 5.83Z"
               />
             </svg>
-            Continue with Google
+            {t("auth.continueWithGoogle")}
           </button>
 
           <div className="my-6 flex items-center gap-3">
             <div className="h-px flex-1 bg-slate-200" />
 
             <span className="text-xs font-medium uppercase tracking-wide text-slate-400">
-              or
+              {t("auth.or")}
             </span>
 
             <div className="h-px flex-1 bg-slate-200" />
@@ -113,7 +120,7 @@ export default function LoginPage() {
                 navigate("/app");
               } catch (error) {
                 setErrorMessage(
-                  error instanceof Error ? error.message : "Unable to log in",
+                  error instanceof Error ? error.message : t("auth.login.failed"),
                 );
               } finally {
                 setIsSubmitting(false);
@@ -126,7 +133,7 @@ export default function LoginPage() {
                 htmlFor="email"
                 className="mb-2 block text-sm font-medium text-slate-700"
               >
-                Email
+                {t("auth.email")}
               </label>
 
               <input
@@ -134,7 +141,7 @@ export default function LoginPage() {
                 type="email"
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
-                placeholder="you@example.com"
+                placeholder={t("auth.emailPlaceholder")}
                 autoComplete="email"
                 required
                 className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none transition focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
@@ -146,7 +153,7 @@ export default function LoginPage() {
                 htmlFor="password"
                 className="mb-2 block text-sm font-medium text-slate-700"
               >
-                Password
+                {t("auth.password")}
               </label>
 
               <input
@@ -154,7 +161,7 @@ export default function LoginPage() {
                 type="password"
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
-                placeholder="Enter your password"
+                placeholder={t("auth.passwordPlaceholder")}
                 autoComplete="current-password"
                 required
                 className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none transition focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
@@ -165,7 +172,7 @@ export default function LoginPage() {
                   to="/forgot-password"
                   className="text-sm font-medium text-slate-600 hover:text-slate-900 hover:underline"
                 >
-                  Forgot password?
+                  {t("auth.login.forgotPassword")}
                 </Link>
               </div>
             </div>
@@ -184,17 +191,17 @@ export default function LoginPage() {
               disabled={isSubmitting}
               className="w-full rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {isSubmitting ? "Signing in..." : "Sign in"}
+              {isSubmitting ? t("auth.login.submitting") : t("auth.login.submit")}
             </button>
           </form>
 
           <p className="mt-6 text-center text-sm text-slate-500">
-            Don't have an account?{" "}
+            {t("auth.login.noAccount")}{" "}
             <Link
               to="/register"
               className="font-semibold text-slate-900 hover:underline"
             >
-              Create account
+              {t("auth.register.submit")}
             </Link>
           </p>
         </section>

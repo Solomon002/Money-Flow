@@ -1,0 +1,13 @@
+{
+  "expiredToday": "Dein MoneyFlow Pro-Abo ist heute abgelaufen.",
+  "expiredYesterday": "Dein MoneyFlow Pro-Abo ist gestern abgelaufen.",
+  "expiredDaysAgo_one": "Dein MoneyFlow Pro-Abo ist vor {{count}} Tag abgelaufen.",
+  "expiredDaysAgo_other": "Dein MoneyFlow Pro-Abo ist vor {{count}} Tagen abgelaufen.",
+  "expiresToday": "Dein MoneyFlow Pro-Abo läuft heute ab.",
+  "expiresTomorrow": "Dein MoneyFlow Pro-Abo läuft morgen ab.",
+  "expiresInDays_one": "Dein MoneyFlow Pro-Abo läuft in {{count}} Tag ab.",
+  "expiresInDays_other": "Dein MoneyFlow Pro-Abo läuft in {{count}} Tagen ab.",
+  "graceBody": "Du befindest dich in einer kurzen Kulanzzeit, in der deine Pro-Funktionen noch funktionieren. Verlängere jetzt, um den Zugang nicht zu verlieren.",
+  "renewBody": "Verlängere jetzt, um weiterhin Zugriff auf erweiterte Berichte, tiefere Einblicke und alle Pro-Funktionen zu haben.",
+  "renew": "Pro verlängern"
+}

@@ -1,12 +1,15 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
 import { ArrowLeft } from "lucide-react";
 import { createGoal } from "../api/goals.js";
 import { useAuth } from "../context/AuthContext.js";
+import { currencySymbol as getCurrencySymbol } from "../i18n/format.js";
 
 export default function AddGoalPage() {
   const navigate = useNavigate();
   const { onboardingPreferences } = useAuth();
+  const { t } = useTranslation();
 
   const [name, setName] = useState("");
   const [targetAmount, setTargetAmount] = useState("");
@@ -17,17 +20,9 @@ export default function AddGoalPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
-  const currencySymbols: Record<string, string> = {
-    NGN: "₦",
-    USD: "$",
-    GBP: "£",
-    EUR: "€",
-  };
-
-  const currencySymbol =
-    currencySymbols[onboardingPreferences?.currency_code || "NGN"] ||
-    onboardingPreferences?.currency_code ||
-    "NGN";
+  const currencySymbol = getCurrencySymbol(
+    onboardingPreferences?.currency_code || "NGN",
+  );
 
   function getTodayDate() {
     const today = new Date();
@@ -45,21 +40,21 @@ export default function AddGoalPage() {
     setErrorMessage("");
 
     if (!name.trim()) {
-      setErrorMessage("Please enter a goal name.");
+      setErrorMessage(t("goals.form.nameError"));
       return;
     }
 
     const targetAmountNumber = Number(targetAmount);
 
     if (!Number.isFinite(targetAmountNumber) || targetAmountNumber <= 0) {
-      setErrorMessage("Please enter a target amount greater than zero.");
+      setErrorMessage(t("goals.form.targetError"));
       return;
     }
 
     const currentAmountNumber = Number(currentAmount);
 
     if (!Number.isFinite(currentAmountNumber) || currentAmountNumber < 0) {
-      setErrorMessage("Current amount cannot be negative.");
+      setErrorMessage(t("goals.form.currentError"));
       return;
     }
 
@@ -89,7 +84,7 @@ export default function AddGoalPage() {
       });
 
       if (!result.response.ok) {
-        throw new Error(result.data.message || "Unable to create goal");
+        throw new Error(result.data.message || t("goals.form.createFailed"));
       }
 
       navigate("/app/goals");
@@ -97,7 +92,7 @@ export default function AddGoalPage() {
       console.error("Creating goal failed:", error);
 
       setErrorMessage(
-        error instanceof Error ? error.message : "Unable to create goal",
+        error instanceof Error ? error.message : t("goals.form.createFailed"),
       );
     } finally {
       setIsSaving(false);
@@ -111,15 +106,15 @@ export default function AddGoalPage() {
           type="button"
           onClick={() => navigate("/app/goals")}
           className="rounded-lg p-2 text-slate-500 transition hover:bg-slate-100"
-          aria-label="Go back"
+          aria-label={t("common.back")}
         >
           <ArrowLeft size={20} />
         </button>
 
         <div>
-          <p className="text-sm text-slate-500">Financial planning</p>
+          <p className="text-sm text-slate-500">{t("goals.eyebrow")}</p>
 
-          <h1 className="mt-1 text-2xl font-bold text-slate-900">Add goal</h1>
+          <h1 className="mt-1 text-2xl font-bold text-slate-900">{t("goals.add")}</h1>
         </div>
       </div>
 
@@ -139,7 +134,7 @@ export default function AddGoalPage() {
               htmlFor="goal-name"
               className="block text-sm font-medium text-slate-700"
             >
-              Goal name
+              {t("goals.form.name")}
             </label>
 
             <input
@@ -147,7 +142,7 @@ export default function AddGoalPage() {
               type="text"
               value={name}
               onChange={(event) => setName(event.target.value)}
-              placeholder="e.g. New laptop"
+              placeholder={t("goals.form.namePlaceholder")}
               className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-slate-900"
             />
           </div>
@@ -157,7 +152,7 @@ export default function AddGoalPage() {
               htmlFor="target-amount"
               className="block text-sm font-medium text-slate-700"
             >
-              Target amount
+              {t("goals.form.target")}
             </label>
 
             <div className="relative mt-2">
@@ -183,7 +178,7 @@ export default function AddGoalPage() {
               htmlFor="current-amount"
               className="block text-sm font-medium text-slate-700"
             >
-              Already saved
+              {t("goals.form.alreadySaved")}
             </label>
 
             <div className="relative mt-2">
@@ -209,9 +204,9 @@ export default function AddGoalPage() {
               htmlFor="target-date"
               className="block text-sm font-medium text-slate-700"
             >
-              Target date
+              {t("goals.form.targetDate")}
               <span className="ml-1 font-normal text-slate-400">
-                (optional)
+                {t("common.optionalSuffix")}
               </span>
             </label>
 
@@ -230,9 +225,9 @@ export default function AddGoalPage() {
               htmlFor="goal-description"
               className="block text-sm font-medium text-slate-700"
             >
-              Description
+              {t("common.description")}
               <span className="ml-1 font-normal text-slate-400">
-                (optional)
+                {t("common.optionalSuffix")}
               </span>
             </label>
 
@@ -252,7 +247,7 @@ export default function AddGoalPage() {
               onClick={() => navigate("/app/goals")}
               className="rounded-xl border border-slate-300 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
             >
-              Cancel
+              {t("common.cancel")}
             </button>
 
             <button
@@ -260,7 +255,7 @@ export default function AddGoalPage() {
               disabled={isSaving}
               className="rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {isSaving ? "Saving..." : "Save goal"}
+              {isSaving ? t("common.saving") : t("goals.form.submit")}
             </button>
           </div>
         </form>

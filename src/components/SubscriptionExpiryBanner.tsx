@@ -1,4 +1,5 @@
 import { Link } from "react-router";
+import { useTranslation } from "react-i18next";
 import { AlertTriangle } from "lucide-react";
 import { useProExpiry } from "../hooks/useProExpiry.js";
 
@@ -10,6 +11,7 @@ export default function SubscriptionExpiryBanner() {
     daysUntilExpiry,
     daysSinceExpiry,
   } = useProExpiry();
+  const { t } = useTranslation();
 
   if (isLoading) {
     return null;
@@ -23,19 +25,19 @@ export default function SubscriptionExpiryBanner() {
 
   const headline = isGrace
     ? daysSinceExpiry === 0
-      ? "Your MoneyFlow Pro subscription expired today."
+      ? t("proExpiry.expiredToday")
       : daysSinceExpiry === 1
-        ? "Your MoneyFlow Pro subscription expired yesterday."
-        : `Your MoneyFlow Pro subscription expired ${daysSinceExpiry} days ago.`
+        ? t("proExpiry.expiredYesterday")
+        : t("proExpiry.expiredDaysAgo", { count: daysSinceExpiry })
     : daysUntilExpiry === 0
-      ? "Your MoneyFlow Pro subscription expires today."
+      ? t("proExpiry.expiresToday")
       : daysUntilExpiry === 1
-        ? "Your MoneyFlow Pro subscription expires tomorrow."
-        : `Your MoneyFlow Pro subscription expires in ${daysUntilExpiry} days.`;
+        ? t("proExpiry.expiresTomorrow")
+        : t("proExpiry.expiresInDays", { count: daysUntilExpiry });
 
   const body = isGrace
-    ? "You're in a short grace period where your Pro features still work. Renew now to avoid losing access."
-    : "Renew now to keep access to advanced reports, deeper insights, and all Pro features.";
+    ? t("proExpiry.graceBody")
+    : t("proExpiry.renewBody");
 
   return (
     <div
@@ -82,7 +84,7 @@ export default function SubscriptionExpiryBanner() {
               : "bg-amber-900 hover:bg-amber-800"
           }`}
         >
-          Renew Pro
+          {t("proExpiry.renew")}
         </Link>
       </div>
     </div>

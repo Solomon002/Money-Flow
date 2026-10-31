@@ -1,0 +1,11 @@
+{
+  "title": "Configuremos tu MoneyFlow",
+  "subtitle": "Cuéntanos un poco sobre tus finanzas para personalizar tu experiencia.",
+  "currency": "¿Qué moneda usas?",
+  "incomeSource": "¿Cuál es tu principal fuente de ingresos?",
+  "objective": "¿Cuál es tu principal objetivo financiero?",
+  "monthlyIncome": "¿Cuál es tu ingreso mensual aproximado?",
+  "monthlyIncomeHint": "Es opcional. Puedes añadirlo o cambiarlo más tarde.",
+  "failed": "No se pudo guardar tu información",
+  "submit": "Continuar a MoneyFlow"
+}

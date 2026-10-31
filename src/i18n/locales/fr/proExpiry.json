@@ -1,0 +1,13 @@
+{
+  "expiredToday": "Votre abonnement MoneyFlow Pro a expiré aujourd'hui.",
+  "expiredYesterday": "Votre abonnement MoneyFlow Pro a expiré hier.",
+  "expiredDaysAgo_one": "Votre abonnement MoneyFlow Pro a expiré il y a {{count}} jour.",
+  "expiredDaysAgo_other": "Votre abonnement MoneyFlow Pro a expiré il y a {{count}} jours.",
+  "expiresToday": "Votre abonnement MoneyFlow Pro expire aujourd'hui.",
+  "expiresTomorrow": "Votre abonnement MoneyFlow Pro expire demain.",
+  "expiresInDays_one": "Votre abonnement MoneyFlow Pro expire dans {{count}} jour.",
+  "expiresInDays_other": "Votre abonnement MoneyFlow Pro expire dans {{count}} jours.",
+  "graceBody": "Vous êtes dans une courte période de grâce où vos fonctionnalités Pro fonctionnent encore. Renouvelez maintenant pour ne pas perdre l'accès.",
+  "renewBody": "Renouvelez maintenant pour garder l'accès aux rapports avancés, aux analyses approfondies et à toutes les fonctionnalités Pro.",
+  "renew": "Renouveler Pro"
+}
