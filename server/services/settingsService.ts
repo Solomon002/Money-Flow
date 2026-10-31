@@ -24,6 +24,7 @@ export async function getSettings(userId: string) {
         u.name,
         u.email,
         u.created_at,
+        (u.password_hash IS NOT NULL) AS has_password,
 
         fp.currency_code,
         fp.income_source,

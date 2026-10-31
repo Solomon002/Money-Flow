@@ -116,3 +116,10 @@ export async function getSubscriptionPayments() {
     };
   }>;
 }
+export async function getProAccess(): Promise<boolean> {
+  const result = await apiRequest("/api/subscription/access", {
+    method: "GET",
+  });
+
+  return Boolean(result.data.isPro);
+}

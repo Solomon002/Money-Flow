@@ -22,12 +22,15 @@ import {
 
 // Labels: t("pro.features.<key>")
 const proFeatures = [
+  "unlimitedCoach",
+  "autoCategorize",
+  "recurring",
+  "forecast",
   "advancedReports",
   "spendingBreakdowns",
   "topSpending",
   "budgetPerformance",
   "deeperInsights",
-  "coachInsights",
   "history",
   "exports",
 ];
@@ -38,6 +41,7 @@ const freeFeatures = [
   "dashboard",
   "basicReports",
   "basicNotifications",
+  "coachAllowance",
 ];
 
 const CHANNEL_LABELS: Record<string, string> = {

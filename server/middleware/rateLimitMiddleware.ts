@@ -132,6 +132,21 @@ export const importRateLimiter = rateLimit({
   },
 });
 
+// Data export builds a full copy of the account. Must run after requireAuth.
+export const accountDataRateLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  limit: 10,
+  standardHeaders: "draft-8",
+  legacyHeaders: false,
+  keyGenerator: (req) =>
+    (req as AuthenticatedRequest).userId ??
+    ipKeyGenerator(req.ip ?? ""),
+  message: {
+    status: "error",
+    message: "Too many requests. Please try again later.",
+  },
+});
+
 export const refreshTokenRateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   limit: 30,

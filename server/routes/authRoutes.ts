@@ -29,6 +29,7 @@ import {
 } from "../middleware/authMiddleware.js";
 
 import { pool } from "../db.js";
+import { LEGAL_VERSION } from "../utils/legal.js";
 
 const router = Router();
 
@@ -69,7 +70,14 @@ router.post(
   registerRateLimiter,
   async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, acceptTerms } = req.body;
+
+    if (acceptTerms !== true) {
+      return res.status(400).json({
+        status: "error",
+        message: "You must accept the Terms of Service and Privacy Policy",
+      });
+    }
 
     if (
       typeof name !== "string" ||
@@ -113,6 +121,7 @@ router.post(
       name: name.trim(),
       email: normalizedEmail,
       password,
+      termsVersion: LEGAL_VERSION,
     });
 
     return res.status(201).json({

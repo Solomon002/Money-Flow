@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useTranslation } from "react-i18next";
+import { Trans, useTranslation } from "react-i18next";
 import LanguageSwitcher from "../components/LanguageSwitcher.js";
 import { Link, useLocation, useNavigate } from "react-router";
 import { useAuth } from "../context/AuthContext.js";
@@ -92,6 +92,16 @@ export default function LoginPage() {
             </svg>
             {t("auth.continueWithGoogle")}
           </button>
+
+          <p className="mt-3 text-center text-xs leading-5 text-slate-500">
+            <Trans
+              i18nKey="legal.googleNotice"
+              components={{
+                terms: <Link to="/terms" className="font-medium text-emerald-700 hover:underline" />,
+                privacy: <Link to="/privacy" className="font-medium text-emerald-700 hover:underline" />,
+              }}
+            />
+          </p>
 
           <div className="my-6 flex items-center gap-3">
             <div className="h-px flex-1 bg-slate-200" />

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { formatDate as formatLocalDate, formatMoney as formatLocalMoney } from "../i18n/format.js";
 import { categoryLabel } from "../i18n/categories.js";
@@ -150,6 +150,16 @@ export default function ReportsPage() {
     return formatLocalDate(date);
   }
 
+  const isPro =
+    subscription?.plan === "pro" &&
+    (subscription.status === "active" ||
+      subscription.status === "trialing" ||
+      subscription.status === "cancelled");
+
+  // Read inside async loaders, which would otherwise see a stale value.
+  const isProRef = useRef(isPro);
+  isProRef.current = isPro;
+
   async function loadAdvancedReport(
     selectedStartDate: string,
     selectedEndDate: string,
@@ -215,7 +225,12 @@ export default function ReportsPage() {
 
       setExpandedCategories({});
 
-      await loadAdvancedReport(selectedStartDate, selectedEndDate);
+      // Free users never call the Pro-only endpoint.
+      if (isProRef.current) {
+        await loadAdvancedReport(selectedStartDate, selectedEndDate);
+      } else {
+        setIsAdvancedLoading(false);
+      }
     } catch (error) {
       console.error("Loading report failed:", error);
 
@@ -260,6 +275,14 @@ export default function ReportsPage() {
 
     loadSubscription();
   }, []);
+
+  // Subscription status arrives after the first report; fetch the Pro
+  // report once we know the user has Pro.
+  useEffect(() => {
+    if (isPro && report) {
+      void loadAdvancedReport(report.startDate, report.endDate);
+    }
+  }, [isPro]);
 
   function handlePeriodChange(selectedPeriod: ReportPeriod) {
     setPeriod(selectedPeriod);
@@ -419,12 +442,6 @@ export default function ReportsPage() {
       expenses: (expenses / total) * 100,
     };
   }, [advancedReport]);
-
-  const isPro =
-    subscription?.plan === "pro" &&
-    (subscription.status === "active" ||
-      subscription.status === "trialing" ||
-      subscription.status === "cancelled");
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">

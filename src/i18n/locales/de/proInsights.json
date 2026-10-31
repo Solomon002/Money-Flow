@@ -1,0 +1,19 @@
+{
+  "teaserTitle": "Sieh deine Rechnungen kommen und wie dein Monat endet",
+  "teaserBody": "MoneyFlow Pro erkennt wiederkehrende Rechnungen und Abos, zeigt dir, wann sie fällig sind, und prognostiziert, wie viel du bis Monatsende ausgibst und übrig hast.",
+  "forecastTitle": "Prognose zum Monatsende",
+  "dayOf": "Tag {{day}} von {{total}}",
+  "spentSoFar": "Bisher ausgegeben",
+  "projectedSpending": "Prognose für den Monat",
+  "endPositive": "In diesem Tempo beendest du den Monat mit etwa {{amount}} im Plus.",
+  "endNegative": "In diesem Tempo gibst du diesen Monat etwa {{amount}} mehr aus, als hereinkam.",
+  "overBudget": "Du bist auf dem Weg, deine Budgets um etwa {{amount}} zu überschreiten.",
+  "withinBudget": "Du bleibst voraussichtlich etwa {{amount}} unter deinen Budgets.",
+  "forecastNote": "Basierend auf deinem Ausgabentempo in diesem Monat und noch fälligen wiederkehrenden Zahlungen.",
+  "recurringTitle": "Wiederkehrende Zahlungen",
+  "recurringBody": "Automatisch aus deinen Transaktionen erkannt.",
+  "noRecurring": "Noch keine wiederkehrenden Zahlungen gefunden. Sie erscheinen, wenn dieselbe Zahlung etwa dreimal vorkommt.",
+  "monthly": "Monatlich",
+  "weekly": "Wöchentlich",
+  "nextOn": "nächste am {{date}}"
+}

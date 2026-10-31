@@ -16,10 +16,13 @@ import {
   deleteCoachChat,
   getCoachChat,
   getCoachChats,
+  getCoachUsage,
   sendCoachMessage,
   type CoachChat,
   type CoachMessage,
+  type CoachUsage,
 } from "../api/coach.js";
+import { Link } from "react-router";
 
 function CoachPage() {
   const { t } = useTranslation();
@@ -36,6 +39,13 @@ function CoachPage() {
   const [loadingChats, setLoadingChats] = useState(true);
   const [loadingChat, setLoadingChat] = useState(false);
   const [sending, setSending] = useState(false);
+  const [usage, setUsage] = useState<CoachUsage | null>(null);
+
+  const messagesLeft =
+    usage && usage.limit !== null
+      ? Math.max(usage.limit - usage.used, 0)
+      : null;
+  const limitReached = messagesLeft === 0;
 
   // The reply currently being "typed" out; older messages render instantly.
   const [typingMessage, setTypingMessage] = useState<CoachMessage | null>(
@@ -107,6 +117,10 @@ function CoachPage() {
 
   useEffect(() => {
     void loadChats();
+
+    getCoachUsage()
+      .then(setUsage)
+      .catch(() => setUsage(null));
   }, []);
 
   useEffect(() => {
@@ -183,7 +197,7 @@ function CoachPage() {
 
     const trimmedQuestion = question.trim();
 
-    if (!trimmedQuestion || sending) {
+    if (!trimmedQuestion || sending || limitReached) {
       return;
     }
 
@@ -216,6 +230,9 @@ function CoachPage() {
       const result = await sendCoachMessage(chatId, trimmedQuestion);
 
       setTypingMessage(result.assistantMessage);
+      setUsage((current) =>
+        current ? { ...current, used: current.used + 1 } : current,
+      );
       setMessages((current) => [...current, result.assistantMessage]);
 
       setChats((current) =>
@@ -599,13 +616,13 @@ function CoachPage() {
               placeholder={t("coach.placeholder")}
               rows={1}
               maxLength={1000}
-              disabled={sending}
+              disabled={sending || limitReached}
               className="mf-caret min-h-11 min-w-0 flex-1 resize-none rounded-xl border border-slate-300 bg-white px-3.5 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 disabled:bg-slate-50 sm:px-4"
             />
 
             <button
               type="submit"
-              disabled={sending || !question.trim()}
+              disabled={sending || limitReached || !question.trim()}
               className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-600 text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-40"
               title={t("coach.send")}
             >
@@ -616,6 +633,27 @@ function CoachPage() {
               )}
             </button>
           </form>
+
+          {messagesLeft !== null && (
+            <p
+              className={`mx-auto mt-2 max-w-4xl text-xs ${
+                limitReached ? "font-medium text-amber-700" : "text-slate-500"
+              }`}
+            >
+              {limitReached
+                ? t("coach.limitReached")
+                : t("coach.messagesLeft", {
+                    count: messagesLeft,
+                    limit: usage?.limit,
+                  })}{" "}
+              <Link
+                to="/app/pro"
+                className="font-semibold text-emerald-700 hover:underline"
+              >
+                {t("coach.unlimitedWithPro")}
+              </Link>
+            </p>
+          )}
 
           <p className="mx-auto mt-2 hidden max-w-4xl text-xs text-slate-400 sm:block">
             {t("coach.disclaimer")}

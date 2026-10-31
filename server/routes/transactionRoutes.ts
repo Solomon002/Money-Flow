@@ -11,6 +11,8 @@ import {
   type ImportTransactionRow,
 } from "../services/transactionService.js";
 import { importRateLimiter } from "../middleware/rateLimitMiddleware.js";
+import { requirePro } from "../middleware/proMiddleware.js";
+import { suggestCategories } from "../services/categorizationService.js";
 import { isClientInputDbError } from "../utils/validation.js";
 
 const router = Router();
@@ -383,6 +385,62 @@ router.post(
       return res.status(500).json({
         status: "error",
         message: "Unable to import transactions",
+      });
+    }
+  },
+);
+
+/*
+ * POST /api/transactions/suggest-categories (MoneyFlow Pro)
+ * Body: { items: [{ description, type }] }
+ * Returns { suggestions: (categoryId | null)[] } in the same order.
+ */
+router.post(
+  "/suggest-categories",
+  requireAuth,
+  requirePro,
+  importRateLimiter,
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      if (!req.userId) {
+        return res.status(401).json({
+          status: "error",
+          message: "Authentication required",
+        });
+      }
+
+      const items = req.body?.items;
+
+      if (
+        !Array.isArray(items) ||
+        items.length === 0 ||
+        items.length > MAX_IMPORT_ROWS ||
+        !items.every(
+          (item) =>
+            item &&
+            typeof item.description === "string" &&
+            item.description.length <= MAX_DESCRIPTION_LENGTH &&
+            (item.type === "income" || item.type === "expense"),
+        )
+      ) {
+        return res.status(400).json({
+          status: "error",
+          message: "Invalid request",
+        });
+      }
+
+      const suggestions = await suggestCategories(req.userId, items);
+
+      return res.json({
+        status: "success",
+        suggestions,
+      });
+    } catch (error) {
+      console.error("Suggesting categories failed:", error);
+
+      return res.status(500).json({
+        status: "error",
+        message: "Unable to suggest categories",
       });
     }
   },

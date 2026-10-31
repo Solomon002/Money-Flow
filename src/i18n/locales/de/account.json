@@ -1,0 +1,15 @@
+{
+  "title": "Deine Daten",
+  "body": "Lade eine Kopie aller Daten herunter, die MoneyFlow über dich speichert, oder lösche dein Konto dauerhaft.",
+  "export": "Meine Daten herunterladen",
+  "exporting": "Download wird vorbereitet...",
+  "exportFailed": "Deine Daten konnten nicht exportiert werden",
+  "delete": "Konto löschen",
+  "deleteTitle": "Konto endgültig löschen?",
+  "deleteWarning": "Dadurch werden dein Profil, deine Transaktionen, Budgets, Ziele, Coach-Chats und dein Zahlungsverlauf sofort gelöscht. Das kann nicht rückgängig gemacht werden und verbleibende Pro-Zeit verfällt. Lade vorher deine Daten herunter, wenn du eine Kopie möchtest.",
+  "confirmPassword": "Gib dein Passwort zur Bestätigung ein",
+  "confirmEmail": "Gib {{email}} zur Bestätigung ein",
+  "deleteForever": "Mein Konto löschen",
+  "deleteFailed": "Dein Konto konnte nicht gelöscht werden",
+  "deletedNotice": "Dein MoneyFlow-Konto und alle Daten wurden gelöscht."
+}

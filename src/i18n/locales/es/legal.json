@@ -1,0 +1,8 @@
+{
+  "termsTitle": "Términos del servicio",
+  "privacyTitle": "Política de privacidad",
+  "lastUpdated": "Última actualización: {{date}}",
+  "englishOnly": "Este documento solo está disponible en inglés por ahora.",
+  "acceptLabel": "Acepto los <terms>Términos del servicio</terms> y la <privacy>Política de privacidad</privacy>.",
+  "googleNotice": "Al continuar con Google, aceptas nuestros <terms>Términos del servicio</terms> y nuestra <privacy>Política de privacidad</privacy>."
+}

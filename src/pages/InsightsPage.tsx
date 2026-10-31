@@ -12,6 +12,7 @@ import { getInsights, type Insights } from "../api/insights.js";
 import { useAuth } from "../context/AuthContext.js";
 import { formatMoney } from "../i18n/format.js";
 import { categoryLabel } from "../i18n/categories.js";
+import ProInsights from "../components/ProInsights.js";
 
 export default function InsightsPage() {
   const { onboardingPreferences } = useAuth();
@@ -188,6 +189,8 @@ export default function InsightsPage() {
           </p>
         </div>
       </section>
+
+      <ProInsights currencyCode={currencyCode} />
 
       <section className="rounded-2xl border border-slate-200 bg-white p-6">
         <div>

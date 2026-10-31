@@ -1,0 +1,8 @@
+{
+  "termsTitle": "Nutzungsbedingungen",
+  "privacyTitle": "Datenschutzerklärung",
+  "lastUpdated": "Zuletzt aktualisiert: {{date}}",
+  "englishOnly": "Dieses Dokument ist derzeit nur auf Englisch verfügbar.",
+  "acceptLabel": "Ich stimme den <terms>Nutzungsbedingungen</terms> und der <privacy>Datenschutzerklärung</privacy> zu.",
+  "googleNotice": "Wenn du mit Google fortfährst, stimmst du unseren <terms>Nutzungsbedingungen</terms> und der <privacy>Datenschutzerklärung</privacy> zu."
+}

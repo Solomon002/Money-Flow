@@ -88,7 +88,7 @@ app.use(
 
 // Imports carry up to 1,000 rows, so they get a larger (still bounded) limit.
 app.use(
-  "/api/transactions/import",
+  ["/api/transactions/import", "/api/transactions/suggest-categories"],
   express.json({
     limit: "1mb",
   }),

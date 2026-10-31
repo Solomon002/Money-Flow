@@ -1,0 +1,19 @@
+{
+  "teaserTitle": "See your bills coming and where your month will end",
+  "teaserBody": "MoneyFlow Pro spots your recurring bills and subscriptions, tells you when each one is next due, and forecasts how much you'll spend and have left by the end of the month.",
+  "forecastTitle": "Month-end forecast",
+  "dayOf": "Day {{day}} of {{total}}",
+  "spentSoFar": "Spent so far",
+  "projectedSpending": "Projected for the month",
+  "endPositive": "At this pace you'll end the month about {{amount}} ahead.",
+  "endNegative": "At this pace you'll spend about {{amount}} more than came in this month.",
+  "overBudget": "You're on track to go about {{amount}} over your budgets.",
+  "withinBudget": "You're on track to stay about {{amount}} under your budgets.",
+  "forecastNote": "Based on your spending pace this month plus recurring payments still due.",
+  "recurringTitle": "Recurring bills & income",
+  "recurringBody": "Found automatically from your transactions.",
+  "noRecurring": "No recurring payments found yet. They appear after the same payment shows up about three times.",
+  "monthly": "Monthly",
+  "weekly": "Weekly",
+  "nextOn": "next {{date}}"
+}

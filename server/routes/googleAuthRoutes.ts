@@ -17,6 +17,8 @@ import {
   exchangeGoogleAuthCode,
 } from "../services/googleAuthService.js";
 
+import { LEGAL_VERSION } from "../utils/legal.js";
+
 const router = Router();
 
 const googleClientId =
@@ -214,6 +216,8 @@ router.get(
           await createGoogleUser({
             name: googleName,
             email: googleEmail,
+            // The sign-in pages say continuing with Google accepts the terms.
+            termsVersion: LEGAL_VERSION,
           });
       } else {
         await claimAccountWithVerifiedEmail(user.id);
