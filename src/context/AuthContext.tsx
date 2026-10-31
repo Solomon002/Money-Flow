@@ -10,7 +10,6 @@ import {
   getCurrentUser,
   loginUser,
   logoutUser,
-  refreshAccessToken,
 } from "../api/auth.js";
 import {
   clearAuthTokens,
@@ -157,47 +156,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
 
     try {
+      // apiRequest transparently refreshes an expired access
+      // token (and rotates the refresh token) before giving up.
       const currentUserResult = await getCurrentUser(accessToken);
 
-      if (currentUserResult.response.ok) {
-        setUser(currentUserResult.data.user);
-        return;
-      }
-
-      const latestRefreshToken = getRefreshToken();
-
-      if (!latestRefreshToken) {
-        setUser(null);
-        return;
-      }
-
-      const refreshResult = await refreshAccessToken(latestRefreshToken);
-
-      if (!refreshResult.response.ok) {
-        clearAuthTokens();
-        setUser(null);
-        return;
-      }
-
-      const newAccessToken = refreshResult.data.accessToken;
-
-      if (!newAccessToken) {
-        clearAuthTokens();
-        setUser(null);
-        return;
-      }
-
-      saveAuthTokens(newAccessToken, latestRefreshToken);
-
-      const refreshedUserResult = await getCurrentUser(newAccessToken);
-
-      if (refreshedUserResult.response.ok) {
-        setUser(refreshedUserResult.data.user);
-        return;
-      }
-
-      clearAuthTokens();
-      setUser(null);
+      setUser(currentUserResult.data.user);
     } catch (error) {
       console.error("Authentication initialization failed:", error);
 

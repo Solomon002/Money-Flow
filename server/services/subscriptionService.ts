@@ -201,6 +201,166 @@ export async function updateSubscriptionPlan(
   return createdResult.rows[0];
 }
 
+export type ProPayment = {
+  userId: string;
+  amountMinor: number;
+  currency: string;
+  reference: string;
+  transactionId: number | null;
+  channel: string | null;
+  paidAt: string | null;
+  customerCode: string | null;
+  subscriptionCode: string | null;
+};
+
+/*
+ * Records a verified Pro payment and grants 30 days of Pro for it.
+ *
+ * Each provider reference can only ever grant access once: the payment
+ * row is inserted first and, if that reference was already recorded
+ * (by /verify, the webhook, or a replayed request), the subscription is
+ * left untouched. A renewal before the current period ends is added on
+ * top of the remaining time instead of replacing it.
+ */
+export async function activateProFromPayment(
+  payment: ProPayment,
+): Promise<{
+  subscription: Subscription;
+  alreadyProcessed: boolean;
+}> {
+  const client = await pool.connect();
+
+  try {
+    await client.query("BEGIN");
+
+    const paymentResult = await client.query(
+      `
+        INSERT INTO subscription_payments (
+          user_id,
+          amount_minor,
+          currency,
+          status,
+          provider,
+          provider_reference,
+          provider_transaction_id,
+          channel,
+          paid_at
+        )
+        VALUES (
+          $1,
+          $2,
+          $3,
+          'success',
+          'paystack',
+          $4,
+          $5,
+          $6,
+          COALESCE($7, NOW())
+        )
+        ON CONFLICT (provider, provider_reference)
+        DO NOTHING
+        RETURNING id
+      `,
+      [
+        payment.userId,
+        payment.amountMinor,
+        payment.currency,
+        payment.reference,
+        payment.transactionId,
+        payment.channel,
+        payment.paidAt,
+      ],
+    );
+
+    const alreadyProcessed = paymentResult.rows.length === 0;
+
+    if (alreadyProcessed) {
+      await client.query("COMMIT");
+
+      return {
+        subscription: await getOrCreateSubscription(payment.userId),
+        alreadyProcessed: true,
+      };
+    }
+
+    const subscriptionResult = await client.query<Subscription>(
+      `
+        INSERT INTO subscriptions (
+          user_id,
+          plan,
+          status,
+          provider,
+          provider_customer_id,
+          provider_subscription_id,
+          current_period_start,
+          current_period_end
+        )
+        VALUES (
+          $1,
+          'pro',
+          'active',
+          'paystack',
+          $2,
+          $3,
+          COALESCE($4::timestamptz, NOW()),
+          NOW() + INTERVAL '30 days'
+        )
+        ON CONFLICT (user_id)
+        DO UPDATE SET
+          plan = 'pro',
+          status = 'active',
+          provider = 'paystack',
+          provider_customer_id = COALESCE(
+            EXCLUDED.provider_customer_id,
+            subscriptions.provider_customer_id
+          ),
+          provider_subscription_id = COALESCE(
+            EXCLUDED.provider_subscription_id,
+            subscriptions.provider_subscription_id
+          ),
+          current_period_start = EXCLUDED.current_period_start,
+          current_period_end = CASE
+            WHEN subscriptions.plan = 'pro'
+              AND subscriptions.current_period_end > NOW()
+            THEN subscriptions.current_period_end + INTERVAL '30 days'
+            ELSE NOW() + INTERVAL '30 days'
+          END,
+          updated_at = NOW()
+        RETURNING
+          id,
+          user_id,
+          plan,
+          status,
+          provider,
+          provider_customer_id,
+          provider_subscription_id,
+          current_period_start,
+          current_period_end,
+          created_at,
+          updated_at
+      `,
+      [
+        payment.userId,
+        payment.customerCode,
+        payment.subscriptionCode,
+        payment.paidAt,
+      ],
+    );
+
+    await client.query("COMMIT");
+
+    return {
+      subscription: subscriptionResult.rows[0],
+      alreadyProcessed: false,
+    };
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
 export async function cancelSubscription(
   userId: string,
 ): Promise<Subscription | null> {

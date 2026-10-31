@@ -39,9 +39,11 @@ export async function requireAuth(
       });
     }
 
+    // Pin the algorithm so a token signed any other way is rejected.
     const decoded = jwt.verify(
       token,
-      getAccessTokenSecret()
+      getAccessTokenSecret(),
+      { algorithms: ['HS256'] }
     );
 
     if (
