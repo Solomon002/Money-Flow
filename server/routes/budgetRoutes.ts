@@ -10,7 +10,27 @@ import {
   deleteBudget,
 } from "../services/budgetService.js";
 
+import {
+  MAX_YEAR,
+  MIN_YEAR,
+  isClientInputDbError,
+  isValidUuid,
+  toMinorUnits,
+} from "../utils/validation.js";
+
 const router = Router();
+
+// Unknown or malformed ids are simply "not found".
+router.param("id", (req, res, next, id) => {
+  if (!isValidUuid(id)) {
+    return res.status(404).json({
+      status: "error",
+      message: "Budget not found",
+    });
+  }
+
+  next();
+});
 
 router.get(
   "/",
@@ -60,27 +80,20 @@ router.post(
         year,
       } = req.body;
 
-      if (
-        !categoryId ||
-        typeof categoryId !== "string"
-      ) {
+      if (!isValidUuid(categoryId)) {
         return res.status(400).json({
           status: "error",
           message: "Category is required",
         });
       }
 
-      const monthlyAmountNumber =
-        Number(monthlyAmount);
+      const monthlyAmountMinor = toMinorUnits(monthlyAmount);
 
-      if (
-        !Number.isFinite(monthlyAmountNumber) ||
-        monthlyAmountNumber <= 0
-      ) {
+      if (monthlyAmountMinor === null) {
         return res.status(400).json({
           status: "error",
           message:
-            "Monthly budget must be greater than zero",
+            "Monthly budget must be greater than zero and no more than 10 billion",
         });
       }
 
@@ -100,17 +113,14 @@ router.post(
 
       if (
         !Number.isInteger(yearNumber) ||
-        yearNumber < 2000
+        yearNumber < MIN_YEAR ||
+        yearNumber > MAX_YEAR
       ) {
         return res.status(400).json({
           status: "error",
           message: "Invalid year",
         });
       }
-
-      const monthlyAmountMinor = Math.round(
-        monthlyAmountNumber * 100,
-      );
 
       const budget = await createBudget({
         userId: req.userId,
@@ -135,6 +145,13 @@ router.post(
           status: "error",
           message:
             "A budget already exists for this category and month.",
+        });
+      }
+
+      if (isClientInputDbError(error)) {
+        return res.status(400).json({
+          status: "error",
+          message: "Invalid budget category",
         });
       }
 
@@ -167,27 +184,20 @@ router.put(
         year,
       } = req.body;
 
-      if (
-        !categoryId ||
-        typeof categoryId !== "string"
-      ) {
+      if (!isValidUuid(categoryId)) {
         return res.status(400).json({
           status: "error",
           message: "Category is required",
         });
       }
 
-      const monthlyAmountNumber =
-        Number(monthlyAmount);
+      const monthlyAmountMinor = toMinorUnits(monthlyAmount);
 
-      if (
-        !Number.isFinite(monthlyAmountNumber) ||
-        monthlyAmountNumber <= 0
-      ) {
+      if (monthlyAmountMinor === null) {
         return res.status(400).json({
           status: "error",
           message:
-            "Monthly budget must be greater than zero",
+            "Monthly budget must be greater than zero and no more than 10 billion",
         });
       }
 
@@ -207,17 +217,14 @@ router.put(
 
       if (
         !Number.isInteger(yearNumber) ||
-        yearNumber < 2000
+        yearNumber < MIN_YEAR ||
+        yearNumber > MAX_YEAR
       ) {
         return res.status(400).json({
           status: "error",
           message: "Invalid year",
         });
       }
-
-      const monthlyAmountMinor = Math.round(
-        monthlyAmountNumber * 100,
-      );
 
       const budget = await updateBudget({
         userId: req.userId,
@@ -250,6 +257,13 @@ router.put(
           status: "error",
           message:
             "A budget already exists for this category and month.",
+        });
+      }
+
+      if (isClientInputDbError(error)) {
+        return res.status(400).json({
+          status: "error",
+          message: "Invalid budget category",
         });
       }
 

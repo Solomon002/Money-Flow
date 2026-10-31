@@ -115,12 +115,11 @@ app.use("/api/advanced-reports", advancedReportRoutes);
 
 app.get("/api/health", async (_req, res) => {
   try {
-    const result = await pool.query("SELECT NOW()");
+    await pool.query("SELECT 1");
 
     return res.status(200).json({
       status: "ok",
       message: "MoneyFlow backend is running",
-      databaseTime: result.rows[0].now,
     });
   } catch (error) {
     console.error("Database connection failed:", error);
@@ -141,6 +140,28 @@ app.use(
     res: express.Response,
     _next: express.NextFunction,
   ) => {
+    // Body-parser errors (malformed JSON, body too large) are the
+    // client's fault and carry their own 4xx status.
+    const status =
+      typeof err === "object" &&
+      err !== null &&
+      "status" in err &&
+      typeof err.status === "number" &&
+      err.status >= 400 &&
+      err.status < 500
+        ? err.status
+        : 500;
+
+    if (status !== 500) {
+      return res.status(status).json({
+        status: "error",
+        message:
+          status === 413
+            ? "Request is too large"
+            : "Invalid request",
+      });
+    }
+
     console.error("Unhandled error:", err);
 
     return res.status(500).json({

@@ -100,7 +100,12 @@ export async function updateSettings({
         UPDATE public.users
         SET
           name = $1,
-          email = $2,
+          email = $2::varchar,
+          -- A new address hasn't been proven yet.
+          email_verified_at = CASE
+            WHEN lower(email) = lower($2::varchar) THEN email_verified_at
+            ELSE NULL
+          END,
           updated_at = NOW()
         WHERE id = $3
         RETURNING

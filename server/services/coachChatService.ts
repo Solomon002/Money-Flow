@@ -156,9 +156,11 @@ export async function sendCoachMessage({
   chatId: string;
   question: string;
 }) {
-  const client = await pool.connect();
+  // Use the pool directly: holding a dedicated connection across the slow
+  // AI call would let a handful of concurrent chats exhaust the pool.
+  const client = pool;
 
-  try {
+  {
     const chatResult = await client.query(
       `
         SELECT
@@ -310,7 +312,5 @@ export async function sendCoachMessage({
       assistantMessage,
       title: newTitle,
     } as const;
-  } finally {
-    client.release();
   }
 }

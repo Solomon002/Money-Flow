@@ -33,6 +33,8 @@ export async function getSettings() {
 export async function updateSettings(data: {
   name: string;
   email: string;
+  // Required by the server only when the email is being changed.
+  currentPassword?: string;
   currencyCode: string;
   incomeSource: string | null;
   monthlyIncome: number | null;

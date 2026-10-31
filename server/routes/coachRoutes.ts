@@ -19,7 +19,21 @@ import {
 
 import { coachRateLimiter } from "../middleware/rateLimitMiddleware.js";
 
+import { isValidUuid } from "../utils/validation.js";
+
 const router = Router();
+
+// Unknown or malformed ids are simply "not found".
+router.param("chatId", (req, res, next, id) => {
+  if (!isValidUuid(id)) {
+    return res.status(404).json({
+      status: "error",
+      message: "Coach chat not found",
+    });
+  }
+
+  next();
+});
 
 /*
  * GET /api/coach/chats

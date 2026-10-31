@@ -107,6 +107,12 @@ export default function SettingsPage() {
   const [recurringRemindersEnabled, setRecurringRemindersEnabled] =
     useState(true);
 
+  const [emailChangePassword, setEmailChangePassword] = useState("");
+
+  const emailChanged =
+    settings !== null &&
+    email.trim().toLowerCase() !== settings.email.toLowerCase();
+
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -221,6 +227,7 @@ export default function SettingsPage() {
     const response = await updateSettings({
       name,
       email,
+      currentPassword: emailChanged ? emailChangePassword : undefined,
       currencyCode,
       incomeSource: incomeSource.trim() || null,
       monthlyIncome: monthlyIncome.trim() === "" ? null : Number(monthlyIncome),
@@ -237,6 +244,7 @@ export default function SettingsPage() {
     });
 
     setSettings(response.data.settings);
+    setEmailChangePassword("");
   }
 
   async function handleSaveProfile(event: FormEvent) {
@@ -578,6 +586,28 @@ export default function SettingsPage() {
                   className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-slate-900"
                 />
               </div>
+
+              {emailChanged && (
+                <div className="md:col-span-2">
+                  <label className="mb-2 block text-sm font-medium text-slate-700">
+                    Current password
+                  </label>
+
+                  <input
+                    type="password"
+                    autoComplete="current-password"
+                    value={emailChangePassword}
+                    onChange={(event) =>
+                      setEmailChangePassword(event.target.value)
+                    }
+                    className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-slate-900"
+                  />
+
+                  <p className="mt-2 text-xs text-slate-500">
+                    Enter your current password to change your email address.
+                  </p>
+                </div>
+              )}
             </div>
 
             <div className="mt-6 flex justify-end">
