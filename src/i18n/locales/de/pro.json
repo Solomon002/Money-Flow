@@ -46,6 +46,11 @@
     "mobile_money": "Mobile Money"
   },
   "features": {
+    "unlimitedCoach": "Unbegrenzter MoneyFlow Coach",
+    "autoCategorize": "Automatische Kategorien für importierte Auszüge",
+    "recurring": "Wiederkehrende Rechnungen und Abos automatisch erkannt",
+    "forecast": "Ausgabenprognose zum Monatsende",
+    "coachAllowance": "20 MoneyFlow-Coach-Nachrichten pro Monat",
     "advancedReports": "Erweiterte Berichte",
     "spendingBreakdowns": "Detaillierte Ausgabenaufschlüsselung",
     "topSpending": "Analyse der größten Ausgaben",

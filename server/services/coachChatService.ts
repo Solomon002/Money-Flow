@@ -318,3 +318,21 @@ export async function sendCoachMessage({
     } as const;
   }
 }
+// Free plan Coach allowance; Pro is unlimited (still hourly rate-limited).
+export const FREE_COACH_MESSAGES_PER_MONTH = 20;
+
+export async function countCoachMessagesThisMonth(userId: string) {
+  const result = await pool.query<{ count: number }>(
+    `
+      SELECT COUNT(*)::int AS count
+      FROM public.coach_messages m
+      INNER JOIN public.coach_chats c ON c.id = m.chat_id
+      WHERE c.user_id = $1
+        AND m.role = 'user'
+        AND m.created_at >= date_trunc('month', NOW())
+    `,
+    [userId],
+  );
+
+  return result.rows[0]?.count ?? 0;
+}

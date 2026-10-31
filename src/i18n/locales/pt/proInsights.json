@@ -1,0 +1,19 @@
+{
+  "teaserTitle": "Veja suas contas chegando e como seu mês vai terminar",
+  "teaserBody": "O MoneyFlow Pro identifica suas contas e assinaturas recorrentes, mostra quando cada uma vence e prevê quanto você vai gastar e quanto vai sobrar no fim do mês.",
+  "forecastTitle": "Previsão de fim de mês",
+  "dayOf": "Dia {{day}} de {{total}}",
+  "spentSoFar": "Gasto até agora",
+  "projectedSpending": "Previsto para o mês",
+  "endPositive": "Nesse ritmo, você vai terminar o mês com cerca de {{amount}} a mais.",
+  "endNegative": "Nesse ritmo, você vai gastar cerca de {{amount}} a mais do que entrou este mês.",
+  "overBudget": "Você está a caminho de ultrapassar seus orçamentos em cerca de {{amount}}.",
+  "withinBudget": "Você deve ficar cerca de {{amount}} abaixo dos seus orçamentos.",
+  "forecastNote": "Com base no seu ritmo de gastos deste mês e nos pagamentos recorrentes ainda previstos.",
+  "recurringTitle": "Contas e receitas recorrentes",
+  "recurringBody": "Encontrados automaticamente nas suas transações.",
+  "noRecurring": "Nenhum pagamento recorrente ainda. Eles aparecem quando o mesmo pagamento se repete cerca de três vezes.",
+  "monthly": "Mensal",
+  "weekly": "Semanal",
+  "nextOn": "próximo em {{date}}"
+}

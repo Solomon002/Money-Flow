@@ -46,6 +46,11 @@
     "mobile_money": "Dinheiro móvel"
   },
   "features": {
+    "unlimitedCoach": "Coach MoneyFlow ilimitado",
+    "autoCategorize": "Categorias automáticas para extratos importados",
+    "recurring": "Contas e assinaturas recorrentes detectadas para você",
+    "forecast": "Previsão de gastos no fim do mês",
+    "coachAllowance": "20 mensagens ao Coach MoneyFlow por mês",
     "advancedReports": "Relatórios avançados",
     "spendingBreakdowns": "Detalhamento de gastos",
     "topSpending": "Análise dos maiores gastos",

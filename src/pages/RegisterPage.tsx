@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useTranslation } from "react-i18next";
+import { Trans, useTranslation } from "react-i18next";
 import LanguageSwitcher from "../components/LanguageSwitcher.js";
 import { Link, useNavigate } from "react-router";
 import { registerUser, getGoogleSignInUrl } from "../api/auth.js";
@@ -14,6 +14,7 @@ export default function RegisterPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [acceptTerms, setAcceptTerms] = useState(false);
 
   const passwordRequirements = [
     {
@@ -103,6 +104,16 @@ export default function RegisterPage() {
             {t("auth.continueWithGoogle")}
           </button>
 
+          <p className="mt-3 text-center text-xs leading-5 text-slate-500">
+            <Trans
+              i18nKey="legal.googleNotice"
+              components={{
+                terms: <Link to="/terms" className="font-medium text-emerald-700 hover:underline" />,
+                privacy: <Link to="/privacy" className="font-medium text-emerald-700 hover:underline" />,
+              }}
+            />
+          </p>
+
           <div className="my-6 flex items-center gap-3">
             <div className="h-px flex-1 bg-slate-200" />
 
@@ -136,6 +147,7 @@ export default function RegisterPage() {
                   name: name.trim(),
                   email: email.trim(),
                   password,
+                  acceptTerms,
                 });
 
                 if (!result.response.ok) {
@@ -271,6 +283,26 @@ export default function RegisterPage() {
                 className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none transition focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
               />
             </div>
+
+            <label className="flex items-start gap-3 text-sm leading-6 text-slate-600">
+              <input
+                type="checkbox"
+                checked={acceptTerms}
+                onChange={(event) => setAcceptTerms(event.target.checked)}
+                required
+                className="mt-1 h-4 w-4 accent-emerald-600"
+              />
+
+              <span>
+                <Trans
+                  i18nKey="legal.acceptLabel"
+                  components={{
+                    terms: <Link to="/terms" target="_blank" className="font-medium text-emerald-700 hover:underline" />,
+                    privacy: <Link to="/privacy" target="_blank" className="font-medium text-emerald-700 hover:underline" />,
+                  }}
+                />
+              </span>
+            </label>
 
             {errorMessage && (
               <div

@@ -146,8 +146,31 @@ export default function LandingPage() {
     description: t(`landing.preview.${activeTab}.description`),
   };
 
+  // Set by Settings after the user deletes their account.
+  const [accountDeleted, setAccountDeleted] = useState(() =>
+    new URLSearchParams(window.location.search).has("accountDeleted"),
+  );
+
   return (
     <main className="min-h-screen overflow-hidden bg-slate-50 text-slate-900">
+      {accountDeleted && (
+        <div
+          role="status"
+          className="fixed inset-x-4 top-20 z-50 mx-auto flex max-w-lg items-start justify-between gap-3 rounded-xl border border-emerald-200 bg-white p-4 text-sm text-slate-700 shadow-lg"
+        >
+          <span>{t("account.deletedNotice")}</span>
+
+          <button
+            type="button"
+            onClick={() => setAccountDeleted(false)}
+            className="shrink-0 rounded-lg p-1 text-slate-400 hover:text-slate-700"
+            aria-label={t("common.close")}
+          >
+            <X size={16} />
+          </button>
+        </div>
+      )}
+
       <ScrollProgressBar />
 
       {/* Navigation */}
@@ -1249,7 +1272,7 @@ export default function LandingPage() {
             </p>
           </div>
 
-          <div className="flex items-center gap-6 text-sm">
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
             <a href="#features" className="transition hover:text-white">
               {t("landing.nav.features")}
             </a>
@@ -1261,6 +1284,14 @@ export default function LandingPage() {
             <a href="#questions" className="transition hover:text-white">
               {t("landing.nav.questions")}
             </a>
+
+            <Link to="/terms" className="transition hover:text-white">
+              {t("legal.termsTitle")}
+            </Link>
+
+            <Link to="/privacy" className="transition hover:text-white">
+              {t("legal.privacyTitle")}
+            </Link>
           </div>
 
           <p className="text-xs text-slate-600">

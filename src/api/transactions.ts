@@ -51,3 +51,15 @@ export async function importTransactions(
     body: JSON.stringify({ rows, skipDuplicates }),
   });
 }
+
+// MoneyFlow Pro: suggested category id (or null) for each item, in order.
+export async function suggestCategories(
+  items: { description: string; type: "income" | "expense" }[],
+): Promise<(string | null)[]> {
+  const result = await apiRequest("/api/transactions/suggest-categories", {
+    method: "POST",
+    body: JSON.stringify({ items }),
+  });
+
+  return result.data.suggestions;
+}

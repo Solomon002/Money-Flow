@@ -74,7 +74,8 @@ export async function registerUser({
   name,
   email,
   password,
-}: RegisterUserInput) {
+  termsVersion,
+}: RegisterUserInput & { termsVersion: string }) {
   const passwordHash = await argon2.hash(password, {
     type: argon2.argon2id,
   });
@@ -84,16 +85,18 @@ export async function registerUser({
       INSERT INTO public.users (
         name,
         email,
-        password_hash
+        password_hash,
+        terms_accepted_at,
+        terms_version
       )
-      VALUES ($1, $2, $3)
+      VALUES ($1, $2, $3, NOW(), $4)
       RETURNING
         id,
         name,
         email,
         created_at
     `,
-    [name, email, passwordHash],
+    [name, email, passwordHash, termsVersion],
   );
 
   return result.rows[0];
@@ -233,9 +236,11 @@ export async function claimAccountWithVerifiedEmail(
 export async function createGoogleUser({
   name,
   email,
+  termsVersion,
 }: {
   name: string;
   email: string;
+  termsVersion: string;
 }) {
   const result = await pool.query(
     `
@@ -243,16 +248,18 @@ export async function createGoogleUser({
         name,
         email,
         password_hash,
-        email_verified_at
+        email_verified_at,
+        terms_accepted_at,
+        terms_version
       )
-      VALUES ($1, $2, NULL, NOW())
+      VALUES ($1, $2, NULL, NOW(), NOW(), $3)
       RETURNING
         id,
         name,
         email,
         created_at
     `,
-    [name, email],
+    [name, email, termsVersion],
   );
 
   return result.rows[0];

@@ -1,16 +1,16 @@
 import { Router } from "express";
 
 import {
-  askMoneyFlowCoach,
-} from "../services/coachService.js";
-
-import {
   createCoachChat,
   getCoachChats,
   getCoachChat,
   deleteCoachChat,
   sendCoachMessage,
+  countCoachMessagesThisMonth,
+  FREE_COACH_MESSAGES_PER_MONTH,
 } from "../services/coachChatService.js";
+
+import { hasProAccess } from "../services/subscriptionService.js";
 
 import {
   requireAuth,
@@ -35,6 +35,45 @@ router.param("chatId", (req, res, next, id) => {
 
   next();
 });
+
+/*
+ * GET /api/coach/usage
+ *
+ * How many Coach messages the user has left this month.
+ */
+router.get(
+  "/usage",
+  requireAuth,
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      if (!req.userId) {
+        return res.status(401).json({
+          status: "error",
+          message: "Authentication required",
+        });
+      }
+
+      const [isPro, used] = await Promise.all([
+        hasProAccess(req.userId),
+        countCoachMessagesThisMonth(req.userId),
+      ]);
+
+      return res.json({
+        status: "success",
+        isPro,
+        used,
+        limit: isPro ? null : FREE_COACH_MESSAGES_PER_MONTH,
+      });
+    } catch (error) {
+      console.error("Failed to get Coach usage:", error);
+
+      return res.status(500).json({
+        status: "error",
+        message: "Unable to load Coach usage",
+      });
+    }
+  },
+);
 
 /*
  * GET /api/coach/chats
@@ -294,6 +333,21 @@ router.post(
         });
       }
 
+      // Free plan: limited messages per calendar month. Checked on the
+      // server so it can't be skipped by calling the API directly.
+      if (!(await hasProAccess(req.userId))) {
+        const used = await countCoachMessagesThisMonth(req.userId);
+
+        if (used >= FREE_COACH_MESSAGES_PER_MONTH) {
+          return res.status(403).json({
+            status: "error",
+            code: "coach_limit_reached",
+            message:
+              "You've used all your free MoneyFlow Coach messages this month. Upgrade to Pro for unlimited Coach.",
+          });
+        }
+      }
+
       const result =
         await sendCoachMessage({
           userId:
@@ -323,153 +377,6 @@ router.post(
         assistantMessage:
           result.assistantMessage,
         title: result.title,
-      });
-    } catch (error: any) {
-      console.error(
-        "MoneyFlow Coach failed:",
-        error,
-      );
-
-      if (
-        error?.message ===
-        "GEMINI_API_KEY is not defined"
-      ) {
-        return res.status(503).json({
-          status: "error",
-          message:
-            "MoneyFlow Coach is not configured yet.",
-        });
-      }
-
-      if (
-        error?.status === 429 ||
-        error?.statusCode === 429 ||
-        error?.code ===
-          "too_many_requests"
-      ) {
-        return res.status(429).json({
-          status: "error",
-          message:
-            "MoneyFlow Coach has reached its daily AI usage limit. Please try again later.",
-        });
-      }
-
-      return res.status(500).json({
-        status: "error",
-        message:
-          "Unable to get a response from MoneyFlow Coach",
-      });
-    }
-  },
-);
-
-/*
- * POST /api/coach/ask
- *
- * Existing Coach endpoint.
- *
- * Kept temporarily so the current frontend
- * does not break while we build the new
- * persistent-chat frontend.
- */
-router.post(
-  "/ask",
-  requireAuth,
-  coachRateLimiter,
-  async (
-    req: AuthenticatedRequest,
-    res,
-  ) => {
-    try {
-      if (!req.userId) {
-        return res.status(401).json({
-          status: "error",
-          message:
-            "Authentication required",
-        });
-      }
-
-      const {
-        question,
-        conversation,
-      } = req.body;
-
-      if (
-        typeof question !== "string" ||
-        question.trim().length === 0
-      ) {
-        return res.status(400).json({
-          status: "error",
-          message:
-            "Question is required",
-        });
-      }
-
-      if (
-        question.trim().length > 1000
-      ) {
-        return res.status(400).json({
-          status: "error",
-          message:
-            "Question must be 1000 characters or less",
-        });
-      }
-
-      if (
-        conversation !== undefined &&
-        !Array.isArray(conversation)
-      ) {
-        return res.status(400).json({
-          status: "error",
-          message:
-            "Conversation must be an array",
-        });
-      }
-
-      const cleanedConversation =
-        (conversation ?? [])
-          .filter(
-            (message: unknown) => {
-              if (
-                typeof message !==
-                  "object" ||
-                message === null
-              ) {
-                return false;
-              }
-
-              const item =
-                message as {
-                  role?: unknown;
-                  content?: unknown;
-                };
-
-              return (
-                (item.role === "user" ||
-                  item.role ===
-                    "assistant") &&
-                typeof item.content ===
-                  "string" &&
-                item.content.trim()
-                  .length > 0 &&
-                item.content.length <= 4000
-              );
-            },
-          )
-          .slice(-12);
-
-      const result =
-        await askMoneyFlowCoach(
-          req.userId,
-          question.trim(),
-          cleanedConversation,
-          resolveLanguage(req.headers["accept-language"]),
-        );
-
-      return res.json({
-        status: "success",
-        answer: result.answer,
-        context: result.context,
       });
     } catch (error: any) {
       console.error(

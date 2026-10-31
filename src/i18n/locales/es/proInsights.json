@@ -1,0 +1,19 @@
+{
+  "teaserTitle": "Anticipa tus facturas y cómo acabará tu mes",
+  "teaserBody": "MoneyFlow Pro detecta tus facturas y suscripciones recurrentes, te dice cuándo vence cada una y prevé cuánto gastarás y te quedará a fin de mes.",
+  "forecastTitle": "Previsión de fin de mes",
+  "dayOf": "Día {{day}} de {{total}}",
+  "spentSoFar": "Gastado hasta ahora",
+  "projectedSpending": "Previsto para el mes",
+  "endPositive": "A este ritmo terminarás el mes con unos {{amount}} a favor.",
+  "endNegative": "A este ritmo gastarás unos {{amount}} más de lo que ha entrado este mes.",
+  "overBudget": "Vas camino de superar tus presupuestos en unos {{amount}}.",
+  "withinBudget": "Vas camino de quedarte unos {{amount}} por debajo de tus presupuestos.",
+  "forecastNote": "Basado en tu ritmo de gasto de este mes y los pagos recurrentes pendientes.",
+  "recurringTitle": "Facturas e ingresos recurrentes",
+  "recurringBody": "Detectados automáticamente en tus transacciones.",
+  "noRecurring": "Aún no hay pagos recurrentes. Aparecen cuando el mismo pago se repite unas tres veces.",
+  "monthly": "Mensual",
+  "weekly": "Semanal",
+  "nextOn": "próximo el {{date}}"
+}

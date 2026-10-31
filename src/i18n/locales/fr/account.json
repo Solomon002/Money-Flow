@@ -1,0 +1,15 @@
+{
+  "title": "Vos données",
+  "body": "Téléchargez une copie de tout ce que MoneyFlow conserve sur vous, ou supprimez définitivement votre compte.",
+  "export": "Télécharger mes données",
+  "exporting": "Préparation...",
+  "exportFailed": "Impossible d'exporter vos données",
+  "delete": "Supprimer le compte",
+  "deleteTitle": "Supprimer définitivement votre compte ?",
+  "deleteWarning": "Cela supprime immédiatement votre profil, vos transactions, budgets, objectifs, conversations avec le coach et votre historique de paiements. C'est irréversible et le temps Pro restant est perdu. Téléchargez vos données d'abord si vous voulez une copie.",
+  "confirmPassword": "Saisissez votre mot de passe pour confirmer",
+  "confirmEmail": "Saisissez {{email}} pour confirmer",
+  "deleteForever": "Supprimer mon compte",
+  "deleteFailed": "Impossible de supprimer votre compte",
+  "deletedNotice": "Votre compte MoneyFlow et toutes ses données ont été supprimés."
+}

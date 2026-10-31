@@ -8,11 +8,14 @@ import {
   CheckCircle2,
   Download,
   FileSpreadsheet,
+  Sparkles,
   Upload,
 } from "lucide-react";
+import { Link } from "react-router";
 
 import { getCategories, type Category } from "../api/categories.js";
-import { importTransactions } from "../api/transactions.js";
+import { importTransactions, suggestCategories } from "../api/transactions.js";
+import { getProAccess } from "../api/subscription.js";
 import { useAuth } from "../context/AuthContext.js";
 import { categoryLabel } from "../i18n/categories.js";
 import { formatDate, formatMoney } from "../i18n/format.js";
@@ -74,10 +77,20 @@ export default function ImportTransactionsPage() {
   const [rows, setRows] = useState<ReviewRow[]>([]);
   const [skipDuplicates, setSkipDuplicates] = useState(true);
   const [importing, setImporting] = useState(false);
+  const [isPro, setIsPro] = useState(false);
+  const [preparing, setPreparing] = useState(false);
+  // How many rows Pro auto-categorisation filled in (null = not run).
+  const [autoCategorized, setAutoCategorized] = useState<number | null>(null);
   const [result, setResult] = useState<{
     importedCount: number;
     skippedCount: number;
   } | null>(null);
+
+  useEffect(() => {
+    getProAccess()
+      .then(setIsPro)
+      .catch(() => setIsPro(false));
+  }, []);
 
   useEffect(() => {
     getCategories()
@@ -197,8 +210,9 @@ export default function ImportTransactionsPage() {
     });
   }
 
-  function buildRows() {
+  async function buildRows() {
     setError("");
+    setAutoCategorized(null);
 
     const built: ReviewRow[] = records.map((record) => {
       let amount: number | null;
@@ -231,6 +245,35 @@ export default function ImportTransactionsPage() {
     if (!built.some((row) => row.include)) {
       setError(t("import.errors.noValidRows"));
       return;
+    }
+
+    if (isPro) {
+      setPreparing(true);
+
+      try {
+        const suggestions = await suggestCategories(
+          built.map((row) => ({
+            description: row.description,
+            type: row.type,
+          })),
+        );
+
+        let filled = 0;
+
+        suggestions.forEach((categoryId, index) => {
+          if (categoryId && categories.some((category) => category.id === categoryId)) {
+            built[index].categoryId = categoryId;
+            filled += 1;
+          }
+        });
+
+        setAutoCategorized(filled);
+      } catch {
+        // Suggestions are a convenience; the defaults still work.
+        setAutoCategorized(null);
+      } finally {
+        setPreparing(false);
+      }
     }
 
     setRows(built);
@@ -614,10 +657,10 @@ export default function ImportTransactionsPage() {
             <button
               type="button"
               onClick={buildRows}
-              disabled={!dateColumn || !descriptionColumn || !expenseCategoryId || !incomeCategoryId}
+              disabled={preparing || !dateColumn || !descriptionColumn || !expenseCategoryId || !incomeCategoryId}
               className="rounded-xl bg-emerald-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-50"
             >
-              {t("import.map.continue")}
+              {preparing ? t("import.review.sorting") : t("import.map.continue")}
             </button>
           </div>
         </section>
@@ -650,6 +693,23 @@ export default function ImportTransactionsPage() {
               {t("import.review.skipDuplicates")}
             </label>
           </div>
+
+          {isPro ? (
+            autoCategorized !== null && (
+              <p className="flex items-center gap-2 rounded-xl bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+                <Sparkles size={16} className="shrink-0" />
+                {t("import.review.autoCategorized", { count: autoCategorized })}
+              </p>
+            )
+          ) : (
+            <p className="flex flex-wrap items-center gap-2 rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-600">
+              <Sparkles size={16} className="shrink-0 text-emerald-600" />
+              {t("import.review.proHint")}
+              <Link to="/app/pro" className="font-semibold text-emerald-700 hover:underline">
+                {t("pro.upgrade")}
+              </Link>
+            </p>
+          )}
 
           <div className="max-h-[60vh] overflow-auto rounded-xl border border-slate-200">
             <table className="w-full text-left text-sm">

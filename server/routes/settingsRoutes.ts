@@ -10,7 +10,15 @@ import {
   verifyEmailChange,
 } from "../services/authService.js";
 
-import { passwordCheckRateLimiter } from "../middleware/rateLimitMiddleware.js";
+import {
+  accountDataRateLimiter,
+  passwordCheckRateLimiter,
+} from "../middleware/rateLimitMiddleware.js";
+
+import {
+  deleteAccount,
+  exportUserData,
+} from "../services/accountService.js";
 
 import {
   ALLOWED_CURRENCIES,
@@ -478,6 +486,109 @@ router.put(
         status: "error",
         message:
           "Unable to change password",
+      });
+    }
+  },
+);
+
+/*
+ * GET /api/settings/export
+ * Downloads everything stored about the signed-in user as JSON.
+ */
+router.get(
+  "/export",
+  requireAuth,
+  accountDataRateLimiter,
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      if (!req.userId) {
+        return res.status(401).json({
+          status: "error",
+          message: "Authentication required",
+        });
+      }
+
+      const data = await exportUserData(req.userId);
+
+      if (!data) {
+        return res.status(404).json({
+          status: "error",
+          message: "User not found",
+        });
+      }
+
+      res.setHeader("Cache-Control", "no-store");
+
+      return res.json({
+        status: "success",
+        data,
+      });
+    } catch (error) {
+      console.error("Exporting account data failed:", error);
+
+      return res.status(500).json({
+        status: "error",
+        message: "Unable to export your data",
+      });
+    }
+  },
+);
+
+/*
+ * DELETE /api/settings/account
+ * Body: { password } for password accounts, { confirmEmail } for
+ * Google-only accounts. Permanently deletes the account and all its data.
+ */
+router.delete(
+  "/account",
+  requireAuth,
+  passwordCheckRateLimiter,
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      if (!req.userId) {
+        return res.status(401).json({
+          status: "error",
+          message: "Authentication required",
+        });
+      }
+
+      const result = await deleteAccount({
+        userId: req.userId,
+        password: req.body?.password,
+        confirmEmail: req.body?.confirmEmail,
+      });
+
+      if (result === "password_incorrect") {
+        return res.status(403).json({
+          status: "error",
+          message: "Current password is incorrect",
+        });
+      }
+
+      if (result === "confirmation_incorrect") {
+        return res.status(400).json({
+          status: "error",
+          message: "Type your email address exactly to confirm",
+        });
+      }
+
+      if (result === "not_found") {
+        return res.status(404).json({
+          status: "error",
+          message: "User not found",
+        });
+      }
+
+      return res.json({
+        status: "success",
+        message: "Your account has been deleted",
+      });
+    } catch (error) {
+      console.error("Deleting account failed:", error);
+
+      return res.status(500).json({
+        status: "error",
+        message: "Unable to delete your account",
       });
     }
   },

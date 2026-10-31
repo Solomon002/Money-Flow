@@ -46,6 +46,11 @@
     "mobile_money": "Mobile money"
   },
   "features": {
+    "unlimitedCoach": "Unlimited MoneyFlow Coach",
+    "autoCategorize": "Automatic categories for imported statements",
+    "recurring": "Recurring bills and subscriptions detected for you",
+    "forecast": "Month-end spending forecast",
+    "coachAllowance": "20 MoneyFlow Coach messages a month",
     "advancedReports": "Advanced reports",
     "spendingBreakdowns": "Detailed spending breakdowns",
     "topSpending": "Top spending analysis",

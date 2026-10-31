@@ -1,6 +1,7 @@
 import { FormEvent, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import LanguageSwitcher from "../components/LanguageSwitcher.js";
+import AccountDataSection from "../components/AccountDataSection.js";
 import { CURRENCIES, currencyLabel } from "../i18n/currencies.js";
 import { formatDate } from "../i18n/format.js";
 import {
@@ -1277,6 +1278,11 @@ export default function SettingsPage() {
               </button>
             </div>
           </form>
+
+          <AccountDataSection
+            email={settings.email}
+            hasPassword={settings.has_password}
+          />
         </div>
       </div>
 
