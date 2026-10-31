@@ -8,6 +8,7 @@ import {
   hasProAccess,
   cancelSubscription,
   reactivateSubscription,
+  activateProFromPayment,
 } from "../services/subscriptionService.js";
 import {
   getProPriceMinor,
@@ -194,10 +195,7 @@ router.post(
 
       return res.status(500).json({
         status: "error",
-        message:
-          error instanceof Error
-            ? error.message
-            : "Failed to initialize Paystack subscription",
+        message: "Failed to initialize Paystack subscription",
       });
     }
   },
@@ -328,98 +326,24 @@ router.post(
         });
       }
 
-      const subscriptionResult =
-        await pool.query(
-          `
-            INSERT INTO subscriptions (
-              user_id,
-              plan,
-              status,
-              provider,
-              provider_customer_id,
-              current_period_start,
-              current_period_end
-            )
-            VALUES (
-              $1,
-              'pro',
-              'active',
-              'paystack',
-              $2,
-              $3,
-              NOW() + INTERVAL '30 days'
-            )
-            ON CONFLICT (user_id)
-            DO UPDATE SET
-              plan = 'pro',
-              status = 'active',
-              provider = 'paystack',
-              provider_customer_id = EXCLUDED.provider_customer_id,
-              current_period_start = EXCLUDED.current_period_start,
-              current_period_end = NOW() + INTERVAL '30 days',
-              updated_at = NOW()
-            RETURNING
-              id,
-              user_id,
-              plan,
-              status,
-              provider,
-              provider_customer_id,
-              provider_subscription_id,
-              current_period_start,
-              current_period_end,
-              created_at,
-              updated_at
-          `,
-          [
-            req.userId,
-            transaction.customer?.customer_code ?? null,
-            transaction.paid_at ?? transaction.created_at,
-          ],
-        );
-
-      await pool.query(
-        `
-          INSERT INTO subscription_payments (
-            user_id,
-            amount_minor,
-            currency,
-            status,
-            provider,
-            provider_reference,
-            provider_transaction_id,
-            channel,
-            paid_at
-          )
-          VALUES (
-            $1,
-            $2,
-            $3,
-            'success',
-            'paystack',
-            $4,
-            $5,
-            $6,
-            COALESCE($7, NOW())
-          )
-          ON CONFLICT (provider, provider_reference)
-          DO NOTHING
-        `,
-        [
-          req.userId,
-          transaction.amount ?? expectedAmountMinor,
-          transaction.currency ?? "NGN",
-          transaction.reference,
-          transaction.id ?? null,
-          transaction.authorization?.channel ?? null,
-          transaction.paid_at ?? transaction.created_at ?? null,
-        ],
-      );
+      // A reference that was already recorded (by an earlier /verify
+      // call or by the webhook) does not extend the subscription again.
+      const { subscription } = await activateProFromPayment({
+        userId: req.userId,
+        amountMinor: transaction.amount,
+        currency: transaction.currency,
+        reference: transaction.reference,
+        transactionId: transaction.id ?? null,
+        channel: transaction.authorization?.channel ?? null,
+        paidAt: transaction.paid_at ?? transaction.created_at ?? null,
+        customerCode: transaction.customer?.customer_code ?? null,
+        subscriptionCode: null,
+      });
 
       return res.status(200).json({
         status: "success",
         message: "MoneyFlow Pro activated successfully",
-        subscription: subscriptionResult.rows[0],
+        subscription,
       });
     } catch (error) {
       console.error(
@@ -429,10 +353,7 @@ router.post(
 
       return res.status(500).json({
         status: "error",
-        message:
-          error instanceof Error
-            ? error.message
-            : "Failed to verify Paystack transaction",
+        message: "Failed to verify Paystack transaction",
       });
     }
   },

@@ -17,6 +17,8 @@ import {
   type AuthenticatedRequest,
 } from "../middleware/authMiddleware.js";
 
+import { coachRateLimiter } from "../middleware/rateLimitMiddleware.js";
+
 const router = Router();
 
 /*
@@ -235,6 +237,7 @@ router.delete(
 router.post(
   "/chats/:chatId/messages",
   requireAuth,
+  coachRateLimiter,
   async (
     req: AuthenticatedRequest,
     res,
@@ -354,6 +357,7 @@ router.post(
 router.post(
   "/ask",
   requireAuth,
+  coachRateLimiter,
   async (
     req: AuthenticatedRequest,
     res,
@@ -429,7 +433,8 @@ router.post(
                 typeof item.content ===
                   "string" &&
                 item.content.trim()
-                  .length > 0
+                  .length > 0 &&
+                item.content.length <= 4000
               );
             },
           )
