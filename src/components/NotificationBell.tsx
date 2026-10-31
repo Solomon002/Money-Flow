@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { formatRelativeTime } from "../i18n/format.js";
 import { useNavigate } from "react-router";
 
 import {
@@ -10,13 +12,7 @@ import {
 } from "../api/notifications.js";
 
 function formatNotificationTime(createdAt: string) {
-  const date = new Date(createdAt);
-
-  if (Number.isNaN(date.getTime())) {
-    return "";
-  }
-
-  return date.toLocaleString();
+  return formatRelativeTime(createdAt);
 }
 
 function getNotificationIcon(type: Notification["type"]) {
@@ -46,6 +42,7 @@ function getNotificationIcon(type: Notification["type"]) {
 
 export default function NotificationBell() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const [notifications, setNotifications] = useState<Notification[]>([]);
 
@@ -158,7 +155,7 @@ export default function NotificationBell() {
     } catch (error) {
       console.error("Failed to load notifications:", error);
 
-      setError("Unable to load notifications.");
+      setError(t("notifications.loadFailed"));
     } finally {
       if (showLoading) {
         setIsLoading(false);
@@ -301,7 +298,7 @@ export default function NotificationBell() {
           }
         }}
         className="relative flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-700 transition hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-gray-800"
-        aria-label="Notifications"
+        aria-label={t("notifications.title")}
       >
         <span className="text-xl">🔔</span>
 
@@ -317,7 +314,7 @@ export default function NotificationBell() {
           <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3 dark:border-gray-700">
             <div className="min-w-0">
               <h3 className="font-semibold text-gray-900 dark:text-white">
-                Notifications
+                {t("notifications.title")}
               </h3>
 
               {unreadCount > 0 && (
@@ -333,7 +330,7 @@ export default function NotificationBell() {
                 onClick={handleMarkAllAsRead}
                 className="shrink-0 text-xs font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400"
               >
-                Mark all as read
+                {t("notifications.markAllRead")}
               </button>
             )}
           </div>
@@ -341,7 +338,7 @@ export default function NotificationBell() {
           <div className="max-h-[70vh] overflow-y-auto sm:max-h-105">
             {isLoading && (
               <div className="px-4 py-8 text-center text-sm text-gray-500">
-                Loading notifications...
+                {t("notifications.loading")}
               </div>
             )}
 
@@ -356,11 +353,11 @@ export default function NotificationBell() {
                 <div className="mb-2 text-3xl">🔔</div>
 
                 <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  No notifications
+                  {t("notifications.emptyTitle")}
                 </p>
 
                 <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                  You're all caught up.
+                  {t("notifications.emptyBody")}
                 </p>
               </div>
             )}
@@ -395,7 +392,7 @@ export default function NotificationBell() {
                             type="button"
                             onClick={() => handleDelete(notification.id)}
                             className="shrink-0 text-xs text-gray-400 hover:text-red-500"
-                            aria-label="Delete notification"
+                            aria-label={t("notifications.delete")}
                           >
                             ✕
                           </button>
@@ -428,7 +425,7 @@ export default function NotificationBell() {
                               onClick={() => handleMarkAsRead(notification.id)}
                               className="text-xs font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400"
                             >
-                              Mark as read
+                              {t("notifications.markRead")}
                             </button>
                           )}
                         </div>

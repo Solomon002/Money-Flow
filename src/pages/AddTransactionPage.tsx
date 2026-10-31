@@ -1,13 +1,18 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
 import { ArrowLeft } from "lucide-react";
 import { getCategories, type Category } from "../api/categories.js";
 import { apiRequest } from "../api/client.js";
 import { useAuth } from "../context/AuthContext.js";
+import { currencySymbol as getCurrencySymbol } from "../i18n/format.js";
+import { categoryLabel } from "../i18n/categories.js";
+import { todayLocalDate } from "../utils/dates.js";
 
 export default function AddTransactionPage() {
   const navigate = useNavigate();
   const { onboardingPreferences } = useAuth();
+  const { t } = useTranslation();
 
   const [categories, setCategories] = useState<Category[]>([]);
   const [type, setType] = useState<"income" | "expense">("expense");
@@ -16,7 +21,7 @@ export default function AddTransactionPage() {
   const [amount, setAmount] = useState("");
   const [description, setDescription] = useState("");
   const [transactionDate, setTransactionDate] = useState(
-    new Date().toISOString().split("T")[0],
+    todayLocalDate(),
   );
   const [notes, setNotes] = useState("");
 
@@ -24,17 +29,9 @@ export default function AddTransactionPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
-  const currencySymbols: Record<string, string> = {
-    NGN: "₦",
-    USD: "$",
-    GBP: "£",
-    EUR: "€",
-  };
-
-  const currencySymbol =
-    currencySymbols[onboardingPreferences?.currency_code || "NGN"] ||
-    onboardingPreferences?.currency_code ||
-    "NGN";
+  const currencySymbol = getCurrencySymbol(
+    onboardingPreferences?.currency_code || "NGN",
+  );
 
   useEffect(() => {
     async function loadCategories() {
@@ -45,7 +42,7 @@ export default function AddTransactionPage() {
         const result = await getCategories();
 
         if (!result.response.ok) {
-          throw new Error(result.data.message || "Unable to load categories");
+          throw new Error(result.data.message || t("transactions.categoriesFailed"));
         }
 
         setCategories(result.data.categories);
@@ -53,7 +50,7 @@ export default function AddTransactionPage() {
         console.error("Loading categories failed:", error);
 
         setErrorMessage(
-          error instanceof Error ? error.message : "Unable to load categories",
+          error instanceof Error ? error.message : t("transactions.categoriesFailed"),
         );
       } finally {
         setIsLoadingCategories(false);
@@ -90,19 +87,19 @@ export default function AddTransactionPage() {
     setErrorMessage("");
 
     if (!categoryId) {
-      setErrorMessage("Please select a category.");
+      setErrorMessage(t("transactions.form.selectCategoryError"));
       return;
     }
 
     const amountNumber = Number(amount);
 
     if (!Number.isFinite(amountNumber) || amountNumber <= 0) {
-      setErrorMessage("Please enter an amount greater than zero.");
+      setErrorMessage(t("transactions.form.amountError"));
       return;
     }
 
     if (!description.trim()) {
-      setErrorMessage("Please enter a description.");
+      setErrorMessage(t("transactions.form.descriptionError"));
       return;
     }
 
@@ -122,7 +119,7 @@ export default function AddTransactionPage() {
       });
 
       if (!result.response.ok) {
-        throw new Error(result.data.message || "Unable to create transaction");
+        throw new Error(result.data.message || t("transactions.form.createFailed"));
       }
 
       navigate("/app/transactions");
@@ -130,7 +127,7 @@ export default function AddTransactionPage() {
       console.error("Creating transaction failed:", error);
 
       setErrorMessage(
-        error instanceof Error ? error.message : "Unable to create transaction",
+        error instanceof Error ? error.message : t("transactions.form.createFailed"),
       );
     } finally {
       setIsSaving(false);
@@ -144,16 +141,16 @@ export default function AddTransactionPage() {
           type="button"
           onClick={() => navigate("/app/transactions")}
           className="rounded-lg p-2 text-slate-500 transition hover:bg-slate-100"
-          aria-label="Go back"
+          aria-label={t("common.back")}
         >
           <ArrowLeft size={20} />
         </button>
 
         <div>
-          <p className="text-sm text-slate-500">Money activity</p>
+          <p className="text-sm text-slate-500">{t("transactions.eyebrow")}</p>
 
           <h1 className="mt-1 text-2xl font-bold text-slate-900">
-            Add transaction
+            {t("transactions.add")}
           </h1>
         </div>
       </div>
@@ -171,7 +168,7 @@ export default function AddTransactionPage() {
 
           <div>
             <label className="block text-sm font-medium text-slate-700">
-              Transaction type
+              {t("transactions.form.type")}
             </label>
 
             <div className="mt-2 grid grid-cols-2 gap-3">
@@ -184,7 +181,7 @@ export default function AddTransactionPage() {
                     : "border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
                 }`}
               >
-                Expense
+                {t("common.expense")}
               </button>
 
               <button
@@ -196,7 +193,7 @@ export default function AddTransactionPage() {
                     : "border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
                 }`}
               >
-                Income
+                {t("common.income")}
               </button>
             </div>
           </div>
@@ -206,7 +203,7 @@ export default function AddTransactionPage() {
               htmlFor="category"
               className="block text-sm font-medium text-slate-700"
             >
-              Category
+              {t("common.category")}
             </label>
 
             <select
@@ -218,13 +215,13 @@ export default function AddTransactionPage() {
             >
               <option value="">
                 {isLoadingCategories
-                  ? "Loading categories..."
-                  : "Select a category"}
+                  ? t("transactions.form.loadingCategories")
+                  : t("transactions.form.selectCategory")}
               </option>
 
               {availableCategories.map((category) => (
                 <option key={category.id} value={category.id}>
-                  {category.name}
+                  {categoryLabel(category.name)}
                 </option>
               ))}
             </select>
@@ -236,7 +233,7 @@ export default function AddTransactionPage() {
                 htmlFor="subcategory"
                 className="block text-sm font-medium text-slate-700"
               >
-                Subcategory
+                {t("transactions.form.subcategory")}
               </label>
 
               <select
@@ -245,11 +242,11 @@ export default function AddTransactionPage() {
                 onChange={(event) => setSubcategoryId(event.target.value)}
                 className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-slate-900"
               >
-                <option value="">No subcategory</option>
+                <option value="">{t("transactions.form.noSubcategory")}</option>
 
                 {availableSubcategories.map((subcategory) => (
                   <option key={subcategory.id} value={subcategory.id}>
-                    {subcategory.name}
+                    {categoryLabel(subcategory.name)}
                   </option>
                 ))}
               </select>
@@ -261,7 +258,7 @@ export default function AddTransactionPage() {
               htmlFor="amount"
               className="block text-sm font-medium text-slate-700"
             >
-              Amount
+              {t("common.amount")}
             </label>
 
             <div className="relative mt-2">
@@ -287,7 +284,7 @@ export default function AddTransactionPage() {
               htmlFor="description"
               className="block text-sm font-medium text-slate-700"
             >
-              Description
+              {t("common.description")}
             </label>
 
             <input
@@ -295,7 +292,8 @@ export default function AddTransactionPage() {
               type="text"
               value={description}
               onChange={(event) => setDescription(event.target.value)}
-              placeholder="e.g. Groceries"
+              placeholder={t("transactions.form.descriptionPlaceholder")}
+              maxLength={160}
               className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-slate-900"
             />
           </div>
@@ -305,7 +303,7 @@ export default function AddTransactionPage() {
               htmlFor="transactionDate"
               className="block text-sm font-medium text-slate-700"
             >
-              Date
+              {t("common.date")}
             </label>
 
             <input
@@ -322,14 +320,14 @@ export default function AddTransactionPage() {
               htmlFor="notes"
               className="block text-sm font-medium text-slate-700"
             >
-              Notes
+              {t("common.notes")}
             </label>
 
             <textarea
               id="notes"
               value={notes}
               onChange={(event) => setNotes(event.target.value)}
-              placeholder="Optional notes"
+              placeholder={t("transactions.form.notesPlaceholder")}
               rows={4}
               className="mt-2 w-full resize-none rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-slate-900"
             />
@@ -341,7 +339,7 @@ export default function AddTransactionPage() {
               onClick={() => navigate("/app/transactions")}
               className="rounded-xl border border-slate-300 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
             >
-              Cancel
+              {t("common.cancel")}
             </button>
 
             <button
@@ -349,7 +347,7 @@ export default function AddTransactionPage() {
               disabled={isSaving || isLoadingCategories}
               className="rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {isSaving ? "Saving..." : "Save transaction"}
+              {isSaving ? t("common.saving") : t("transactions.form.submit")}
             </button>
           </div>
         </form>

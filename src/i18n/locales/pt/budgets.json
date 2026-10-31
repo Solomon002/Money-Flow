@@ -1,0 +1,31 @@
+{
+  "eyebrow": "Controle de gastos",
+  "title": "Orçamentos",
+  "add": "Adicionar orçamento",
+  "edit": "Editar orçamento",
+  "create": "Criar orçamento",
+  "loading": "Carregando orçamentos...",
+  "loadingOne": "Carregando orçamento...",
+  "loadFailed": "Não foi possível carregar os orçamentos",
+  "loadOneFailed": "Não foi possível carregar o orçamento",
+  "notFound": "Orçamento não encontrado",
+  "deleteFailed": "Não foi possível excluir o orçamento",
+  "confirmDelete": "Excluir o orçamento de {{category}} de {{month}} de {{year}}?",
+  "emptyTitle": "Nenhum orçamento ainda",
+  "emptyBody": "Crie um orçamento para este mês e comece a controlar seus gastos.",
+  "monthly": "Orçamento mensal",
+  "spent": "Gasto",
+  "percentUsed": "{{percent}}% usado",
+  "remaining": "Restam {{amount}}",
+  "over": "{{amount}} acima do orçamento",
+  "overWarning": "Você ultrapassou este orçamento.",
+  "closeWarning": "Você está muito perto do limite do orçamento.",
+  "approachingWarning": "Você está se aproximando do limite do orçamento.",
+  "form": {
+    "amountError": "Digite um valor de orçamento maior que zero.",
+    "createFailed": "Não foi possível criar o orçamento",
+    "updateFailed": "Não foi possível atualizar o orçamento",
+    "noChanges": "Nenhuma alteração feita.",
+    "submit": "Salvar orçamento"
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "eyebrow": "Activité financière",
+  "title": "Transactions",
+  "subtitle": "Consultez vos revenus et vos dépenses.",
+  "add": "Ajouter une transaction",
+  "import": "Importer des transactions",
+  "loading": "Chargement des transactions...",
+  "loadFailed": "Impossible de charger les transactions",
+  "categoriesFailed": "Impossible de charger les catégories",
+  "emptyTitle": "Aucune transaction pour l'instant",
+  "emptyBody": "Vos revenus et dépenses apparaîtront ici après avoir ajouté ou importé votre première transaction.",
+  "form": {
+    "type": "Type de transaction",
+    "loadingCategories": "Chargement des catégories...",
+    "selectCategory": "Choisissez une catégorie",
+    "selectCategoryError": "Veuillez choisir une catégorie.",
+    "subcategory": "Sous-catégorie",
+    "noSubcategory": "Aucune sous-catégorie",
+    "amountError": "Veuillez saisir un montant supérieur à zéro.",
+    "descriptionError": "Veuillez saisir une description.",
+    "descriptionPlaceholder": "ex. Courses",
+    "notesPlaceholder": "Notes facultatives",
+    "createFailed": "Impossible de créer la transaction",
+    "submit": "Enregistrer la transaction"
+  }
+}

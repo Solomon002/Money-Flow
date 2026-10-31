@@ -4,6 +4,7 @@ import {
   getRefreshToken,
   saveAuthTokens,
 } from "./authStorage.js";
+import { currentLanguage, translateServerMessage } from "../i18n/index.js";
 
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ||
@@ -83,6 +84,9 @@ export async function apiRequest(
       headers.set("Content-Type", "application/json");
     }
 
+    // Lets the server answer in the user's language (e.g. the AI Coach).
+    headers.set("Accept-Language", currentLanguage());
+
     if (accessToken) {
       headers.set(
         "Authorization",
@@ -122,8 +126,10 @@ export async function apiRequest(
 
   if (!response.ok) {
     throw new Error(
-      data?.message ||
-        "Something went wrong. Please try again.",
+      translateServerMessage(
+        data?.message ||
+          "Something went wrong. Please try again.",
+      ),
     );
   }
 

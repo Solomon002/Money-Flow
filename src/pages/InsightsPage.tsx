@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   AlertCircle,
   ArrowDownLeft,
@@ -9,25 +10,18 @@ import {
 } from "lucide-react";
 import { getInsights, type Insights } from "../api/insights.js";
 import { useAuth } from "../context/AuthContext.js";
+import { formatMoney } from "../i18n/format.js";
+import { categoryLabel } from "../i18n/categories.js";
 
 export default function InsightsPage() {
   const { onboardingPreferences } = useAuth();
+  const { t } = useTranslation();
 
   const [insights, setInsights] = useState<Insights | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
 
-  const currencySymbols: Record<string, string> = {
-    NGN: "₦",
-    USD: "$",
-    GBP: "£",
-    EUR: "€",
-  };
-
-  const currencySymbol =
-    currencySymbols[onboardingPreferences?.currency_code || "NGN"] ||
-    onboardingPreferences?.currency_code ||
-    "NGN";
+  const currencyCode = onboardingPreferences?.currency_code || "NGN";
 
   useEffect(() => {
     async function loadInsights() {
@@ -38,7 +32,7 @@ export default function InsightsPage() {
         const result = await getInsights();
 
         if (!result.response.ok) {
-          throw new Error(result.data.message || "Unable to load insights");
+          throw new Error(result.data.message || t("insights.loadFailed"));
         }
 
         setInsights(result.data.insights);
@@ -46,7 +40,7 @@ export default function InsightsPage() {
         console.error("Loading insights failed:", error);
 
         setErrorMessage(
-          error instanceof Error ? error.message : "Unable to load insights",
+          error instanceof Error ? error.message : t("insights.loadFailed"),
         );
       } finally {
         setIsLoading(false);
@@ -57,10 +51,7 @@ export default function InsightsPage() {
   }, []);
 
   function formatAmount(amountMinor: number) {
-    return `${currencySymbol}${(amountMinor / 100).toLocaleString("en-NG", {
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 2,
-    })}`;
+    return formatMoney(amountMinor, currencyCode);
   }
 
   const topCategoryTotal = useMemo(() => {
@@ -77,7 +68,7 @@ export default function InsightsPage() {
   if (isLoading) {
     return (
       <div className="flex min-h-64 items-center justify-center">
-        <p className="text-sm text-slate-500">Loading insights...</p>
+        <p className="text-sm text-slate-500">{t("insights.loading")}</p>
       </div>
     );
   }
@@ -86,9 +77,9 @@ export default function InsightsPage() {
     return (
       <div className="space-y-6">
         <div>
-          <p className="text-sm text-slate-500">Financial patterns</p>
+          <p className="text-sm text-slate-500">{t("insights.eyebrow")}</p>
 
-          <h1 className="mt-1 text-2xl font-bold text-slate-900">Insights</h1>
+          <h1 className="mt-1 text-2xl font-bold text-slate-900">{t("insights.title")}</h1>
         </div>
 
         <div
@@ -104,7 +95,7 @@ export default function InsightsPage() {
   if (!insights) {
     return (
       <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center">
-        <p className="text-sm text-slate-500">No insights available yet.</p>
+        <p className="text-sm text-slate-500">{t("insights.empty")}</p>
       </div>
     );
   }
@@ -126,12 +117,12 @@ export default function InsightsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <p className="text-sm text-slate-500">Financial patterns</p>
+        <p className="text-sm text-slate-500">{t("insights.eyebrow")}</p>
 
-        <h1 className="mt-1 text-2xl font-bold text-slate-900">Insights</h1>
+        <h1 className="mt-1 text-2xl font-bold text-slate-900">{t("insights.title")}</h1>
 
         <p className="mt-2 text-sm text-slate-500">
-          Understand what your recent money activity is telling you.
+          {t("insights.subtitle")}
         </p>
       </div>
 
@@ -143,7 +134,7 @@ export default function InsightsPage() {
             </div>
 
             <div>
-              <p className="text-sm text-slate-500">This month's spending</p>
+              <p className="text-sm text-slate-500">{t("insights.monthSpending")}</p>
 
               <p className="mt-1 text-xl font-bold text-slate-900">
                 {formatAmount(insights.currentExpenseMinor)}
@@ -156,21 +147,21 @@ export default function InsightsPage() {
               <>
                 <TrendingUp size={16} className="text-red-600" />
                 <span className="font-medium text-red-600">
-                  {spendingChange.toFixed(1)}% higher
+                  {t("insights.percentHigher", { percent: spendingChange.toFixed(1) })}
                 </span>
               </>
             ) : spendingDecreased ? (
               <>
                 <TrendingDown size={16} className="text-emerald-600" />
                 <span className="font-medium text-emerald-600">
-                  {spendingChange.toFixed(1)}% lower
+                  {t("insights.percentLower", { percent: spendingChange.toFixed(1) })}
                 </span>
               </>
             ) : (
-              <span className="font-medium text-slate-600">No change</span>
+              <span className="font-medium text-slate-600">{t("insights.noChange")}</span>
             )}
 
-            <span className="text-slate-400">vs last month</span>
+            <span className="text-slate-400">{t("insights.vsLastMonth")}</span>
           </div>
         </div>
 
@@ -181,7 +172,7 @@ export default function InsightsPage() {
             </div>
 
             <div>
-              <p className="text-sm text-slate-500">This month's income</p>
+              <p className="text-sm text-slate-500">{t("insights.monthIncome")}</p>
 
               <p className="mt-1 text-xl font-bold text-slate-900">
                 {formatAmount(insights.currentIncomeMinor)}
@@ -190,7 +181,7 @@ export default function InsightsPage() {
           </div>
 
           <p className="mt-5 text-sm text-slate-500">
-            Last month:{" "}
+            {t("insights.lastMonth")}{" "}
             <span className="font-medium text-slate-700">
               {formatAmount(insights.previousIncomeMinor)}
             </span>
@@ -201,11 +192,11 @@ export default function InsightsPage() {
       <section className="rounded-2xl border border-slate-200 bg-white p-6">
         <div>
           <h2 className="text-lg font-semibold text-slate-900">
-            What stands out
+            {t("insights.standsOut")}
           </h2>
 
           <p className="mt-1 text-sm text-slate-500">
-            A quick summary of your current financial activity.
+            {t("insights.standsOutBody")}
           </p>
         </div>
 
@@ -216,12 +207,11 @@ export default function InsightsPage() {
 
               <div>
                 <p className="font-medium text-red-900">
-                  Spending has increased
+                  {t("insights.increasedTitle")}
                 </p>
 
                 <p className="mt-1 text-sm text-red-700">
-                  Your spending is {spendingChange.toFixed(1)}% higher than last
-                  month.
+                  {t("insights.increasedBody", { percent: spendingChange.toFixed(1) })}
                 </p>
               </div>
             </div>
@@ -235,11 +225,10 @@ export default function InsightsPage() {
               />
 
               <div>
-                <p className="font-medium text-emerald-900">Spending is down</p>
+                <p className="font-medium text-emerald-900">{t("insights.decreasedTitle")}</p>
 
                 <p className="mt-1 text-sm text-emerald-700">
-                  Your spending is {spendingChange.toFixed(1)}% lower than last
-                  month.
+                  {t("insights.decreasedBody", { percent: spendingChange.toFixed(1) })}
                 </p>
               </div>
             </div>
@@ -254,11 +243,11 @@ export default function InsightsPage() {
 
               <div>
                 <p className="font-medium text-slate-900">
-                  Spending is unchanged
+                  {t("insights.unchangedTitle")}
                 </p>
 
                 <p className="mt-1 text-sm text-slate-600">
-                  Your spending is currently at the same level as last month.
+                  {t("insights.unchangedBody")}
                 </p>
               </div>
             </div>
@@ -273,13 +262,11 @@ export default function InsightsPage() {
 
               <div>
                 <p className="font-medium text-amber-900">
-                  Some budgets need attention
+                  {t("insights.attentionTitle")}
                 </p>
 
                 <p className="mt-1 text-sm text-amber-700">
-                  {budgetWarnings.length}{" "}
-                  {budgetWarnings.length === 1 ? "budget is" : "budgets are"} at
-                  90% or more of their limit.
+                  {t("insights.attentionBody", { count: budgetWarnings.length })}
                 </p>
               </div>
             </div>
@@ -294,11 +281,11 @@ export default function InsightsPage() {
 
               <div>
                 <p className="font-medium text-emerald-900">
-                  Your budgets are on track
+                  {t("insights.onTrackTitle")}
                 </p>
 
                 <p className="mt-1 text-sm text-emerald-700">
-                  None of your current budgets have reached 90% of their limits.
+                  {t("insights.onTrackBody")}
                 </p>
               </div>
             </div>
@@ -309,18 +296,18 @@ export default function InsightsPage() {
       <section className="rounded-2xl border border-slate-200 bg-white p-6">
         <div>
           <h2 className="text-lg font-semibold text-slate-900">
-            Top spending categories
+            {t("insights.topCategories")}
           </h2>
 
           <p className="mt-1 text-sm text-slate-500">
-            Where your money is going this month.
+            {t("insights.topCategoriesBody")}
           </p>
         </div>
 
         {insights.topSpendingCategories.length === 0 ? (
           <div className="mt-6 rounded-xl bg-slate-50 p-6 text-center">
             <p className="text-sm text-slate-500">
-              No expense transactions recorded this month yet.
+              {t("insights.noExpenses")}
             </p>
           </div>
         ) : (
@@ -335,7 +322,7 @@ export default function InsightsPage() {
                 <div key={category.categoryId}>
                   <div className="flex items-center justify-between gap-4">
                     <p className="text-sm font-medium text-slate-700">
-                      {category.categoryName}
+                      {categoryLabel(category.categoryName)}
                     </p>
 
                     <p className="text-sm font-semibold text-slate-900">
@@ -361,18 +348,18 @@ export default function InsightsPage() {
       <section className="rounded-2xl border border-slate-200 bg-white p-6">
         <div>
           <h2 className="text-lg font-semibold text-slate-900">
-            Budget insights
+            {t("insights.budgetInsights")}
           </h2>
 
           <p className="mt-1 text-sm text-slate-500">
-            How your current monthly budgets are performing.
+            {t("insights.budgetInsightsBody")}
           </p>
         </div>
 
         {insights.budgetInsights.length === 0 ? (
           <div className="mt-6 rounded-xl bg-slate-50 p-6 text-center">
             <p className="text-sm text-slate-500">
-              You have not created any budgets for this month yet.
+              {t("insights.noBudgets")}
             </p>
           </div>
         ) : (
@@ -387,12 +374,14 @@ export default function InsightsPage() {
                   <div className="flex items-center justify-between gap-4">
                     <div>
                       <p className="text-sm font-medium text-slate-700">
-                        {budget.categoryName}
+                        {categoryLabel(budget.categoryName)}
                       </p>
 
                       <p className="mt-1 text-xs text-slate-500">
-                        {formatAmount(budget.spentMinor)} of{" "}
-                        {formatAmount(budget.budgetMinor)}
+                        {t("insights.spentOf", {
+                          spent: formatAmount(budget.spentMinor),
+                          budget: formatAmount(budget.budgetMinor),
+                        })}
                       </p>
                     </div>
 
@@ -424,10 +413,10 @@ export default function InsightsPage() {
                     }`}
                   >
                     {budget.remainingMinor >= 0
-                      ? `${formatAmount(budget.remainingMinor)} remaining`
-                      : `${formatAmount(
-                          Math.abs(budget.remainingMinor),
-                        )} over budget`}
+                      ? t("budgets.remaining", { amount: formatAmount(budget.remainingMinor) })
+                      : t("budgets.over", {
+                          amount: formatAmount(Math.abs(budget.remainingMinor)),
+                        })}
                   </p>
                 </div>
               );

@@ -24,6 +24,7 @@ import ForgotPasswordPage from "./pages/ForgotPasswordPage.js";
 import ResetPasswordPage from "./pages/ResetPasswordPage.js";
 import GoogleAuthCallbackPage from "./pages/GoogleAuthCallbackPage.js";
 import ProPage from "./pages/ProPage.js";
+import ImportTransactionsPage from "./pages/ImportTransactionsPage.js";
 
 export default function App() {
   return (
@@ -56,6 +57,11 @@ export default function App() {
         <Route path="transactions" element={<TransactionsPage />} />
 
         <Route path="transactions/add" element={<AddTransactionPage />} />
+
+        <Route
+          path="transactions/import"
+          element={<ImportTransactionsPage />}
+        />
 
         <Route path="budgets" element={<BudgetsPage />} />
 

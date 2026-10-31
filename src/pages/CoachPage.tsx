@@ -1,4 +1,6 @@
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
+import TypewriterText from "../components/TypewriterText.js";
 import {
   Bot,
   Loader2,
@@ -20,6 +22,13 @@ import {
 } from "../api/coach.js";
 
 function CoachPage() {
+  const { t } = useTranslation();
+
+  // New chats are titled "New Chat" by the server until the first message.
+  function chatTitle(title: string | null | undefined) {
+    return !title || title === "New Chat" ? t("coach.newChat") : title;
+  }
+
   const [chats, setChats] = useState<CoachChat[]>([]);
   const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
   const [messages, setMessages] = useState<CoachMessage[]>([]);
@@ -27,6 +36,31 @@ function CoachPage() {
   const [loadingChats, setLoadingChats] = useState(true);
   const [loadingChat, setLoadingChat] = useState(false);
   const [sending, setSending] = useState(false);
+
+  // The reply currently being "typed" out; older messages render instantly.
+  const [typingMessage, setTypingMessage] = useState<CoachMessage | null>(
+    null,
+  );
+
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
+
+  // A chat created by sending its first message already has its messages in
+  // state; reloading it from the server would wipe the question just sent.
+  const skipLoadForChatRef = useRef<string | null>(null);
+
+  // Ignore a slow chat load that finishes after the user switched chats.
+  const selectedChatIdRef = useRef(selectedChatId);
+  selectedChatIdRef.current = selectedChatId;
+
+  const scrollToBottom = useCallback(() => {
+    messagesEndRef.current?.scrollIntoView({ block: "end" });
+  }, []);
+
+  const finishTyping = useCallback(() => setTypingMessage(null), []);
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages, sending, scrollToBottom]);
   const [creatingChat, setCreatingChat] = useState(false);
   const [deletingChat, setDeletingChat] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -45,7 +79,7 @@ function CoachPage() {
       }
     } catch (error) {
       console.error("Failed to load Coach chats:", error);
-      setError("Unable to load your Coach chats.");
+      setError(t("coach.loadChatsFailed"));
     } finally {
       setLoadingChats(false);
     }
@@ -58,10 +92,14 @@ function CoachPage() {
 
       const result = await getCoachChat(chatId);
 
+      if (selectedChatIdRef.current !== chatId) {
+        return;
+      }
+
       setMessages(result.messages);
     } catch (error) {
       console.error("Failed to load Coach chat:", error);
-      setError("Unable to load this Coach chat.");
+      setError(t("coach.loadChatFailed"));
     } finally {
       setLoadingChat(false);
     }
@@ -74,6 +112,11 @@ function CoachPage() {
   useEffect(() => {
     if (!selectedChatId) {
       setMessages([]);
+      return;
+    }
+
+    if (skipLoadForChatRef.current === selectedChatId) {
+      skipLoadForChatRef.current = null;
       return;
     }
 
@@ -94,7 +137,7 @@ function CoachPage() {
       setQuestion("");
     } catch (error) {
       console.error("Failed to create Coach chat:", error);
-      setError("Unable to create a new chat.");
+      setError(t("coach.createFailed"));
     } finally {
       setCreatingChat(false);
     }
@@ -105,7 +148,7 @@ function CoachPage() {
       return;
     }
 
-    const confirmed = window.confirm("Delete this Coach chat?");
+    const confirmed = window.confirm(t("coach.confirmDelete"));
 
     if (!confirmed) {
       return;
@@ -129,7 +172,7 @@ function CoachPage() {
       }
     } catch (error) {
       console.error("Failed to delete Coach chat:", error);
-      setError("Unable to delete this chat.");
+      setError(t("coach.deleteFailed"));
     } finally {
       setDeletingChat(false);
     }
@@ -157,6 +200,7 @@ function CoachPage() {
 
         setChats((current) => [result.chat, ...current]);
 
+        skipLoadForChatRef.current = chatId;
         setSelectedChatId(chatId);
       }
 
@@ -171,6 +215,7 @@ function CoachPage() {
 
       const result = await sendCoachMessage(chatId, trimmedQuestion);
 
+      setTypingMessage(result.assistantMessage);
       setMessages((current) => [...current, result.assistantMessage]);
 
       setChats((current) =>
@@ -198,7 +243,7 @@ function CoachPage() {
       if (error instanceof Error) {
         setError(error.message);
       } else {
-        setError("Unable to get a response from MoneyFlow Coach.");
+        setError(t("coach.replyFailed"));
       }
     } finally {
       setSending(false);
@@ -213,10 +258,10 @@ function CoachPage() {
       <aside className="hidden w-80 shrink-0 flex-col border-r border-slate-200 bg-white lg:flex">
         <div className="flex items-center justify-between border-b border-slate-200 p-4">
           <div className="min-w-0">
-            <h1 className="text-lg font-semibold">MoneyFlow Coach</h1>
+            <h1 className="text-lg font-semibold">{t("nav.coach")}</h1>
 
             <p className="text-xs text-slate-500">
-              Your financial AI assistant
+              {t("coach.tagline")}
             </p>
           </div>
 
@@ -227,7 +272,7 @@ function CoachPage() {
             }}
             disabled={creatingChat}
             className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-900 text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
-            title="New chat"
+            title={t("coach.newChat")}
           >
             {creatingChat ? (
               <Loader2 size={18} className="animate-spin" />
@@ -247,7 +292,7 @@ function CoachPage() {
             className="flex w-full items-center justify-center gap-2 rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
           >
             <Plus size={17} />
-            New Chat
+            {t("coach.newChat")}
           </button>
         </div>
 
@@ -263,10 +308,10 @@ function CoachPage() {
                 className="mx-auto mb-3 text-slate-300"
               />
 
-              <p className="text-sm font-medium text-slate-600">No chats yet</p>
+              <p className="text-sm font-medium text-slate-600">{t("coach.noChats")}</p>
 
               <p className="mt-1 text-xs text-slate-400">
-                Start a conversation with MoneyFlow Coach.
+                {t("coach.noChatsBody")}
               </p>
             </div>
           ) : (
@@ -290,7 +335,7 @@ function CoachPage() {
 
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-medium text-slate-700">
-                        {chat.title}
+                        {chatTitle(chat.title)}
                       </p>
 
                       {chat.message_count !== undefined && (
@@ -313,11 +358,11 @@ function CoachPage() {
         <div className="flex items-center justify-between gap-3 px-4 py-3">
           <div className="min-w-0">
             <h1 className="truncate text-base font-semibold">
-              MoneyFlow Coach
+              {t("nav.coach")}
             </h1>
 
             <p className="text-xs text-slate-500">
-              Your financial AI assistant
+              {t("coach.tagline")}
             </p>
           </div>
 
@@ -328,7 +373,7 @@ function CoachPage() {
             }}
             disabled={creatingChat}
             className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-900 text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
-            title="New chat"
+            title={t("coach.newChat")}
           >
             {creatingChat ? (
               <Loader2 size={18} className="animate-spin" />
@@ -345,7 +390,7 @@ function CoachPage() {
             </div>
           ) : chats.length === 0 ? (
             <p className="py-2 text-xs text-slate-400">
-              No previous chats yet.
+              {t("coach.noPreviousChats")}
             </p>
           ) : (
             <div className="flex gap-2 overflow-x-auto pb-1">
@@ -364,7 +409,7 @@ function CoachPage() {
                     <MessageSquare size={15} className="shrink-0" />
 
                     <span className="truncate text-xs font-medium">
-                      {chat.title}
+                      {chatTitle(chat.title)}
                     </span>
                   </div>
                 </button>
@@ -379,11 +424,11 @@ function CoachPage() {
         <header className="flex shrink-0 items-center justify-between gap-3 border-b border-slate-200 bg-white px-4 py-3 sm:px-6 sm:py-4">
           <div className="min-w-0">
             <h2 className="truncate text-sm font-semibold text-slate-900 sm:text-base">
-              {selectedChat?.title ?? "MoneyFlow Coach"}
+              {selectedChat ? chatTitle(selectedChat.title) : t("nav.coach")}
             </h2>
 
             <p className="truncate text-xs text-slate-500">
-              Ask questions about your finances.
+              {t("coach.askAbout")}
             </p>
           </div>
 
@@ -395,7 +440,7 @@ function CoachPage() {
               }}
               disabled={deletingChat}
               className="flex h-9 shrink-0 items-center justify-center gap-2 rounded-lg px-2 text-sm text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50 sm:px-3"
-              title="Delete chat"
+              title={t("coach.deleteChat")}
             >
               {deletingChat ? (
                 <Loader2 size={17} className="animate-spin" />
@@ -403,7 +448,7 @@ function CoachPage() {
                 <Trash2 size={17} />
               )}
 
-              <span className="hidden sm:inline">Delete</span>
+              <span className="hidden sm:inline">{t("common.delete")}</span>
             </button>
           )}
         </header>
@@ -427,11 +472,10 @@ function CoachPage() {
                   <Bot size={28} className="text-slate-500" />
                 </div>
 
-                <h2 className="text-xl font-semibold">MoneyFlow Coach</h2>
+                <h2 className="text-xl font-semibold">{t("nav.coach")}</h2>
 
                 <p className="mt-2 text-sm leading-6 text-slate-500">
-                  Ask me about your spending, budgets, goals, or financial
-                  patterns.
+                  {t("coach.intro")}
                 </p>
 
                 <button
@@ -443,7 +487,7 @@ function CoachPage() {
                   className="mt-5 inline-flex items-center gap-2 rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-slate-700 disabled:opacity-50"
                 >
                   <Plus size={17} />
-                  Start a Chat
+                  {t("coach.startChat")}
                 </button>
               </div>
             </div>
@@ -454,10 +498,10 @@ function CoachPage() {
                   <Bot size={28} className="text-slate-500" />
                 </div>
 
-                <h2 className="text-xl font-semibold">How can I help?</h2>
+                <h2 className="text-xl font-semibold">{t("coach.howCanIHelp")}</h2>
 
                 <p className="mt-2 text-sm leading-6 text-slate-500">
-                  Ask MoneyFlow Coach anything about your financial records.
+                  {t("coach.askAnything")}
                 </p>
               </div>
             </div>
@@ -487,7 +531,15 @@ function CoachPage() {
                       }`}
                     >
                       <p className="whitespace-pre-wrap wrap-break-word">
-                        {message.content}
+                        {message === typingMessage ? (
+                          <TypewriterText
+                            text={message.content}
+                            onDone={finishTyping}
+                            onProgress={scrollToBottom}
+                          />
+                        ) : (
+                          message.content
+                        )}
                       </p>
                     </div>
 
@@ -506,14 +558,24 @@ function CoachPage() {
                     <Bot size={17} />
                   </div>
 
-                  <div className="rounded-2xl bg-white px-4 py-3 shadow-sm ring-1 ring-slate-200">
-                    <Loader2
-                      size={18}
-                      className="animate-spin text-slate-500"
-                    />
+                  <div
+                    className="flex items-center gap-3 rounded-2xl bg-white px-4 py-3 shadow-sm ring-1 ring-emerald-100"
+                    role="status"
+                  >
+                    <span className="flex items-center gap-1" aria-hidden="true">
+                      <span className="mf-typing-dot" />
+                      <span className="mf-typing-dot" />
+                      <span className="mf-typing-dot" />
+                    </span>
+
+                    <span className="text-xs text-slate-500">
+                      {t("coach.typing")}
+                    </span>
                   </div>
                 </div>
               )}
+
+              <div ref={messagesEndRef} />
             </div>
           )}
         </div>
@@ -534,18 +596,18 @@ function CoachPage() {
                   event.currentTarget.form?.requestSubmit();
                 }
               }}
-              placeholder="Ask MoneyFlow Coach..."
+              placeholder={t("coach.placeholder")}
               rows={1}
               maxLength={1000}
               disabled={sending}
-              className="min-h-11 min-w-0 flex-1 resize-none rounded-xl border border-slate-300 bg-white px-3.5 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-slate-500 focus:ring-2 focus:ring-slate-100 disabled:bg-slate-50 sm:px-4"
+              className="mf-caret min-h-11 min-w-0 flex-1 resize-none rounded-xl border border-slate-300 bg-white px-3.5 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 disabled:bg-slate-50 sm:px-4"
             />
 
             <button
               type="submit"
               disabled={sending || !question.trim()}
-              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-slate-900 text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-40"
-              title="Send message"
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-600 text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-40"
+              title={t("coach.send")}
             >
               {sending ? (
                 <Loader2 size={18} className="animate-spin" />
@@ -556,8 +618,7 @@ function CoachPage() {
           </form>
 
           <p className="mx-auto mt-2 hidden max-w-4xl text-xs text-slate-400 sm:block">
-            MoneyFlow Coach uses your financial records to provide context-aware
-            responses.
+            {t("coach.disclaimer")}
           </p>
         </div>
       </main>

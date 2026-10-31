@@ -86,6 +86,14 @@ app.use(
   paystackWebhookRoutes,
 );
 
+// Imports carry up to 1,000 rows, so they get a larger (still bounded) limit.
+app.use(
+  "/api/transactions/import",
+  express.json({
+    limit: "1mb",
+  }),
+);
+
 app.use(
   express.json({
     limit: "100kb",

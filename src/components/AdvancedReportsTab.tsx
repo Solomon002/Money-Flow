@@ -1,4 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { formatDate, formatMoney as formatLocalMoney } from "../i18n/format.js";
+import { categoryLabel } from "../i18n/categories.js";
 import {
   Bar,
   BarChart,
@@ -22,7 +25,7 @@ import {
 type AdvancedReportsTabProps = {
   startDate: string;
   endDate: string;
-  currencySymbol: string;
+  currencyCode: string;
 };
 
 const DONUT_COLORS = [
@@ -37,34 +40,12 @@ const DONUT_COLORS = [
   "#f1f5f9",
 ];
 
-function formatMoney(amountMinor: number, currencySymbol: string) {
-  return `${currencySymbol}${(Number(amountMinor) / 100).toLocaleString(
-    "en-NG",
-    {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    },
-  )}`;
+function formatMoney(amountMinor: number, currencyCode: string) {
+  return formatLocalMoney(amountMinor, currencyCode);
 }
 
-function formatBucketLabel(bucket: string, mode: "day" | "week") {
-  const date = new Date(`${bucket}T00:00:00`);
-
-  if (Number.isNaN(date.getTime())) {
-    return bucket;
-  }
-
-  if (mode === "week") {
-    return date.toLocaleDateString("en-NG", {
-      day: "numeric",
-      month: "short",
-    });
-  }
-
-  return date.toLocaleDateString("en-NG", {
-    day: "numeric",
-    month: "short",
-  });
+function formatBucketLabel(bucket: string) {
+  return formatDate(bucket, { day: "numeric", month: "short" }) || bucket;
 }
 
 function downloadCsv(filename: string, rows: string[][]) {
@@ -90,8 +71,9 @@ function downloadCsv(filename: string, rows: string[][]) {
 export default function AdvancedReportsTab({
   startDate,
   endDate,
-  currencySymbol,
+  currencyCode,
 }: AdvancedReportsTabProps) {
+  const { t } = useTranslation();
   const [analytics, setAnalytics] = useState<AdvancedAnalytics | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
@@ -105,7 +87,7 @@ export default function AdvancedReportsTab({
 
       if (!response.response.ok) {
         throw new Error(
-          response.data.message || "Unable to load advanced analytics",
+          response.data.message || t("reports.analyticsFailed"),
         );
       }
 
@@ -118,7 +100,7 @@ export default function AdvancedReportsTab({
       setErrorMessage(
         error instanceof Error
           ? error.message
-          : "Unable to load advanced analytics",
+          : t("reports.analyticsFailed"),
       );
     } finally {
       setIsLoading(false);
@@ -133,7 +115,7 @@ export default function AdvancedReportsTab({
     if (!analytics) return [];
 
     return analytics.categoryDonut.map((row, index) => ({
-      name: row.categoryName,
+      name: categoryLabel(row.categoryName),
       value: row.totalMinor,
       percentage: row.percentage,
       color: DONUT_COLORS[index % DONUT_COLORS.length],
@@ -144,7 +126,7 @@ export default function AdvancedReportsTab({
     if (!analytics) return [];
 
     return analytics.timeSeries.map((point) => ({
-      label: formatBucketLabel(point.bucket, analytics.bucket),
+      label: formatBucketLabel(point.bucket),
       income: point.incomeMinor / 100,
       expense: point.expenseMinor / 100,
     }));
@@ -154,9 +136,9 @@ export default function AdvancedReportsTab({
     if (!analytics) return;
 
     const rows: string[][] = [
-      ["Category", "Amount", "Percentage"],
+      [t("common.category"), t("common.amount"), t("reports.csv.percentage")],
       ...analytics.topCategories.map((row) => [
-        row.categoryName,
+        categoryLabel(row.categoryName),
         (row.totalMinor / 100).toFixed(2),
         row.percentage.toFixed(2),
       ]),
@@ -169,10 +151,15 @@ export default function AdvancedReportsTab({
     if (!analytics) return;
 
     const rows: string[][] = [
-      ["Subcategory", "Parent category", "Amount", "Percentage"],
+      [
+        t("transactions.form.subcategory"),
+        t("reports.csv.parentCategory"),
+        t("common.amount"),
+        t("reports.csv.percentage"),
+      ],
       ...analytics.topSubCategories.map((row) => [
-        row.categoryName,
-        row.parentCategoryName,
+        categoryLabel(row.categoryName),
+        categoryLabel(row.parentCategoryName),
         (row.totalMinor / 100).toFixed(2),
         row.percentage.toFixed(2),
       ]),
@@ -185,7 +172,7 @@ export default function AdvancedReportsTab({
     if (!analytics) return;
 
     const rows: string[][] = [
-      ["Period", "Income", "Expense"],
+      [t("reports.csv.period"), t("common.income"), t("common.expense")],
       ...analytics.timeSeries.map((row) => [
         row.bucket,
         (row.incomeMinor / 100).toFixed(2),
@@ -200,12 +187,18 @@ export default function AdvancedReportsTab({
     if (!analytics) return;
 
     const rows: string[][] = [
-      ["Date", "Description", "Category", "Parent category", "Amount"],
+      [
+        t("common.date"),
+        t("common.description"),
+        t("common.category"),
+        t("reports.csv.parentCategory"),
+        t("common.amount"),
+      ],
       ...analytics.topTransactions.map((row) => [
         row.transactionDate.slice(0, 10),
         row.description,
-        row.categoryName,
-        row.parentCategoryName ?? "",
+        categoryLabel(row.categoryName),
+        row.parentCategoryName ? categoryLabel(row.parentCategoryName) : "",
         (row.amountMinor / 100).toFixed(2),
       ]),
     ];
@@ -220,7 +213,7 @@ export default function AdvancedReportsTab({
   if (isLoading) {
     return (
       <section className="rounded-2xl border border-slate-200 bg-white p-10 text-center">
-        <p className="text-sm text-slate-500">Loading advanced analytics...</p>
+        <p className="text-sm text-slate-500">{t("reports.loadingAnalytics")}</p>
       </section>
     );
   }
@@ -233,7 +226,7 @@ export default function AdvancedReportsTab({
 
           <div className="flex-1">
             <p className="font-semibold text-red-900">
-              Unable to load advanced analytics
+              {t("reports.analyticsFailed")}
             </p>
 
             <p className="mt-1 text-sm text-red-800">{errorMessage}</p>
@@ -244,7 +237,7 @@ export default function AdvancedReportsTab({
               className="mt-4 inline-flex items-center gap-2 rounded-xl bg-red-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-800"
             >
               <RefreshCw size={16} />
-              Try again
+              {t("common.retry")}
             </button>
           </div>
         </div>
@@ -256,11 +249,11 @@ export default function AdvancedReportsTab({
     return (
       <section className="rounded-2xl border border-slate-200 bg-white p-10 text-center">
         <p className="text-sm font-medium text-slate-700">
-          No data for this period
+          {t("reports.noData")}
         </p>
 
         <p className="mt-2 text-sm text-slate-500">
-          Add some transactions and the analytics will appear here.
+          {t("reports.noDataBody")}
         </p>
       </section>
     );
@@ -285,11 +278,11 @@ export default function AdvancedReportsTab({
         <div className="flex items-start justify-between gap-4">
           <div>
             <h2 className="text-lg font-semibold text-slate-900">
-              Top categories
+              {t("reports.topCategories")}
             </h2>
 
             <p className="mt-1 text-sm text-slate-500">
-              Where most of your money went.
+              {t("reports.topCategoriesBody")}
             </p>
           </div>
 
@@ -308,12 +301,12 @@ export default function AdvancedReportsTab({
             <div key={row.categoryId}>
               <div className="flex items-center justify-between gap-4">
                 <p className="text-sm font-medium text-slate-800">
-                  {row.categoryName}
+                  {categoryLabel(row.categoryName)}
                 </p>
 
                 <div className="text-right">
                   <p className="text-sm font-semibold text-slate-900">
-                    {formatMoney(row.totalMinor, currencySymbol)}
+                    {formatMoney(row.totalMinor, currencyCode)}
                   </p>
 
                   <p className="text-xs text-slate-500">
@@ -339,11 +332,11 @@ export default function AdvancedReportsTab({
           <div className="flex items-start justify-between gap-4">
             <div>
               <h2 className="text-lg font-semibold text-slate-900">
-                Top subcategories
+                {t("reports.topSubcategories")}
               </h2>
 
               <p className="mt-1 text-sm text-slate-500">
-                The finer detail behind your categories.
+                {t("reports.topSubcategoriesBody")}
               </p>
             </div>
 
@@ -361,10 +354,10 @@ export default function AdvancedReportsTab({
             <table className="w-full text-left text-sm">
               <thead className="bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
                 <tr>
-                  <th className="px-4 py-3">Subcategory</th>
-                  <th className="px-4 py-3">Parent</th>
-                  <th className="px-4 py-3 text-right">Amount</th>
-                  <th className="px-4 py-3 text-right">Share</th>
+                  <th className="px-4 py-3">{t("transactions.form.subcategory")}</th>
+                  <th className="px-4 py-3">{t("reports.parent")}</th>
+                  <th className="px-4 py-3 text-right">{t("common.amount")}</th>
+                  <th className="px-4 py-3 text-right">{t("reports.share")}</th>
                 </tr>
               </thead>
 
@@ -372,15 +365,15 @@ export default function AdvancedReportsTab({
                 {analytics.topSubCategories.map((row) => (
                   <tr key={row.categoryId}>
                     <td className="px-4 py-3 font-medium text-slate-800">
-                      {row.categoryName}
+                      {categoryLabel(row.categoryName)}
                     </td>
 
                     <td className="px-4 py-3 text-slate-500">
-                      {row.parentCategoryName}
+                      {categoryLabel(row.parentCategoryName)}
                     </td>
 
                     <td className="px-4 py-3 text-right font-semibold text-slate-900">
-                      {formatMoney(row.totalMinor, currencySymbol)}
+                      {formatMoney(row.totalMinor, currencyCode)}
                     </td>
 
                     <td className="px-4 py-3 text-right text-slate-500">
@@ -399,11 +392,11 @@ export default function AdvancedReportsTab({
         <section className="rounded-2xl border border-slate-200 bg-white p-6">
           <div>
             <h2 className="text-lg font-semibold text-slate-900">
-              Spending split
+              {t("reports.spendingSplit")}
             </h2>
 
             <p className="mt-1 text-sm text-slate-500">
-              How your expenses divide across categories.
+              {t("reports.spendingSplitBody")}
             </p>
           </div>
 
@@ -426,7 +419,7 @@ export default function AdvancedReportsTab({
                 <Tooltip
                   formatter={(value) =>
                     typeof value === "number"
-                      ? formatMoney(value, currencySymbol)
+                      ? formatMoney(value, currencyCode)
                       : ""
                   }
                 />
@@ -440,11 +433,11 @@ export default function AdvancedReportsTab({
         <section className="rounded-2xl border border-slate-200 bg-white p-6">
           <div>
             <h2 className="text-lg font-semibold text-slate-900">
-              Income vs expenses
+              {t("reports.incomeVsExpenses")}
             </h2>
 
             <p className="mt-1 text-sm text-slate-500">
-              See how much came in versus how much went out.
+              {t("reports.incomeVsExpensesShort")}
             </p>
           </div>
 
@@ -469,13 +462,13 @@ export default function AdvancedReportsTab({
               <div className="flex items-center gap-2">
                 <span className="h-3 w-3 rounded-full bg-slate-900" />
 
-                <p className="text-sm font-medium text-slate-600">Income</p>
+                <p className="text-sm font-medium text-slate-600">{t("common.income")}</p>
               </div>
 
               <p className="mt-2 text-lg font-bold text-slate-900">
                 {formatMoney(
                   analytics.incomeVsExpense.totalIncomeMinor,
-                  currencySymbol,
+                  currencyCode,
                 )}
               </p>
 
@@ -489,13 +482,13 @@ export default function AdvancedReportsTab({
               <div className="flex items-center gap-2">
                 <span className="h-3 w-3 rounded-full bg-slate-300" />
 
-                <p className="text-sm font-medium text-slate-600">Expenses</p>
+                <p className="text-sm font-medium text-slate-600">{t("common.expenses")}</p>
               </div>
 
               <p className="mt-2 text-lg font-bold text-slate-900">
                 {formatMoney(
                   analytics.incomeVsExpense.totalExpenseMinor,
-                  currencySymbol,
+                  currencyCode,
                 )}
               </p>
 
@@ -513,12 +506,12 @@ export default function AdvancedReportsTab({
         <section className="rounded-2xl border border-slate-200 bg-white p-6">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <h2 className="text-lg font-semibold text-slate-900">Timeline</h2>
+              <h2 className="text-lg font-semibold text-slate-900">{t("reports.timeline")}</h2>
 
               <p className="mt-1 text-sm text-slate-500">
                 {analytics.bucket === "day"
-                  ? "Daily income and spending for the selected period."
-                  : "Weekly income and spending for the selected period."}
+                  ? t("reports.timelineDaily")
+                  : t("reports.timelineWeekly")}
               </p>
             </div>
 
@@ -541,16 +534,13 @@ export default function AdvancedReportsTab({
                 <Tooltip
                   formatter={(value) =>
                     typeof value === "number"
-                      ? `${currencySymbol}${value.toLocaleString("en-NG", {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}`
+                      ? formatMoney(value * 100, currencyCode)
                       : ""
                   }
                 />
                 <Legend />
-                <Bar dataKey="income" fill="#0f172a" name="Income" />
-                <Bar dataKey="expense" fill="#94a3b8" name="Expenses" />
+                <Bar dataKey="income" fill="#0f172a" name={t("common.income")} />
+                <Bar dataKey="expense" fill="#94a3b8" name={t("common.expenses")} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -562,11 +552,11 @@ export default function AdvancedReportsTab({
         <div className="flex items-start justify-between gap-4">
           <div>
             <h2 className="text-lg font-semibold text-slate-900">
-              Largest transactions
+              {t("reports.largestTransactions")}
             </h2>
 
             <p className="mt-1 text-sm text-slate-500">
-              The biggest single expenses in this period.
+              {t("reports.largestTransactionsBody")}
             </p>
           </div>
 
@@ -584,10 +574,10 @@ export default function AdvancedReportsTab({
           <table className="w-full text-left text-sm">
             <thead className="bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
               <tr>
-                <th className="px-4 py-3">Date</th>
-                <th className="px-4 py-3">Description</th>
-                <th className="px-4 py-3">Category</th>
-                <th className="px-4 py-3 text-right">Amount</th>
+                <th className="px-4 py-3">{t("common.date")}</th>
+                <th className="px-4 py-3">{t("common.description")}</th>
+                <th className="px-4 py-3">{t("common.category")}</th>
+                <th className="px-4 py-3 text-right">{t("common.amount")}</th>
               </tr>
             </thead>
 
@@ -595,11 +585,7 @@ export default function AdvancedReportsTab({
               {analytics.topTransactions.map((row) => (
                 <tr key={row.id}>
                   <td className="whitespace-nowrap px-4 py-3 text-slate-500">
-                    {new Date(row.transactionDate).toLocaleDateString("en-NG", {
-                      day: "numeric",
-                      month: "short",
-                      year: "numeric",
-                    })}
+                    {formatDate(row.transactionDate)}
                   </td>
 
                   <td className="px-4 py-3 text-slate-800">
@@ -608,12 +594,12 @@ export default function AdvancedReportsTab({
 
                   <td className="px-4 py-3 text-slate-500">
                     {row.parentCategoryName
-                      ? `${row.parentCategoryName} · ${row.categoryName}`
-                      : row.categoryName}
+                      ? `${categoryLabel(row.parentCategoryName)} · ${categoryLabel(row.categoryName)}`
+                      : categoryLabel(row.categoryName)}
                   </td>
 
                   <td className="px-4 py-3 text-right font-semibold text-slate-900">
-                    {formatMoney(row.amountMinor, currencySymbol)}
+                    {formatMoney(row.amountMinor, currencyCode)}
                   </td>
                 </tr>
               ))}

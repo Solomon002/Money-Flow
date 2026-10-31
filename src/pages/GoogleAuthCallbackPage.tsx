@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate, useSearchParams } from "react-router";
 import { exchangeGoogleAuthCode, getCurrentUser } from "../api/auth.js";
 import { saveAuthTokens } from "../api/authStorage.js";
 
 export default function GoogleAuthCallbackPage() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [searchParams] = useSearchParams();
 
   const [error, setError] = useState("");
@@ -17,7 +19,7 @@ export default function GoogleAuthCallbackPage() {
     const code = searchParams.get("code");
 
     if (!code) {
-      setError("Google sign-in could not be completed. Please try again.");
+      setError(t("auth.google.failedBody"));
       return;
     }
 
@@ -30,7 +32,7 @@ export default function GoogleAuthCallbackPage() {
         !exchangeResult.data.refreshToken
       ) {
         throw new Error(
-          exchangeResult.data.message || "Unable to complete Google sign-in.",
+          exchangeResult.data.message || t("auth.google.failedBody"),
         );
       }
 
@@ -44,7 +46,7 @@ export default function GoogleAuthCallbackPage() {
       );
 
       if (!currentUserResult.response.ok) {
-        throw new Error("Unable to verify your MoneyFlow account.");
+        throw new Error(t("auth.google.verifyFailed"));
       }
 
       /*
@@ -58,7 +60,7 @@ export default function GoogleAuthCallbackPage() {
       setError(
         error instanceof Error
           ? error.message
-          : "Google sign-in could not be completed. Please try again.",
+          : t("auth.google.failedBody"),
       );
     }
   }
@@ -69,7 +71,7 @@ export default function GoogleAuthCallbackPage() {
         <div className="mx-auto flex min-h-[70vh] max-w-md items-center justify-center">
           <div className="w-full rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-sm">
             <h1 className="text-xl font-semibold text-slate-900">
-              Google sign-in failed
+              {t("auth.google.failedTitle")}
             </h1>
 
             <p className="mt-3 text-sm leading-6 text-slate-600">{error}</p>
@@ -79,7 +81,7 @@ export default function GoogleAuthCallbackPage() {
               onClick={() => navigate("/login")}
               className="mt-6 inline-flex items-center justify-center rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
             >
-              Back to sign in
+              {t("auth.google.backToSignIn")}
             </button>
           </div>
         </div>
@@ -94,11 +96,11 @@ export default function GoogleAuthCallbackPage() {
           <div className="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-slate-200 border-t-slate-900" />
 
           <h1 className="mt-6 text-xl font-semibold text-slate-900">
-            Signing you in
+            {t("auth.google.signingIn")}
           </h1>
 
           <p className="mt-2 text-sm text-slate-600">
-            Please wait while we finish setting up your MoneyFlow session.
+            {t("auth.google.wait")}
           </p>
         </div>
       </div>

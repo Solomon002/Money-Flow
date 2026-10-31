@@ -1,0 +1,21 @@
+{
+  "incomeSource": {
+    "placeholder": "Einkommensquelle auswählen",
+    "salary": "Gehalt",
+    "freelance": "Freiberuflich",
+    "business": "Unternehmen",
+    "investments": "Investitionen",
+    "family_support": "Familiäre Unterstützung",
+    "other": "Sonstiges"
+  },
+  "objective": {
+    "placeholder": "Hauptziel auswählen",
+    "control_spending": "Meine Ausgaben kontrollieren",
+    "save_more": "Mehr Geld sparen",
+    "build_emergency_fund": "Einen Notgroschen aufbauen",
+    "pay_off_debt": "Schulden abbezahlen",
+    "reach_financial_goal": "Ein finanzielles Ziel erreichen",
+    "understand_money": "Verstehen, wohin mein Geld geht",
+    "other": "Sonstiges"
+  }
+}

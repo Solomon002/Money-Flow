@@ -1,7 +1,15 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
+import LanguageSwitcher from "../components/LanguageSwitcher.js";
+import { CURRENCIES, currencyLabel } from "../i18n/currencies.js";
+import {
+  FINANCIAL_OBJECTIVES,
+  INCOME_SOURCES,
+} from "../i18n/options.js";
 import { saveOnboarding } from "../api/onboarding.js";
 
 export default function OnboardingPage() {
+  const { t } = useTranslation();
   const [currency, setCurrency] = useState("NGN");
   const [incomeSource, setIncomeSource] = useState("");
   const [financialObjective, setFinancialObjective] = useState("");
@@ -25,7 +33,7 @@ export default function OnboardingPage() {
 
       if (!result.response.ok) {
         throw new Error(
-          result.data.message || "Unable to save your onboarding information",
+          result.data.message || t("onboarding.failed"),
         );
       }
 
@@ -34,7 +42,7 @@ export default function OnboardingPage() {
       setErrorMessage(
         error instanceof Error
           ? error.message
-          : "Unable to save your onboarding information",
+          : t("onboarding.failed"),
       );
     } finally {
       setIsSubmitting(false);
@@ -46,15 +54,18 @@ export default function OnboardingPage() {
       <div className="mx-auto flex min-h-[80vh] max-w-2xl items-center justify-center">
         <section className="w-full rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
           <div className="mb-8">
-            <p className="text-sm font-semibold text-slate-500">MoneyFlow</p>
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-semibold text-slate-500">MoneyFlow</p>
+
+              <LanguageSwitcher />
+            </div>
 
             <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-900">
-              Let’s set up your MoneyFlow
+              {t("onboarding.title")}
             </h1>
 
             <p className="mt-2 text-sm leading-6 text-slate-500">
-              Tell us a little about your finances so we can personalize your
-              experience.
+              {t("onboarding.subtitle")}
             </p>
           </div>
 
@@ -64,7 +75,7 @@ export default function OnboardingPage() {
                 htmlFor="currency"
                 className="mb-2 block text-sm font-medium text-slate-700"
               >
-                What currency do you use?
+                {t("onboarding.currency")}
               </label>
 
               <select
@@ -73,10 +84,11 @@ export default function OnboardingPage() {
                 onChange={(event) => setCurrency(event.target.value)}
                 className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
               >
-                <option value="NGN">Nigerian Naira (₦)</option>
-                <option value="USD">US Dollar ($)</option>
-                <option value="GBP">British Pound (£)</option>
-                <option value="EUR">Euro (€)</option>
+                {CURRENCIES.map((code) => (
+                  <option key={code} value={code}>
+                    {currencyLabel(code)}
+                  </option>
+                ))}
               </select>
             </div>
 
@@ -85,7 +97,7 @@ export default function OnboardingPage() {
                 htmlFor="income-source"
                 className="mb-2 block text-sm font-medium text-slate-700"
               >
-                What is your main source of income?
+                {t("onboarding.incomeSource")}
               </label>
 
               <select
@@ -95,13 +107,12 @@ export default function OnboardingPage() {
                 required
                 className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
               >
-                <option value="">Select an income source</option>
-                <option value="salary">Salary</option>
-                <option value="freelance">Freelance</option>
-                <option value="business">Business</option>
-                <option value="investments">Investments</option>
-                <option value="family_support">Family support</option>
-                <option value="other">Other</option>
+                <option value="">{t("options.incomeSource.placeholder")}</option>
+                {INCOME_SOURCES.map((source) => (
+                  <option key={source} value={source}>
+                    {t(`options.incomeSource.${source}`)}
+                  </option>
+                ))}
               </select>
             </div>
 
@@ -110,7 +121,7 @@ export default function OnboardingPage() {
                 htmlFor="financial-objective"
                 className="mb-2 block text-sm font-medium text-slate-700"
               >
-                What is your main financial goal?
+                {t("onboarding.objective")}
               </label>
 
               <select
@@ -120,20 +131,12 @@ export default function OnboardingPage() {
                 required
                 className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
               >
-                <option value="">Select your main objective</option>
-                <option value="control_spending">Control my spending</option>
-                <option value="save_more">Save more money</option>
-                <option value="build_emergency_fund">
-                  Build an emergency fund
-                </option>
-                <option value="pay_off_debt">Pay off debt</option>
-                <option value="reach_financial_goal">
-                  Reach a financial goal
-                </option>
-                <option value="understand_money">
-                  Understand where my money goes
-                </option>
-                <option value="other">Other</option>
+                <option value="">{t("options.objective.placeholder")}</option>
+                {FINANCIAL_OBJECTIVES.map((objective) => (
+                  <option key={objective} value={objective}>
+                    {t(`options.objective.${objective}`)}
+                  </option>
+                ))}
               </select>
             </div>
 
@@ -142,7 +145,7 @@ export default function OnboardingPage() {
                 htmlFor="monthly-income"
                 className="mb-2 block text-sm font-medium text-slate-700"
               >
-                What is your approximate monthly income?
+                {t("onboarding.monthlyIncome")}
               </label>
 
               <input
@@ -152,12 +155,12 @@ export default function OnboardingPage() {
                 step="0.01"
                 value={monthlyIncome}
                 onChange={(event) => setMonthlyIncome(event.target.value)}
-                placeholder="Optional"
+                placeholder={t("common.optional")}
                 className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none transition focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
               />
 
               <p className="mt-2 text-xs text-slate-500">
-                This is optional. You can add or change it later.
+                {t("onboarding.monthlyIncomeHint")}
               </p>
             </div>
 
@@ -175,7 +178,7 @@ export default function OnboardingPage() {
               disabled={isSubmitting}
               className="w-full rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {isSubmitting ? "Saving..." : "Continue to MoneyFlow"}
+              {isSubmitting ? t("common.saving") : t("onboarding.submit")}
             </button>
           </form>
         </section>

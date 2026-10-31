@@ -1,0 +1,26 @@
+{
+  "eyebrow": "Movimientos",
+  "title": "Transacciones",
+  "subtitle": "Consulta tus ingresos y gastos.",
+  "add": "Añadir transacción",
+  "import": "Importar transacciones",
+  "loading": "Cargando transacciones...",
+  "loadFailed": "No se pudieron cargar las transacciones",
+  "categoriesFailed": "No se pudieron cargar las categorías",
+  "emptyTitle": "Aún no hay transacciones",
+  "emptyBody": "Tus ingresos y gastos aparecerán aquí cuando añadas o importes tu primera transacción.",
+  "form": {
+    "type": "Tipo de transacción",
+    "loadingCategories": "Cargando categorías...",
+    "selectCategory": "Selecciona una categoría",
+    "selectCategoryError": "Selecciona una categoría.",
+    "subcategory": "Subcategoría",
+    "noSubcategory": "Sin subcategoría",
+    "amountError": "Introduce un importe mayor que cero.",
+    "descriptionError": "Introduce una descripción.",
+    "descriptionPlaceholder": "p. ej. Supermercado",
+    "notesPlaceholder": "Notas opcionales",
+    "createFailed": "No se pudo crear la transacción",
+    "submit": "Guardar transacción"
+  }
+}

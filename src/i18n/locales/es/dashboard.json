@@ -1,0 +1,17 @@
+{
+  "overview": "Resumen",
+  "welcome": "Bienvenido de nuevo, {{name}}",
+  "totalBalance": "Saldo total",
+  "summaryFailed": "No se pudo cargar tu resumen financiero",
+  "spendingFailed": "No se pudo cargar el resumen de gastos",
+  "spendingOverview": "Resumen de gastos",
+  "spendingThisMonth": "Tus gastos de este mes",
+  "viewReports": "Ver informes",
+  "loadingSpending": "Cargando resumen de gastos...",
+  "noExpenses": "No hay gastos registrados este mes.",
+  "addTransactionLink": "Añadir una transacción",
+  "totalSpendingThisMonth": "Gasto total de este mes",
+  "quickActions": "Acciones rápidas",
+  "createGoal": "Crear meta",
+  "setBudget": "Fijar un presupuesto"
+}

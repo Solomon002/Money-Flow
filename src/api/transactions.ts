@@ -33,3 +33,21 @@ export async function getTransactions() {
     method: "GET",
   });
 }
+
+export type ImportRow = {
+  categoryId: string;
+  type: "income" | "expense";
+  amount: number;
+  description: string;
+  transactionDate: string;
+};
+
+export async function importTransactions(
+  rows: ImportRow[],
+  skipDuplicates: boolean,
+) {
+  return apiRequest("/api/transactions/import", {
+    method: "POST",
+    body: JSON.stringify({ rows, skipDuplicates }),
+  });
+}

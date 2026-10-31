@@ -1,0 +1,31 @@
+{
+  "eyebrow": "Ausgabenkontrolle",
+  "title": "Budgets",
+  "add": "Budget hinzufügen",
+  "edit": "Budget bearbeiten",
+  "create": "Budget erstellen",
+  "loading": "Budgets werden geladen...",
+  "loadingOne": "Budget wird geladen...",
+  "loadFailed": "Budgets konnten nicht geladen werden",
+  "loadOneFailed": "Budget konnte nicht geladen werden",
+  "notFound": "Budget nicht gefunden",
+  "deleteFailed": "Budget konnte nicht gelöscht werden",
+  "confirmDelete": "Das Budget {{category}} für {{month}} {{year}} löschen?",
+  "emptyTitle": "Noch keine Budgets",
+  "emptyBody": "Erstelle ein Budget für diesen Monat, um deine Ausgaben zu kontrollieren.",
+  "monthly": "Monatsbudget",
+  "spent": "Ausgegeben",
+  "percentUsed": "{{percent}} % verbraucht",
+  "remaining": "{{amount}} übrig",
+  "over": "{{amount}} über dem Budget",
+  "overWarning": "Du hast dieses Budget überschritten.",
+  "closeWarning": "Du bist sehr nah an deinem Budgetlimit.",
+  "approachingWarning": "Du näherst dich deinem Budgetlimit.",
+  "form": {
+    "amountError": "Bitte gib einen Budgetbetrag größer als null ein.",
+    "createFailed": "Budget konnte nicht erstellt werden",
+    "updateFailed": "Budget konnte nicht aktualisiert werden",
+    "noChanges": "Keine Änderungen vorgenommen.",
+    "submit": "Budget speichern"
+  }
+}

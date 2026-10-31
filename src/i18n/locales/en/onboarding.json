@@ -1,0 +1,11 @@
+{
+  "title": "Let's set up your MoneyFlow",
+  "subtitle": "Tell us a little about your finances so we can personalize your experience.",
+  "currency": "What currency do you use?",
+  "incomeSource": "What is your main source of income?",
+  "objective": "What is your main financial goal?",
+  "monthlyIncome": "What is your approximate monthly income?",
+  "monthlyIncomeHint": "This is optional. You can add or change it later.",
+  "failed": "Unable to save your onboarding information",
+  "submit": "Continue to MoneyFlow"
+}

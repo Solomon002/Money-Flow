@@ -1,0 +1,23 @@
+{
+  "tagline": "Tu asistente financiero con IA",
+  "newChat": "Nuevo chat",
+  "noChats": "Aún no hay chats",
+  "noChatsBody": "Empieza una conversación con el coach de MoneyFlow.",
+  "noPreviousChats": "Aún no hay chats anteriores.",
+  "askAbout": "Haz preguntas sobre tus finanzas.",
+  "deleteChat": "Eliminar chat",
+  "confirmDelete": "¿Eliminar este chat?",
+  "intro": "Pregúntame sobre tus gastos, presupuestos, metas o hábitos financieros.",
+  "startChat": "Iniciar un chat",
+  "howCanIHelp": "¿En qué puedo ayudarte?",
+  "askAnything": "Pregunta al coach de MoneyFlow cualquier cosa sobre tus registros financieros.",
+  "placeholder": "Pregunta al coach de MoneyFlow...",
+  "typing": "El coach de MoneyFlow está escribiendo",
+  "send": "Enviar mensaje",
+  "disclaimer": "El coach de MoneyFlow usa tus registros financieros para dar respuestas adaptadas a tu situación.",
+  "loadChatsFailed": "No se pudieron cargar tus chats.",
+  "loadChatFailed": "No se pudo cargar este chat.",
+  "createFailed": "No se pudo crear un chat nuevo.",
+  "deleteFailed": "No se pudo eliminar este chat.",
+  "replyFailed": "No se pudo obtener respuesta del coach de MoneyFlow."
+}

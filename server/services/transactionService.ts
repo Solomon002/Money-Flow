@@ -204,3 +204,133 @@ export async function getTransactionSummary(
       totalExpenseMinor,
   };
 }
+export type ImportTransactionRow = {
+  categoryId: string;
+  type: TransactionType;
+  amountMinor: number;
+  description: string;
+  transactionDate: string;
+  notes: string | null;
+};
+
+/*
+ * Inserts many transactions in one database transaction: either every
+ * row is saved or none are. With skipDuplicates, a row is skipped when the
+ * user already has a transaction with the same date, type, amount and
+ * description (so importing the same bank statement twice is harmless).
+ */
+export async function importTransactions({
+  userId,
+  rows,
+  skipDuplicates,
+}: {
+  userId: string;
+  rows: ImportTransactionRow[];
+  skipDuplicates: boolean;
+}) {
+  const client = await pool.connect();
+
+  let insertedCount = 0;
+
+  try {
+    await client.query("BEGIN");
+
+    const result = await client.query(
+      `
+        WITH incoming AS (
+          SELECT *
+          FROM unnest(
+            $2::uuid[],
+            $3::text[],
+            $4::bigint[],
+            $5::text[],
+            $6::date[],
+            $7::text[]
+          ) AS r(category_id, type, amount_minor, description, transaction_date, notes)
+        )
+        INSERT INTO public.transactions (
+          user_id,
+          category_id,
+          type,
+          amount_minor,
+          description,
+          transaction_date,
+          notes
+        )
+        SELECT
+          $1,
+          incoming.category_id,
+          incoming.type,
+          incoming.amount_minor,
+          incoming.description,
+          incoming.transaction_date,
+          incoming.notes
+        FROM incoming
+        WHERE NOT $8::boolean
+          OR NOT EXISTS (
+            SELECT 1
+            FROM public.transactions existing
+            WHERE existing.user_id = $1
+              AND existing.transaction_date = incoming.transaction_date
+              AND existing.type = incoming.type
+              AND existing.amount_minor = incoming.amount_minor
+              AND lower(existing.description) = lower(incoming.description)
+          )
+        RETURNING id
+      `,
+      [
+        userId,
+        rows.map((row) => row.categoryId),
+        rows.map((row) => row.type),
+        rows.map((row) => row.amountMinor),
+        rows.map((row) => row.description),
+        rows.map((row) => row.transactionDate),
+        rows.map((row) => row.notes),
+        skipDuplicates,
+      ],
+    );
+
+    insertedCount = result.rowCount ?? 0;
+
+    await client.query("COMMIT");
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
+
+  // One budget check per affected budget, not one per imported row.
+  try {
+    const budgets = await pool.query<{ id: string }>(
+      `
+        SELECT DISTINCT b.id
+        FROM public.budgets b
+        INNER JOIN public.categories c
+          ON c.user_id = b.user_id
+         AND (c.id = b.category_id OR c.parent_id = b.category_id)
+        INNER JOIN unnest($2::uuid[], $3::date[]) AS r(category_id, transaction_date)
+          ON r.category_id = c.id
+         AND b.year = EXTRACT(YEAR FROM r.transaction_date)::int
+         AND b.month = EXTRACT(MONTH FROM r.transaction_date)::int
+        WHERE b.user_id = $1
+      `,
+      [
+        userId,
+        rows.filter((row) => row.type === "expense").map((row) => row.categoryId),
+        rows.filter((row) => row.type === "expense").map((row) => row.transactionDate),
+      ],
+    );
+
+    for (const budget of budgets.rows) {
+      await checkBudgetAlert(userId, budget.id);
+    }
+  } catch (error) {
+    console.error("Budget alerts after import failed:", error);
+  }
+
+  return {
+    importedCount: insertedCount,
+    skippedCount: rows.length - insertedCount,
+  };
+}
