@@ -11,6 +11,7 @@ import {
 
 import {
   loginRateLimiter,
+  loginAccountRateLimiter,
   registerRateLimiter,
   forgotPasswordRateLimiter,
   resetPasswordRateLimiter,
@@ -36,6 +37,9 @@ const feedbackEmail = process.env.FEEDBACK_EMAIL;
 const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
 
 const resend = resendApiKey ? new Resend(resendApiKey) : null;
+
+const FORGOT_PASSWORD_MESSAGE =
+  "If an account exists with that email, a password reset link has been sent";
 
 const MAX_NAME_LENGTH = 120;
 const MAX_EMAIL_LENGTH = 320;
@@ -140,6 +144,7 @@ router.post(
 router.post(
   "/login",
   loginRateLimiter,
+  loginAccountRateLimiter,
   async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -370,14 +375,19 @@ router.post(
     const { resetToken, email: userEmail, tokenRecord } =
       await createPasswordResetToken(result.rows[0].id);
 
+    /*
+     * Failures below are logged but answered with the same message as
+     * an unknown email, so the response never reveals whether an
+     * account exists.
+     */
     if (!resend || !feedbackEmail) {
       console.error(
         "Password reset email cannot be sent because Resend is not configured",
       );
 
-      return res.status(500).json({
-        status: "error",
-        message: "Unable to send password reset email",
+      return res.status(200).json({
+        status: "ok",
+        message: FORGOT_PASSWORD_MESSAGE,
       });
     }
 
@@ -434,9 +444,9 @@ router.post(
         emailResult.error,
       );
 
-      return res.status(500).json({
-        status: "error",
-        message: "Unable to send password reset email",
+      return res.status(200).json({
+        status: "ok",
+        message: FORGOT_PASSWORD_MESSAGE,
       });
     }
 

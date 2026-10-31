@@ -3,6 +3,7 @@ import { Router } from "express";
 import { OAuth2Client } from "google-auth-library";
 
 import {
+  claimAccountWithVerifiedEmail,
   createGoogleUser,
   findUserByEmail,
 } from "../services/authService.js";
@@ -214,6 +215,8 @@ router.get(
             name: googleName,
             email: googleEmail,
           });
+      } else {
+        await claimAccountWithVerifiedEmail(user.id);
       }
 
       /*

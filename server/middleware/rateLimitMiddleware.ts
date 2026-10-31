@@ -13,6 +13,43 @@ export const loginRateLimiter = rateLimit({
   },
 });
 
+// Per-account limit, so an attacker rotating IPs still can't brute-force
+// one account. Only failed attempts count.
+export const loginAccountRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 10,
+  standardHeaders: "draft-8",
+  legacyHeaders: false,
+  skipSuccessfulRequests: true,
+  keyGenerator: (req) =>
+    typeof req.body?.email === "string"
+      ? `login:${req.body.email.trim().toLowerCase()}`
+      : `login-ip:${ipKeyGenerator(req.ip ?? "")}`,
+  message: {
+    status: "error",
+    message:
+      "Too many login attempts for this account. Please try again later.",
+  },
+});
+
+// Guards endpoints that check the current password of a signed-in user
+// (change password, change email). Must run after requireAuth.
+export const passwordCheckRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 10,
+  standardHeaders: "draft-8",
+  legacyHeaders: false,
+  skipSuccessfulRequests: true,
+  keyGenerator: (req) =>
+    (req as AuthenticatedRequest).userId ??
+    ipKeyGenerator(req.ip ?? ""),
+  message: {
+    status: "error",
+    message:
+      "Too many password attempts. Please try again later.",
+  },
+});
+
 export const registerRateLimiter = rateLimit({
   windowMs: 60 * 60 * 1000,
   limit: 5,

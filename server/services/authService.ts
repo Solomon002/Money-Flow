@@ -12,6 +12,64 @@ type LoginUserInput = {
   password: string;
 };
 
+let dummyHashPromise: Promise<string> | null = null;
+
+function getDummyHash(): Promise<string> {
+  if (!dummyHashPromise) {
+    dummyHashPromise = argon2.hash(
+      "moneyflow-timing-equalizer",
+      { type: argon2.argon2id },
+    );
+  }
+
+  return dummyHashPromise;
+}
+
+/*
+ * Decides whether an email change may go ahead.
+ * Unchanged email → "ok". Changed email → the current password must
+ * be supplied and correct.
+ */
+export async function verifyEmailChange({
+  userId,
+  newEmail,
+  currentPassword,
+}: {
+  userId: string;
+  newEmail: string;
+  currentPassword: unknown;
+}): Promise<"ok" | "password_required" | "password_not_set"> {
+  const result = await pool.query(
+    `
+      SELECT email, password_hash
+      FROM public.users
+      WHERE id = $1
+    `,
+    [userId],
+  );
+
+  const user = result.rows[0];
+
+  if (!user || user.email.toLowerCase() === newEmail) {
+    return "ok";
+  }
+
+  if (!user.password_hash) {
+    return "password_not_set";
+  }
+
+  if (
+    typeof currentPassword !== "string" ||
+    currentPassword.length === 0 ||
+    currentPassword.length > 256 ||
+    !(await argon2.verify(user.password_hash, currentPassword))
+  ) {
+    return "password_required";
+  }
+
+  return "ok";
+}
+
 export async function registerUser({
   name,
   email,
@@ -59,14 +117,12 @@ export async function loginUser({
     [email],
   );
 
-  if (result.rows.length === 0) {
-    return null;
-  }
-
   const user = result.rows[0];
 
-  // Google-only accounts do not have a password.
-  if (!user.password_hash) {
+  // Unknown emails and Google-only accounts still pay for one argon2
+  // verify, so response time doesn't reveal which emails have accounts.
+  if (!user || !user.password_hash) {
+    await argon2.verify(await getDummyHash(), password);
     return null;
   }
 
@@ -110,6 +166,70 @@ export async function findUserByEmail(
   return result.rows[0];
 }
 
+/*
+ * Called when Google has just proven the person owns this account's email.
+ *
+ * Password signups never verify their email, so an attacker could register
+ * victim@gmail.com first and wait for the real owner to sign in with Google
+ * into an account whose password the attacker knows. If the email was never
+ * verified, the unproven password is removed and every existing session is
+ * revoked; the owner can set a new password with "Forgot password".
+ */
+export async function claimAccountWithVerifiedEmail(
+  userId: string,
+) {
+  const client = await pool.connect();
+
+  try {
+    await client.query("BEGIN");
+
+    const result = await client.query(
+      `
+        SELECT password_hash, email_verified_at
+        FROM public.users
+        WHERE id = $1
+        FOR UPDATE
+      `,
+      [userId],
+    );
+
+    const user = result.rows[0];
+
+    if (user && user.email_verified_at === null) {
+      if (user.password_hash) {
+        await client.query(
+          `
+            UPDATE public.auth_sessions
+            SET revoked_at = NOW()
+            WHERE user_id = $1
+              AND revoked_at IS NULL
+          `,
+          [userId],
+        );
+      }
+
+      await client.query(
+        `
+          UPDATE public.users
+          SET
+            password_hash = NULL,
+            email_verified_at = NOW(),
+            updated_at = NOW()
+          WHERE id = $1
+        `,
+        [userId],
+      );
+    }
+
+    await client.query("COMMIT");
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
 export async function createGoogleUser({
   name,
   email,
@@ -122,9 +242,10 @@ export async function createGoogleUser({
       INSERT INTO public.users (
         name,
         email,
-        password_hash
+        password_hash,
+        email_verified_at
       )
-      VALUES ($1, $2, NULL)
+      VALUES ($1, $2, NULL, NOW())
       RETURNING
         id,
         name,

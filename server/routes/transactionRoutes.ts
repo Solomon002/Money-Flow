@@ -8,6 +8,7 @@ import {
   getTransactions,
   getTransactionSummary,
 } from "../services/transactionService.js";
+import { isClientInputDbError } from "../utils/validation.js";
 
 const router = Router();
 
@@ -237,6 +238,14 @@ router.post(
         transaction,
       });
     } catch (error) {
+      // The category doesn't belong to this user or is the wrong kind.
+      if (isClientInputDbError(error)) {
+        return res.status(400).json({
+          status: "error",
+          message: "Invalid category for this transaction",
+        });
+      }
+
       console.error(
         "Creating transaction failed:",
         error,

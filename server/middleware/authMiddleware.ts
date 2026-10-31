@@ -1,5 +1,6 @@
 import jwt from 'jsonwebtoken';
 import { Request, Response, NextFunction } from 'express';
+import { isValidUuid } from '../utils/validation.js';
 
 export type AuthenticatedRequest = Request & {
   userId?: string;
@@ -49,7 +50,7 @@ export async function requireAuth(
     if (
       typeof decoded !== 'object' ||
       decoded === null ||
-      typeof decoded.userId !== 'string'
+      !isValidUuid(decoded.userId)
     ) {
       return res.status(401).json({
         status: 'error',
