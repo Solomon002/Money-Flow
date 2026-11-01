@@ -1,4 +1,4 @@
-import { Link, NavLink, Outlet, useNavigate } from "react-router";
+import { Link, NavLink, Outlet, useLocation, useNavigate } from "react-router";
 import { useTranslation } from "react-i18next";
 import {
   ArrowUpRight,
@@ -27,6 +27,11 @@ export default function AppShell() {
   const navigate = useNavigate();
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // Chat-style pages fill exactly one screen: the page itself never
+  // scrolls, so the message box stays pinned at the bottom.
+  const { pathname } = useLocation();
+  const isFullHeightPage = pathname.startsWith("/app/coach");
 
   async function handleLogout() {
     await logout();
@@ -78,8 +83,14 @@ export default function AppShell() {
   ];
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <header className="sticky top-0 z-40 border-b border-slate-200 bg-white">
+    <div
+      className={
+        isFullHeightPage
+          ? "flex h-dvh flex-col overflow-hidden bg-slate-50"
+          : "min-h-screen bg-slate-50"
+      }
+    >
+      <header className="sticky top-0 z-40 shrink-0 border-b border-slate-200 bg-white">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
           <Link to="/app" className="flex items-center gap-2">
             <img
@@ -118,8 +129,16 @@ export default function AppShell() {
 
       <SubscriptionExpiryBanner />
 
-      <div className="mx-auto flex max-w-7xl">
-        <aside className="hidden min-h-[calc(100vh-4rem)] w-64 border-r border-slate-200 bg-white p-4 md:block">
+      <div
+        className={`mx-auto flex w-full max-w-7xl ${
+          isFullHeightPage ? "min-h-0 flex-1" : ""
+        }`}
+      >
+        <aside
+          className={`hidden w-64 shrink-0 border-r border-slate-200 bg-white p-4 md:block ${
+            isFullHeightPage ? "overflow-y-auto" : "min-h-[calc(100vh-4rem)]"
+          }`}
+        >
           <nav className="space-y-1">
             {navigation.map((item) => (
               <NavLink
@@ -186,7 +205,13 @@ export default function AppShell() {
           </div>
         )}
 
-        <main className="min-w-0 flex-1 p-4 sm:p-6 lg:p-8">
+        <main
+          className={
+            isFullHeightPage
+              ? "min-h-0 min-w-0 flex-1"
+              : "min-w-0 flex-1 p-4 sm:p-6 lg:p-8"
+          }
+        >
           <Outlet />
         </main>
       </div>
