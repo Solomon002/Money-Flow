@@ -1,0 +1,15 @@
+{
+  "title": "Tus datos",
+  "body": "Descarga una copia de todo lo que MoneyFlow guarda sobre ti o elimina tu cuenta para siempre.",
+  "export": "Descargar mis datos",
+  "exporting": "Preparando descarga...",
+  "exportFailed": "No se pudieron exportar tus datos",
+  "delete": "Eliminar cuenta",
+  "deleteTitle": "¿Eliminar tu cuenta para siempre?",
+  "deleteWarning": "Esto elimina de inmediato tu perfil, transacciones, presupuestos, metas, chats con el coach e historial de pagos. No se puede deshacer y se pierde el tiempo de Pro restante. Descarga tus datos antes si quieres una copia.",
+  "confirmPassword": "Introduce tu contraseña para confirmar",
+  "confirmEmail": "Escribe {{email}} para confirmar",
+  "deleteForever": "Eliminar mi cuenta",
+  "deleteFailed": "No se pudo eliminar tu cuenta",
+  "deletedNotice": "Tu cuenta de MoneyFlow y todos sus datos se han eliminado."
+}

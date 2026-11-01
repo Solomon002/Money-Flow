@@ -24,6 +24,8 @@ import ForgotPasswordPage from "./pages/ForgotPasswordPage.js";
 import ResetPasswordPage from "./pages/ResetPasswordPage.js";
 import GoogleAuthCallbackPage from "./pages/GoogleAuthCallbackPage.js";
 import ProPage from "./pages/ProPage.js";
+import ImportTransactionsPage from "./pages/ImportTransactionsPage.js";
+import LegalPage from "./pages/LegalPage.js";
 
 export default function App() {
   return (
@@ -33,6 +35,10 @@ export default function App() {
       <Route path="/login" element={<LoginPage />} />
 
       <Route path="/register" element={<RegisterPage />} />
+
+      <Route path="/terms" element={<LegalPage document="terms" />} />
+
+      <Route path="/privacy" element={<LegalPage document="privacy" />} />
 
       <Route
         path="/onboarding"
@@ -56,6 +62,11 @@ export default function App() {
         <Route path="transactions" element={<TransactionsPage />} />
 
         <Route path="transactions/add" element={<AddTransactionPage />} />
+
+        <Route
+          path="transactions/import"
+          element={<ImportTransactionsPage />}
+        />
 
         <Route path="budgets" element={<BudgetsPage />} />
 

@@ -1,0 +1,10 @@
+{
+  "title": "Benachrichtigungen",
+  "loadFailed": "Benachrichtigungen konnten nicht geladen werden.",
+  "markAllRead": "Alle als gelesen markieren",
+  "markRead": "Als gelesen markieren",
+  "loading": "Benachrichtigungen werden geladen...",
+  "emptyTitle": "Keine Benachrichtigungen",
+  "emptyBody": "Du bist auf dem neuesten Stand.",
+  "delete": "Benachrichtigung löschen"
+}

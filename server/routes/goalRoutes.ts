@@ -11,16 +11,48 @@ import {
   deleteGoal,
 } from "../services/goalService.js";
 
+import {
+  MAX_LONG_TEXT_LENGTH,
+  MAX_NAME_LENGTH,
+  isClientInputDbError,
+  isValidUuid,
+  toMinorUnits,
+} from "../utils/validation.js";
+
 const router = Router();
 
-function convertToMinorUnits(amount: unknown) {
-  const numericAmount = Number(amount);
-
-  if (!Number.isFinite(numericAmount) || numericAmount <= 0) {
-    return null;
+// Unknown or malformed ids are simply "not found".
+router.param("id", (req, res, next, id) => {
+  if (!isValidUuid(id)) {
+    return res.status(404).json({
+      status: "error",
+      message: "Goal not found",
+    });
   }
 
-  return Math.round(numericAmount * 100);
+  next();
+});
+
+function convertToMinorUnits(amount: unknown) {
+  return toMinorUnits(amount);
+}
+
+function invalidGoalText(
+  name: string,
+  description: unknown,
+): string | null {
+  if (name.trim().length > MAX_NAME_LENGTH) {
+    return `Goal name must be ${MAX_NAME_LENGTH} characters or less`;
+  }
+
+  if (
+    typeof description === "string" &&
+    description.length > MAX_LONG_TEXT_LENGTH
+  ) {
+    return `Description must be ${MAX_LONG_TEXT_LENGTH} characters or less`;
+  }
+
+  return null;
 }
 
 function isValidDate(date: unknown) {
@@ -32,7 +64,8 @@ function isValidDate(date: unknown) {
     return false;
   }
 
-  const parsedDate = new Date(`${date}T00:00:00`);
+  // Parse as UTC; local-time parsing shifts the day in UTC+ timezones.
+  const parsedDate = new Date(`${date}T00:00:00Z`);
 
   if (Number.isNaN(parsedDate.getTime())) {
     return false;
@@ -122,25 +155,28 @@ router.post(
         });
       }
 
-      const currentAmountMinor =
+      const textError = invalidGoalText(name, description);
+
+      if (textError) {
+        return res.status(400).json({
+          status: "error",
+          message: textError,
+        });
+      }
+
+      const roundedCurrentAmountMinor =
         currentAmount === undefined ||
         currentAmount === null ||
         currentAmount === ""
           ? 0
-          : Number(currentAmount) * 100;
+          : toMinorUnits(currentAmount, { allowZero: true });
 
-      if (
-        !Number.isFinite(currentAmountMinor) ||
-        currentAmountMinor < 0
-      ) {
+      if (roundedCurrentAmountMinor === null) {
         return res.status(400).json({
           status: "error",
           message: "Current amount cannot be negative",
         });
       }
-
-      const roundedCurrentAmountMinor =
-        Math.round(currentAmountMinor);
 
       if (
         roundedCurrentAmountMinor > targetAmountMinor
@@ -193,6 +229,13 @@ router.post(
         goal,
       });
     } catch (error) {
+      if (isClientInputDbError(error)) {
+        return res.status(400).json({
+          status: "error",
+          message: "Invalid goal details",
+        });
+      }
+
       console.error("Creating goal failed:", error);
 
       return res.status(500).json({
@@ -256,6 +299,15 @@ router.put(
         return res.status(400).json({
           status: "error",
           message: "Invalid goal status",
+        });
+      }
+
+      const textError = invalidGoalText(name, description);
+
+      if (textError) {
+        return res.status(400).json({
+          status: "error",
+          message: textError,
         });
       }
 
@@ -373,6 +425,13 @@ router.post(
         goal,
       });
     } catch (error) {
+      if (isClientInputDbError(error)) {
+        return res.status(400).json({
+          status: "error",
+          message: "Invalid amount",
+        });
+      }
+
       console.error("Adding money to goal failed:", error);
 
       return res.status(500).json({

@@ -1,0 +1,21 @@
+{
+  "incomeSource": {
+    "placeholder": "Select an income source",
+    "salary": "Salary",
+    "freelance": "Freelance",
+    "business": "Business",
+    "investments": "Investments",
+    "family_support": "Family support",
+    "other": "Other"
+  },
+  "objective": {
+    "placeholder": "Select your main objective",
+    "control_spending": "Control my spending",
+    "save_more": "Save more money",
+    "build_emergency_fund": "Build an emergency fund",
+    "pay_off_debt": "Pay off debt",
+    "reach_financial_goal": "Reach a financial goal",
+    "understand_money": "Understand where my money goes",
+    "other": "Other"
+  }
+}

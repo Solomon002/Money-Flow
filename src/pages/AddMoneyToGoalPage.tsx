@@ -1,13 +1,19 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router";
 import { ArrowLeft } from "lucide-react";
 import { addMoneyToGoal, getGoals, type Goal } from "../api/goals.js";
 import { useAuth } from "../context/AuthContext.js";
+import {
+  currencySymbol as getCurrencySymbol,
+  formatMoney,
+} from "../i18n/format.js";
 
 export default function AddMoneyToGoalPage() {
   const navigate = useNavigate();
   const { id } = useParams();
   const { onboardingPreferences } = useAuth();
+  const { t } = useTranslation();
 
   const [goal, setGoal] = useState<Goal | null>(null);
   const [amount, setAmount] = useState("");
@@ -16,17 +22,9 @@ export default function AddMoneyToGoalPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
-  const currencySymbols: Record<string, string> = {
-    NGN: "₦",
-    USD: "$",
-    GBP: "£",
-    EUR: "€",
-  };
+  const currencyCode = onboardingPreferences?.currency_code || "NGN";
 
-  const currencySymbol =
-    currencySymbols[onboardingPreferences?.currency_code || "NGN"] ||
-    onboardingPreferences?.currency_code ||
-    "NGN";
+  const currencySymbol = getCurrencySymbol(currencyCode);
 
   useEffect(() => {
     async function loadGoal() {
@@ -45,7 +43,7 @@ export default function AddMoneyToGoalPage() {
         );
 
         if (!selectedGoal) {
-          throw new Error("Goal not found");
+          throw new Error(t("goals.notFound"));
         }
 
         setGoal(selectedGoal);
@@ -53,7 +51,7 @@ export default function AddMoneyToGoalPage() {
         console.error("Loading goal failed:", error);
 
         setErrorMessage(
-          error instanceof Error ? error.message : "Unable to load goal",
+          error instanceof Error ? error.message : t("goals.loadOneFailed"),
         );
       } finally {
         setIsLoading(false);
@@ -69,19 +67,19 @@ export default function AddMoneyToGoalPage() {
     setErrorMessage("");
 
     if (!id) {
-      setErrorMessage("Goal ID is missing.");
+      setErrorMessage(t("goals.notFound"));
       return;
     }
 
     if (!goal) {
-      setErrorMessage("Goal could not be found.");
+      setErrorMessage(t("goals.notFound"));
       return;
     }
 
     const amountNumber = Number(amount);
 
     if (!Number.isFinite(amountNumber) || amountNumber <= 0) {
-      setErrorMessage("Please enter an amount greater than zero.");
+      setErrorMessage(t("transactions.form.amountError"));
       return;
     }
 
@@ -102,7 +100,7 @@ export default function AddMoneyToGoalPage() {
       const result = await addMoneyToGoal(id, amountNumber);
 
       if (!result.response.ok) {
-        throw new Error(result.data.message || "Unable to add money to goal");
+        throw new Error(result.data.message || t("goals.addMoneyFailed"));
       }
 
       navigate("/app/goals");
@@ -110,7 +108,7 @@ export default function AddMoneyToGoalPage() {
       console.error("Adding money to goal failed:", error);
 
       setErrorMessage(
-        error instanceof Error ? error.message : "Unable to add money to goal",
+        error instanceof Error ? error.message : t("goals.addMoneyFailed"),
       );
     } finally {
       setIsSaving(false);
@@ -121,7 +119,7 @@ export default function AddMoneyToGoalPage() {
     return (
       <div className="mx-auto max-w-2xl">
         <section className="rounded-2xl border border-slate-200 bg-white p-8 text-center">
-          <p className="text-sm text-slate-500">Loading goal...</p>
+          <p className="text-sm text-slate-500">{t("goals.loadingOne")}</p>
         </section>
       </div>
     );
@@ -142,15 +140,15 @@ export default function AddMoneyToGoalPage() {
           type="button"
           onClick={() => navigate("/app/goals")}
           className="rounded-lg p-2 text-slate-500 transition hover:bg-slate-100"
-          aria-label="Go back"
+          aria-label={t("common.back")}
         >
           <ArrowLeft size={20} />
         </button>
 
         <div>
-          <p className="text-sm text-slate-500">Financial planning</p>
+          <p className="text-sm text-slate-500">{t("goals.eyebrow")}</p>
 
-          <h1 className="mt-1 text-2xl font-bold text-slate-900">Add money</h1>
+          <h1 className="mt-1 text-2xl font-bold text-slate-900">{t("goals.addMoney")}</h1>
         </div>
       </div>
 
@@ -166,7 +164,7 @@ export default function AddMoneyToGoalPage() {
       {goal && (
         <section className="rounded-2xl border border-slate-200 bg-white p-6">
           <div>
-            <p className="text-sm text-slate-500">Adding money to</p>
+            <p className="text-sm text-slate-500">{t("goals.addingMoneyTo")}</p>
 
             <h2 className="mt-1 text-xl font-bold text-slate-900">
               {goal.name}
@@ -175,29 +173,18 @@ export default function AddMoneyToGoalPage() {
 
           <div className="mt-6 grid gap-4 sm:grid-cols-2">
             <div className="rounded-xl bg-slate-50 p-4">
-              <p className="text-sm text-slate-500">Current amount</p>
+              <p className="text-sm text-slate-500">{t("goals.currentAmount")}</p>
 
               <p className="mt-1 text-lg font-bold text-slate-900">
-                {currencySymbol}
-                {(Number(goal.current_amount_minor) / 100).toLocaleString(
-                  "en-NG",
-                  {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  },
-                )}
+                {formatMoney(Number(goal.current_amount_minor), currencyCode)}
               </p>
             </div>
 
             <div className="rounded-xl bg-slate-50 p-4">
-              <p className="text-sm text-slate-500">Remaining</p>
+              <p className="text-sm text-slate-500">{t("goals.remaining")}</p>
 
               <p className="mt-1 text-lg font-bold text-slate-900">
-                {currencySymbol}
-                {remainingAmount.toLocaleString("en-NG", {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                })}
+                {formatMoney(remainingAmount * 100, currencyCode)}
               </p>
             </div>
           </div>
@@ -208,7 +195,7 @@ export default function AddMoneyToGoalPage() {
                 htmlFor="amount"
                 className="block text-sm font-medium text-slate-700"
               >
-                Amount to add
+                {t("goals.amountToAdd")}
               </label>
 
               <div className="relative mt-2">
@@ -236,7 +223,7 @@ export default function AddMoneyToGoalPage() {
                 onClick={() => navigate("/app/goals")}
                 className="rounded-xl border border-slate-300 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
               >
-                Cancel
+                {t("common.cancel")}
               </button>
 
               <button
@@ -244,7 +231,7 @@ export default function AddMoneyToGoalPage() {
                 disabled={isSaving || remainingAmount <= 0}
                 className="rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {isSaving ? "Saving..." : "Add money"}
+                {isSaving ? t("common.saving") : t("goals.addMoney")}
               </button>
             </div>
           </form>

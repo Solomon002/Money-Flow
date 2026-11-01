@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router";
 import { ArrowLeft } from "lucide-react";
 import {
@@ -8,11 +9,13 @@ import {
   type GoalStatus,
 } from "../api/goals.js";
 import { useAuth } from "../context/AuthContext.js";
+import { currencySymbol as getCurrencySymbol } from "../i18n/format.js";
 
 export default function EditGoalPage() {
   const navigate = useNavigate();
   const { id } = useParams();
   const { onboardingPreferences } = useAuth();
+  const { t } = useTranslation();
 
   const [goal, setGoal] = useState<Goal | null>(null);
 
@@ -26,17 +29,9 @@ export default function EditGoalPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
-  const currencySymbols: Record<string, string> = {
-    NGN: "₦",
-    USD: "$",
-    GBP: "£",
-    EUR: "€",
-  };
-
-  const currencySymbol =
-    currencySymbols[onboardingPreferences?.currency_code || "NGN"] ||
-    onboardingPreferences?.currency_code ||
-    "NGN";
+  const currencySymbol = getCurrencySymbol(
+    onboardingPreferences?.currency_code || "NGN",
+  );
 
   function getTodayDate() {
     const today = new Date();
@@ -65,7 +60,7 @@ export default function EditGoalPage() {
         );
 
         if (!selectedGoal) {
-          throw new Error("Goal not found");
+          throw new Error(t("goals.notFound"));
         }
 
         setGoal(selectedGoal);
@@ -80,7 +75,7 @@ export default function EditGoalPage() {
         console.error("Loading goal failed:", error);
 
         setErrorMessage(
-          error instanceof Error ? error.message : "Unable to load goal",
+          error instanceof Error ? error.message : t("goals.loadOneFailed"),
         );
       } finally {
         setIsLoading(false);
@@ -96,24 +91,24 @@ export default function EditGoalPage() {
     setErrorMessage("");
 
     if (!id) {
-      setErrorMessage("Goal ID is missing.");
+      setErrorMessage(t("goals.notFound"));
       return;
     }
 
     if (!goal) {
-      setErrorMessage("Goal could not be found.");
+      setErrorMessage(t("goals.notFound"));
       return;
     }
 
     if (!name.trim()) {
-      setErrorMessage("Please enter a goal name.");
+      setErrorMessage(t("goals.form.nameError"));
       return;
     }
 
     const targetAmountNumber = Number(targetAmount);
 
     if (!Number.isFinite(targetAmountNumber) || targetAmountNumber <= 0) {
-      setErrorMessage("Please enter a target amount greater than zero.");
+      setErrorMessage(t("goals.form.targetError"));
       return;
     }
 
@@ -134,7 +129,7 @@ export default function EditGoalPage() {
       status !== goal.status;
 
     if (!hasChanges) {
-      setErrorMessage("No changes made.");
+      setErrorMessage(t("budgets.form.noChanges"));
       return;
     }
 
@@ -150,7 +145,7 @@ export default function EditGoalPage() {
       });
 
       if (!result.response.ok) {
-        throw new Error(result.data.message || "Unable to update goal");
+        throw new Error(result.data.message || t("goals.form.updateFailed"));
       }
 
       navigate("/app/goals");
@@ -158,7 +153,7 @@ export default function EditGoalPage() {
       console.error("Updating goal failed:", error);
 
       setErrorMessage(
-        error instanceof Error ? error.message : "Unable to update goal",
+        error instanceof Error ? error.message : t("goals.form.updateFailed"),
       );
     } finally {
       setIsSaving(false);
@@ -169,7 +164,7 @@ export default function EditGoalPage() {
     return (
       <div className="mx-auto max-w-2xl">
         <section className="rounded-2xl border border-slate-200 bg-white p-8 text-center">
-          <p className="text-sm text-slate-500">Loading goal...</p>
+          <p className="text-sm text-slate-500">{t("goals.loadingOne")}</p>
         </section>
       </div>
     );
@@ -182,15 +177,15 @@ export default function EditGoalPage() {
           type="button"
           onClick={() => navigate("/app/goals")}
           className="rounded-lg p-2 text-slate-500 transition hover:bg-slate-100"
-          aria-label="Go back"
+          aria-label={t("common.back")}
         >
           <ArrowLeft size={20} />
         </button>
 
         <div>
-          <p className="text-sm text-slate-500">Financial planning</p>
+          <p className="text-sm text-slate-500">{t("goals.eyebrow")}</p>
 
-          <h1 className="mt-1 text-2xl font-bold text-slate-900">Edit goal</h1>
+          <h1 className="mt-1 text-2xl font-bold text-slate-900">{t("goals.edit")}</h1>
         </div>
       </div>
 
@@ -211,7 +206,7 @@ export default function EditGoalPage() {
                 htmlFor="goal-name"
                 className="block text-sm font-medium text-slate-700"
               >
-                Goal name
+                {t("goals.form.name")}
               </label>
 
               <input
@@ -228,7 +223,7 @@ export default function EditGoalPage() {
                 htmlFor="target-amount"
                 className="block text-sm font-medium text-slate-700"
               >
-                Target amount
+                {t("goals.form.target")}
               </label>
 
               <div className="relative mt-2">
@@ -253,7 +248,7 @@ export default function EditGoalPage() {
                 htmlFor="target-date"
                 className="block text-sm font-medium text-slate-700"
               >
-                Target date
+                {t("goals.form.targetDate")}
               </label>
 
               <input
@@ -271,7 +266,7 @@ export default function EditGoalPage() {
                 htmlFor="goal-status"
                 className="block text-sm font-medium text-slate-700"
               >
-                Status
+                {t("goals.form.status")}
               </label>
 
               <select
@@ -282,13 +277,13 @@ export default function EditGoalPage() {
                 }
                 className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-slate-900"
               >
-                <option value="active">Active</option>
+                <option value="active">{t("goals.status.active")}</option>
 
-                <option value="paused">Paused</option>
+                <option value="paused">{t("goals.status.paused")}</option>
 
-                <option value="completed">Completed</option>
+                <option value="completed">{t("goals.status.completed")}</option>
 
-                <option value="archived">Archived</option>
+                <option value="archived">{t("goals.status.archived")}</option>
               </select>
             </div>
 
@@ -297,7 +292,7 @@ export default function EditGoalPage() {
                 htmlFor="goal-description"
                 className="block text-sm font-medium text-slate-700"
               >
-                Description
+                {t("common.description")}
               </label>
 
               <textarea
@@ -315,7 +310,7 @@ export default function EditGoalPage() {
                 onClick={() => navigate("/app/goals")}
                 className="rounded-xl border border-slate-300 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
               >
-                Cancel
+                {t("common.cancel")}
               </button>
 
               <button
@@ -323,7 +318,7 @@ export default function EditGoalPage() {
                 disabled={isSaving}
                 className="rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {isSaving ? "Saving..." : "Save changes"}
+                {isSaving ? t("common.saving") : t("common.saveChanges")}
               </button>
             </div>
           </form>

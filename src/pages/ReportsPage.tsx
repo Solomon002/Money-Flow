@@ -1,4 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { formatDate as formatLocalDate, formatMoney as formatLocalMoney } from "../i18n/format.js";
+import { categoryLabel } from "../i18n/categories.js";
 import { useNavigate } from "react-router";
 import {
   ArrowLeft,
@@ -99,6 +102,7 @@ function getPeriodDates(period: ReportPeriod) {
 }
 
 export default function ReportsPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { onboardingPreferences } = useAuth();
 
@@ -128,33 +132,14 @@ export default function ReportsPage() {
     Record<string, boolean>
   >({});
 
-  const currencySymbols: Record<string, string> = {
-    NGN: "₦",
-    USD: "$",
-    GBP: "£",
-    EUR: "€",
-  };
-
   const currencyCode = onboardingPreferences?.currency_code || "NGN";
 
-  const currencySymbol = currencySymbols[currencyCode] || currencyCode;
-
   function formatMoney(amountMinor: number) {
-    return `${currencySymbol}${(Number(amountMinor) / 100).toLocaleString(
-      "en-NG",
-      {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      },
-    )}`;
+    return formatLocalMoney(amountMinor, currencyCode);
   }
 
   function formatDate(date: string) {
-    const [year, month, day] = date.split("-").map(Number);
-
-    const parsedDate = new Date(year, month - 1, day);
-
-    return parsedDate.toLocaleDateString("en-NG", {
+    return formatLocalDate(date, {
       day: "numeric",
       month: "long",
       year: "numeric",
@@ -162,14 +147,18 @@ export default function ReportsPage() {
   }
 
   function formatTransactionDate(date: string) {
-    const parsedDate = new Date(date);
-
-    return parsedDate.toLocaleDateString("en-NG", {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-    });
+    return formatLocalDate(date);
   }
+
+  const isPro =
+    subscription?.plan === "pro" &&
+    (subscription.status === "active" ||
+      subscription.status === "trialing" ||
+      subscription.status === "cancelled");
+
+  // Read inside async loaders, which would otherwise see a stale value.
+  const isProRef = useRef(isPro);
+  isProRef.current = isPro;
 
   async function loadAdvancedReport(
     selectedStartDate: string,
@@ -188,13 +177,13 @@ export default function ReportsPage() {
         if (result.response.status === 403) {
           setAdvancedReport(null);
           setAdvancedErrorMessage(
-            "MoneyFlow Pro is required for advanced reports.",
+            t("reports.proRequired"),
           );
           return;
         }
 
         throw new Error(
-          result.data.message || "Unable to load advanced report",
+          result.data.message || t("reports.advancedFailed"),
         );
       }
 
@@ -207,7 +196,7 @@ export default function ReportsPage() {
       setAdvancedErrorMessage(
         error instanceof Error
           ? error.message
-          : "Unable to load advanced report",
+          : t("reports.advancedFailed"),
       );
     } finally {
       setIsAdvancedLoading(false);
@@ -229,14 +218,19 @@ export default function ReportsPage() {
       const result = await getReport(selectedStartDate, selectedEndDate);
 
       if (!result.response.ok) {
-        throw new Error(result.data.message || "Unable to load report");
+        throw new Error(result.data.message || t("reports.loadFailed"));
       }
 
       setReport(result.data.report);
 
       setExpandedCategories({});
 
-      await loadAdvancedReport(selectedStartDate, selectedEndDate);
+      // Free users never call the Pro-only endpoint.
+      if (isProRef.current) {
+        await loadAdvancedReport(selectedStartDate, selectedEndDate);
+      } else {
+        setIsAdvancedLoading(false);
+      }
     } catch (error) {
       console.error("Loading report failed:", error);
 
@@ -244,7 +238,7 @@ export default function ReportsPage() {
       setAdvancedReport(null);
 
       setErrorMessage(
-        error instanceof Error ? error.message : "Unable to load report",
+        error instanceof Error ? error.message : t("reports.loadFailed"),
       );
 
       setIsAdvancedLoading(false);
@@ -282,18 +276,26 @@ export default function ReportsPage() {
     loadSubscription();
   }, []);
 
+  // Subscription status arrives after the first report; fetch the Pro
+  // report once we know the user has Pro.
+  useEffect(() => {
+    if (isPro && report) {
+      void loadAdvancedReport(report.startDate, report.endDate);
+    }
+  }, [isPro]);
+
   function handlePeriodChange(selectedPeriod: ReportPeriod) {
     setPeriod(selectedPeriod);
   }
 
   function handleCustomReport() {
     if (!startDate || !endDate) {
-      setErrorMessage("Please select both a start date and an end date.");
+      setErrorMessage(t("reports.selectDates"));
       return;
     }
 
     if (startDate > endDate) {
-      setErrorMessage("Start date cannot be after end date.");
+      setErrorMessage(t("reports.startAfterEnd"));
       return;
     }
 
@@ -371,7 +373,7 @@ export default function ReportsPage() {
       } else {
         groups.set(key, {
           id: key,
-          name: item.parentCategoryName || item.categoryName,
+          name: categoryLabel(item.parentCategoryName || item.categoryName),
           totalMinor: Number(item.totalMinor),
         });
       }
@@ -441,12 +443,6 @@ export default function ReportsPage() {
     };
   }, [advancedReport]);
 
-  const isPro =
-    subscription?.plan === "pro" &&
-    (subscription.status === "active" ||
-      subscription.status === "trialing" ||
-      subscription.status === "cancelled");
-
   return (
     <div className="mx-auto max-w-6xl space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -455,15 +451,15 @@ export default function ReportsPage() {
             type="button"
             onClick={() => navigate(-1)}
             className="rounded-lg p-2 text-slate-500 transition hover:bg-slate-100"
-            aria-label="Go back"
+            aria-label={t("common.back")}
           >
             <ArrowLeft size={20} />
           </button>
 
           <div>
-            <p className="text-sm text-slate-500">Understand your money</p>
+            <p className="text-sm text-slate-500">{t("reports.eyebrow")}</p>
 
-            <h1 className="mt-1 text-2xl font-bold text-slate-900">Reports</h1>
+            <h1 className="mt-1 text-2xl font-bold text-slate-900">{t("nav.reports")}</h1>
           </div>
         </div>
 
@@ -472,7 +468,7 @@ export default function ReportsPage() {
 
           {report
             ? `${formatDate(report.startDate)} – ${formatDate(report.endDate)}`
-            : "Select a period"}
+            : t("reports.selectPeriod")}
         </div>
       </div>
 
@@ -487,7 +483,7 @@ export default function ReportsPage() {
               : "bg-white text-slate-600 hover:bg-slate-100"
           }`}
         >
-          Basic
+          {t("reports.basic")}
         </button>
 
         <button
@@ -500,7 +496,7 @@ export default function ReportsPage() {
           }`}
         >
           <Crown size={16} />
-          Advanced
+          {t("reports.advanced")}
           {!isPro && <Lock size={14} />}
         </button>
       </div>
@@ -509,11 +505,11 @@ export default function ReportsPage() {
       <section className="rounded-2xl border border-slate-200 bg-white p-4">
         <div className="flex flex-wrap gap-2">
           {[
-            ["this-week", "This week"],
-            ["this-month", "This month"],
-            ["last-month", "Last month"],
-            ["last-3-months", "Last 3 months"],
-            ["custom", "Custom"],
+            ["this-week", t("reports.periods.thisWeek")],
+            ["this-month", t("reports.periods.thisMonth")],
+            ["last-month", t("reports.periods.lastMonth")],
+            ["last-3-months", t("reports.periods.last3Months")],
+            ["custom", t("reports.periods.custom")],
           ].map(([value, label]) => (
             <button
               key={value}
@@ -537,7 +533,7 @@ export default function ReportsPage() {
                 htmlFor="report-start-date"
                 className="block text-sm font-medium text-slate-700"
               >
-                Start date
+                {t("reports.startDate")}
               </label>
 
               <input
@@ -554,7 +550,7 @@ export default function ReportsPage() {
                 htmlFor="report-end-date"
                 className="block text-sm font-medium text-slate-700"
               >
-                End date
+                {t("reports.endDate")}
               </label>
 
               <input
@@ -572,7 +568,7 @@ export default function ReportsPage() {
                 onClick={handleCustomReport}
                 className="w-full rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
               >
-                Generate report
+                {t("reports.generate")}
               </button>
             </div>
           </div>
@@ -593,7 +589,7 @@ export default function ReportsPage() {
 
           {isLoading ? (
             <section className="rounded-2xl border border-slate-200 bg-white p-10 text-center">
-              <p className="text-sm text-slate-500">Loading report...</p>
+              <p className="text-sm text-slate-500">{t("reports.loading")}</p>
             </section>
           ) : !report ? (
             <section className="rounded-2xl border border-slate-200 bg-white p-10 text-center">
@@ -602,11 +598,11 @@ export default function ReportsPage() {
               </div>
 
               <h2 className="mt-4 text-lg font-semibold text-slate-900">
-                No report available
+                {t("reports.noReport")}
               </h2>
 
               <p className="mt-2 text-sm text-slate-500">
-                Select another date range and try again.
+                {t("reports.noReportBody")}
               </p>
             </section>
           ) : (
@@ -614,7 +610,7 @@ export default function ReportsPage() {
               <div className="grid gap-4 md:grid-cols-3">
                 <section className="rounded-2xl border border-slate-200 bg-white p-6">
                   <div className="flex items-center justify-between">
-                    <p className="text-sm font-medium text-slate-500">Income</p>
+                    <p className="text-sm font-medium text-slate-500">{t("common.income")}</p>
 
                     <div className="rounded-xl bg-green-50 p-2">
                       <TrendingUp size={18} className="text-green-600" />
@@ -629,7 +625,7 @@ export default function ReportsPage() {
                 <section className="rounded-2xl border border-slate-200 bg-white p-6">
                   <div className="flex items-center justify-between">
                     <p className="text-sm font-medium text-slate-500">
-                      Expenses
+                      {t("common.expenses")}
                     </p>
 
                     <div className="rounded-xl bg-red-50 p-2">
@@ -645,7 +641,7 @@ export default function ReportsPage() {
                 <section className="rounded-2xl border border-slate-200 bg-white p-6">
                   <div className="flex items-center justify-between">
                     <p className="text-sm font-medium text-slate-500">
-                      Net balance
+                      {t("reports.netBalance")}
                     </p>
 
                     <div className="rounded-xl bg-slate-100 p-2">
@@ -668,18 +664,18 @@ export default function ReportsPage() {
               <section className="rounded-2xl border border-slate-200 bg-white p-6">
                 <div>
                   <h2 className="text-lg font-semibold text-slate-900">
-                    Spending by category
+                    {t("reports.byCategory")}
                   </h2>
 
                   <p className="mt-1 text-sm text-slate-500">
-                    See where your money went during this period.
+                    {t("reports.byCategoryBody")}
                   </p>
                 </div>
 
                 {report.spendingByCategory.length === 0 ? (
                   <div className="mt-6 rounded-xl bg-slate-50 p-6 text-center">
                     <p className="text-sm text-slate-500">
-                      No expenses recorded during this period.
+                      {t("reports.noExpensesPeriod")}
                     </p>
                   </div>
                 ) : (
@@ -714,8 +710,8 @@ export default function ReportsPage() {
                                   className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
                                   aria-label={
                                     isExpanded
-                                      ? `Collapse ${category.categoryName}`
-                                      : `Expand ${category.categoryName}`
+                                      ? t("reports.collapse", { name: categoryLabel(category.categoryName) })
+                                      : t("reports.expand", { name: categoryLabel(category.categoryName) })
                                   }
                                 >
                                   {isExpanded ? (
@@ -732,7 +728,7 @@ export default function ReportsPage() {
                                 <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
                                   <div>
                                     <p className="text-sm font-semibold text-slate-800">
-                                      {category.categoryName}
+                                      {categoryLabel(category.categoryName)}
                                     </p>
 
                                     {hasBreakdown && (
@@ -798,7 +794,7 @@ export default function ReportsPage() {
                                                 : "font-medium text-slate-700"
                                             }`}
                                           >
-                                            {item.categoryName}
+                                            {categoryLabel(item.categoryName)}
                                           </p>
                                         </div>
 
@@ -852,18 +848,17 @@ export default function ReportsPage() {
                     </div>
 
                     <p className="mt-2 text-sm text-slate-500">
-                      Go deeper into your spending with advanced financial
-                      analysis.
+                      {t("reports.proTeaser")}
                     </p>
                   </div>
 
                   {!advancedReport &&
                     advancedErrorMessage.includes(
-                      "MoneyFlow Pro is required",
+                      t("reports.proRequiredShort"),
                     ) && (
                       <div className="flex items-center gap-2 rounded-xl bg-slate-100 px-3 py-2 text-sm font-semibold text-slate-700">
                         <Lock size={16} />
-                        Pro feature
+                        {t("reports.proFeature")}
                       </div>
                     )}
                 </div>
@@ -871,7 +866,7 @@ export default function ReportsPage() {
                 {isAdvancedLoading ? (
                   <div className="mt-6 rounded-xl bg-slate-50 p-6 text-center">
                     <p className="text-sm text-slate-500">
-                      Loading advanced report...
+                      {t("reports.loadingAdvanced")}
                     </p>
                   </div>
                 ) : advancedReport ? (
@@ -879,7 +874,7 @@ export default function ReportsPage() {
                     <div className="grid gap-4 sm:grid-cols-3">
                       <div className="rounded-xl bg-slate-50 p-4">
                         <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
-                          Pro income
+                          {t("reports.proIncome")}
                         </p>
 
                         <p className="mt-2 text-xl font-bold text-slate-900">
@@ -889,7 +884,7 @@ export default function ReportsPage() {
 
                       <div className="rounded-xl bg-slate-50 p-4">
                         <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
-                          Pro expenses
+                          {t("reports.proExpenses")}
                         </p>
 
                         <p className="mt-2 text-xl font-bold text-slate-900">
@@ -901,7 +896,7 @@ export default function ReportsPage() {
 
                       <div className="rounded-xl bg-slate-50 p-4">
                         <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
-                          Net balance
+                          {t("reports.netBalance")}
                         </p>
 
                         <p
@@ -921,19 +916,18 @@ export default function ReportsPage() {
                     <div className="rounded-2xl border border-slate-100 p-5 sm:p-6">
                       <div>
                         <h3 className="text-lg font-semibold text-slate-900">
-                          Where your money went
+                          {t("reports.whereMoneyWent")}
                         </h3>
 
                         <p className="mt-1 text-sm text-slate-500">
-                          A visual breakdown of how your spending was
-                          distributed during this period.
+                          {t("reports.whereMoneyWentBody")}
                         </p>
                       </div>
 
                       {visualSpendingBreakdown.length === 0 ? (
                         <div className="mt-6 rounded-xl bg-slate-50 p-6 text-center">
                           <p className="text-sm text-slate-500">
-                            No spending data available for this period.
+                            {t("reports.noSpendingData")}
                           </p>
                         </div>
                       ) : (
@@ -944,11 +938,11 @@ export default function ReportsPage() {
                               style={{
                                 background: donutGradient,
                               }}
-                              aria-label="Spending distribution chart"
+                              aria-label={t("reports.distributionChart")}
                             >
                               <div className="flex h-40 w-40 flex-col items-center justify-center rounded-full bg-white text-center shadow-sm sm:h-44 sm:w-44">
                                 <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
-                                  Total spent
+                                  {t("reports.totalSpent")}
                                 </p>
 
                                 <p className="mt-2 px-3 text-lg font-bold text-slate-900 sm:text-xl">
@@ -1015,12 +1009,11 @@ export default function ReportsPage() {
                     <div className="rounded-2xl border border-slate-100 p-5 sm:p-6">
                       <div>
                         <h3 className="text-lg font-semibold text-slate-900">
-                          Income vs expenses
+                          {t("reports.incomeVsExpenses")}
                         </h3>
 
                         <p className="mt-1 text-sm text-slate-500">
-                          See how much money came in compared with how much went
-                          out.
+                          {t("reports.incomeVsExpensesBody")}
                         </p>
                       </div>
 
@@ -1047,7 +1040,7 @@ export default function ReportsPage() {
                               <span className="h-3 w-3 rounded-full bg-slate-900" />
 
                               <p className="text-sm font-medium text-slate-600">
-                                Income
+                                {t("common.income")}
                               </p>
                             </div>
 
@@ -1063,7 +1056,7 @@ export default function ReportsPage() {
                               <span className="h-3 w-3 rounded-full bg-slate-300" />
 
                               <p className="text-sm font-medium text-slate-600">
-                                Expenses
+                                {t("common.expenses")}
                               </p>
                             </div>
 
@@ -1082,11 +1075,11 @@ export default function ReportsPage() {
                         <div className="flex items-center justify-between gap-3">
                           <div>
                             <h3 className="font-semibold text-slate-900">
-                              Top spending
+                              {t("reports.topSpending")}
                             </h3>
 
                             <p className="mt-1 text-xs text-slate-500">
-                              Your largest expenses in this period.
+                              {t("reports.topSpendingBody")}
                             </p>
                           </div>
 
@@ -1098,7 +1091,7 @@ export default function ReportsPage() {
 
                         {advancedReport.topSpendingTransactions.length === 0 ? (
                           <p className="mt-5 text-sm text-slate-500">
-                            No expenses recorded.
+                            {t("reports.noExpenses")}
                           </p>
                         ) : (
                           <div className="mt-5 space-y-3">
@@ -1124,8 +1117,8 @@ export default function ReportsPage() {
 
                                         <p className="mt-1 text-xs text-slate-500">
                                           {transaction.parentCategoryName
-                                            ? `${transaction.categoryName} · ${transaction.parentCategoryName}`
-                                            : transaction.categoryName}
+                                            ? `${categoryLabel(transaction.categoryName)} · ${categoryLabel(transaction.parentCategoryName)}`
+                                            : categoryLabel(transaction.categoryName)}
                                           {" · "}
                                           {formatTransactionDate(
                                             transaction.transactionDate,
@@ -1160,11 +1153,11 @@ export default function ReportsPage() {
                         <div className="flex items-center justify-between gap-3">
                           <div>
                             <h3 className="font-semibold text-slate-900">
-                              Budget performance
+                              {t("settings.pro.budgetPerformance")}
                             </h3>
 
                             <p className="mt-1 text-xs text-slate-500">
-                              See how your spending compares with your budgets.
+                              {t("reports.budgetPerformanceBody")}
                             </p>
                           </div>
 
@@ -1176,7 +1169,7 @@ export default function ReportsPage() {
 
                         {advancedReport.budgetPerformance.length === 0 ? (
                           <p className="mt-5 text-sm text-slate-500">
-                            No budgets found for this period.
+                            {t("reports.noBudgets")}
                           </p>
                         ) : (
                           <div className="mt-5 space-y-4">
@@ -1192,7 +1185,7 @@ export default function ReportsPage() {
                                   <div className="flex items-start justify-between gap-3">
                                     <div>
                                       <p className="text-sm font-semibold text-slate-800">
-                                        {budget.categoryName}
+                                        {categoryLabel(budget.categoryName)}
                                       </p>
 
                                       <p className="mt-1 text-xs text-slate-500">
@@ -1220,8 +1213,8 @@ export default function ReportsPage() {
 
                                       <p className="text-xs text-slate-500">
                                         {isOverBudget
-                                          ? "Over budget"
-                                          : "Within budget"}
+                                          ? t("reports.overBudget")
+                                          : t("reports.withinBudget")}
                                       </p>
                                     </div>
                                   </div>
@@ -1250,14 +1243,14 @@ export default function ReportsPage() {
                                     }`}
                                   >
                                     {isOverBudget
-                                      ? `${formatMoney(
-                                          Math.abs(
-                                            Number(budget.remainingMinor),
+                                      ? t("budgets.over", {
+                                          amount: formatMoney(
+                                            Math.abs(Number(budget.remainingMinor)),
                                           ),
-                                        )} over budget`
-                                      : `${formatMoney(
-                                          Number(budget.remainingMinor),
-                                        )} remaining`}
+                                        })
+                                      : t("budgets.remaining", {
+                                          amount: formatMoney(Number(budget.remainingMinor)),
+                                        })}
                                   </p>
                                 </div>
                               );
@@ -1277,13 +1270,11 @@ export default function ReportsPage() {
 
                         <div>
                           <h3 className="font-semibold text-slate-900">
-                            Unlock deeper financial insights
+                            {t("settings.pro.unlockTitle")}
                           </h3>
 
                           <p className="mt-1 max-w-2xl text-sm leading-6 text-slate-600">
-                            MoneyFlow Pro gives you detailed spending analysis,
-                            top spending activity, and budget performance for
-                            the selected period.
+                            {t("reports.proUnlockBody")}
                           </p>
                         </div>
                       </div>
@@ -1293,13 +1284,13 @@ export default function ReportsPage() {
                         onClick={() => navigate("/app/pro")}
                         className="w-full shrink-0 rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 sm:w-auto"
                       >
-                        Explore Pro
+                        {t("settings.pro.explore")}
                       </button>
                     </div>
 
                     {advancedErrorMessage &&
                       !advancedErrorMessage.includes(
-                        "MoneyFlow Pro is required",
+                        t("reports.proRequiredShort"),
                       ) && (
                         <p className="mt-4 text-sm text-red-600">
                           {advancedErrorMessage}
@@ -1317,7 +1308,7 @@ export default function ReportsPage() {
             <AdvancedReportsTab
               startDate={startDate}
               endDate={endDate}
-              currencySymbol={currencySymbol}
+              currencyCode={currencyCode}
             />
           ) : (
             <section className="rounded-2xl border border-slate-200 bg-white p-6 sm:p-10">
@@ -1327,13 +1318,11 @@ export default function ReportsPage() {
                 </div>
 
                 <h2 className="mt-5 text-xl font-bold text-slate-900">
-                  Advanced analytics is a Pro feature
+                  {t("reports.analyticsPro")}
                 </h2>
 
                 <p className="mt-3 text-sm leading-6 text-slate-500">
-                  Upgrade to MoneyFlow Pro to see detailed charts, category
-                  breakdowns, your largest transactions, and downloadable
-                  reports.
+                  {t("reports.analyticsProBody")}
                 </p>
 
                 <div className="mt-6 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
@@ -1343,7 +1332,7 @@ export default function ReportsPage() {
                     className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-slate-900 px-6 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 sm:w-auto"
                   >
                     <Crown size={16} />
-                    Upgrade to Pro
+                    {t("pro.upgrade")}
                   </button>
 
                   <button
@@ -1351,7 +1340,7 @@ export default function ReportsPage() {
                     onClick={() => setActiveTab("basic")}
                     className="inline-flex w-full items-center justify-center rounded-xl border border-slate-200 bg-white px-6 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 sm:w-auto"
                   >
-                    Back to basic report
+                    {t("reports.backToBasic")}
                   </button>
                 </div>
               </div>

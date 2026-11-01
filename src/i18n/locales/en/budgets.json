@@ -1,0 +1,31 @@
+{
+  "eyebrow": "Spending control",
+  "title": "Budgets",
+  "add": "Add budget",
+  "edit": "Edit budget",
+  "create": "Create budget",
+  "loading": "Loading budgets...",
+  "loadingOne": "Loading budget...",
+  "loadFailed": "Unable to load budgets",
+  "loadOneFailed": "Unable to load budget",
+  "notFound": "Budget not found",
+  "deleteFailed": "Unable to delete budget",
+  "confirmDelete": "Delete the {{category}} budget for {{month}} {{year}}?",
+  "emptyTitle": "No budgets yet",
+  "emptyBody": "Create a budget for this month to start controlling your spending.",
+  "monthly": "Monthly budget",
+  "spent": "Spent",
+  "percentUsed": "{{percent}}% used",
+  "remaining": "{{amount}} remaining",
+  "over": "{{amount}} over budget",
+  "overWarning": "You are over this budget.",
+  "closeWarning": "You are very close to your budget limit.",
+  "approachingWarning": "You are approaching your budget limit.",
+  "form": {
+    "amountError": "Please enter a budget amount greater than zero.",
+    "createFailed": "Unable to create budget",
+    "updateFailed": "Unable to update budget",
+    "noChanges": "No changes made.",
+    "submit": "Save budget"
+  }
+}

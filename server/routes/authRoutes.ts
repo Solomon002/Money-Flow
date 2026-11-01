@@ -11,6 +11,7 @@ import {
 
 import {
   loginRateLimiter,
+  loginAccountRateLimiter,
   registerRateLimiter,
   forgotPasswordRateLimiter,
   resetPasswordRateLimiter,
@@ -28,6 +29,7 @@ import {
 } from "../middleware/authMiddleware.js";
 
 import { pool } from "../db.js";
+import { LEGAL_VERSION } from "../utils/legal.js";
 
 const router = Router();
 
@@ -37,13 +39,25 @@ const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
 
 const resend = resendApiKey ? new Resend(resendApiKey) : null;
 
+const FORGOT_PASSWORD_MESSAGE =
+  "If an account exists with that email, a password reset link has been sent";
+
+const MAX_NAME_LENGTH = 120;
+const MAX_EMAIL_LENGTH = 320;
+// Bounds the work argon2 does per request.
+const MAX_PASSWORD_LENGTH = 256;
+
 function isValidEmail(email: string): boolean {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  return (
+    email.length <= MAX_EMAIL_LENGTH &&
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+  );
 }
 
 function isStrongPassword(password: string): boolean {
   return (
     password.length >= 8 &&
+    password.length <= MAX_PASSWORD_LENGTH &&
     /[A-Z]/.test(password) &&
     /[a-z]/.test(password) &&
     /[0-9]/.test(password) &&
@@ -56,12 +70,33 @@ router.post(
   registerRateLimiter,
   async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, acceptTerms } = req.body;
 
-    if (!name || !email || !password) {
+    if (acceptTerms !== true) {
+      return res.status(400).json({
+        status: "error",
+        message: "You must accept the Terms of Service and Privacy Policy",
+      });
+    }
+
+    if (
+      typeof name !== "string" ||
+      typeof email !== "string" ||
+      typeof password !== "string" ||
+      !name.trim() ||
+      !email ||
+      !password
+    ) {
       return res.status(400).json({
         status: "error",
         message: "Name, email, and password are required",
+      });
+    }
+
+    if (name.trim().length > MAX_NAME_LENGTH) {
+      return res.status(400).json({
+        status: "error",
+        message: `Name must be ${MAX_NAME_LENGTH} characters or less`,
       });
     }
 
@@ -86,6 +121,7 @@ router.post(
       name: name.trim(),
       email: normalizedEmail,
       password,
+      termsVersion: LEGAL_VERSION,
     });
 
     return res.status(201).json({
@@ -94,6 +130,17 @@ router.post(
       user,
     });
   } catch (error) {
+    if (
+      error instanceof Error &&
+      "code" in error &&
+      error.code === "23505"
+    ) {
+      return res.status(409).json({
+        status: "error",
+        message: "An account with this email already exists",
+      });
+    }
+
     console.error("Registration failed:", error);
 
     return res.status(500).json({
@@ -106,11 +153,18 @@ router.post(
 router.post(
   "/login",
   loginRateLimiter,
+  loginAccountRateLimiter,
   async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    if (!email || !password) {
+    if (
+      typeof email !== "string" ||
+      typeof password !== "string" ||
+      !email ||
+      !password ||
+      password.length > MAX_PASSWORD_LENGTH
+    ) {
       return res.status(400).json({
         status: "error",
         message: "Email and password are required",
@@ -176,18 +230,28 @@ router.post(
       });
     }
 
-    const accessToken = await refreshAccessToken(refreshToken);
+    if (typeof refreshToken !== "string") {
+      return res.status(400).json({
+        status: "error",
+        message: "Refresh token is required",
+      });
+    }
 
-    if (!accessToken) {
+    const tokens = await refreshAccessToken(refreshToken);
+
+    if (!tokens) {
       return res.status(401).json({
         status: "error",
         message: "Invalid or expired refresh token",
       });
     }
 
+    // The old refresh token is revoked on every refresh,
+    // so the client must store the rotated one.
     return res.status(200).json({
       status: "ok",
-      accessToken,
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
     });
   } catch (error) {
     console.error("Token refresh failed:", error);
@@ -203,7 +267,7 @@ router.post("/logout", async (req, res) => {
   try {
     const { refreshToken } = req.body;
 
-    if (!refreshToken) {
+    if (typeof refreshToken !== "string" || !refreshToken) {
       return res.status(400).json({
         status: "error",
         message: "Refresh token is required",
@@ -280,7 +344,7 @@ router.post(
   try {
     const { email } = req.body;
 
-    if (!email) {
+    if (typeof email !== "string" || !email) {
       return res.status(400).json({
         status: "error",
         message: "Email is required",
@@ -320,14 +384,19 @@ router.post(
     const { resetToken, email: userEmail, tokenRecord } =
       await createPasswordResetToken(result.rows[0].id);
 
+    /*
+     * Failures below are logged but answered with the same message as
+     * an unknown email, so the response never reveals whether an
+     * account exists.
+     */
     if (!resend || !feedbackEmail) {
       console.error(
         "Password reset email cannot be sent because Resend is not configured",
       );
 
-      return res.status(500).json({
-        status: "error",
-        message: "Unable to send password reset email",
+      return res.status(200).json({
+        status: "ok",
+        message: FORGOT_PASSWORD_MESSAGE,
       });
     }
 
@@ -384,9 +453,9 @@ router.post(
         emailResult.error,
       );
 
-      return res.status(500).json({
-        status: "error",
-        message: "Unable to send password reset email",
+      return res.status(200).json({
+        status: "ok",
+        message: FORGOT_PASSWORD_MESSAGE,
       });
     }
 
@@ -416,7 +485,12 @@ router.post(
   try {
     const { token, newPassword } = req.body;
 
-    if (!token || !newPassword) {
+    if (
+      typeof token !== "string" ||
+      typeof newPassword !== "string" ||
+      !token ||
+      !newPassword
+    ) {
       return res.status(400).json({
         status: "error",
         message: "Reset token and new password are required",

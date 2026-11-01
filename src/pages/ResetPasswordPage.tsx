@@ -1,9 +1,11 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Link, useNavigate, useSearchParams } from "react-router";
 import { resetPassword } from "../api/auth.js";
 
 export default function ResetPasswordPage() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [searchParams] = useSearchParams();
 
   const token = searchParams.get("token") || "";
@@ -15,24 +17,28 @@ export default function ResetPasswordPage() {
 
   const passwordRequirements = [
     {
-      label: "At least 8 characters",
+      label: t("auth.rules.length"),
       valid: password.length >= 8,
     },
     {
-      label: "One uppercase letter",
+      label: t("auth.rules.uppercase"),
       valid: /[A-Z]/.test(password),
     },
     {
-      label: "One lowercase letter",
+      label: t("auth.rules.lowercase"),
       valid: /[a-z]/.test(password),
     },
     {
-      label: "One number",
+      label: t("auth.rules.number"),
       valid: /[0-9]/.test(password),
     },
     {
-      label: "One special character",
+      label: t("auth.rules.special"),
       valid: /[^A-Za-z0-9]/.test(password),
+    },
+    {
+      label: t("auth.rules.match"),
+      valid: confirmPassword.length > 0 && password === confirmPassword,
     },
   ];
 
@@ -46,17 +52,17 @@ export default function ResetPasswordPage() {
     setErrorMessage("");
 
     if (!token) {
-      setErrorMessage("This password reset link is invalid or incomplete.");
+      setErrorMessage(t("auth.reset.invalidLink"));
       return;
     }
 
     if (!isPasswordValid) {
-      setErrorMessage("Password does not meet all the requirements.");
+      setErrorMessage(t("auth.rules.notMet"));
       return;
     }
 
     if (password !== confirmPassword) {
-      setErrorMessage("Passwords do not match.");
+      setErrorMessage(t("auth.passwordsDontMatch"));
       return;
     }
 
@@ -66,18 +72,18 @@ export default function ResetPasswordPage() {
       const result = await resetPassword(token, password);
 
       if (!result.response.ok) {
-        throw new Error(result.data.message || "Unable to reset password");
+        throw new Error(result.data.message || t("auth.reset.failed"));
       }
 
       navigate("/login", {
         state: {
           registrationSuccess:
-            "Password reset successfully. Please sign in with your new password.",
+            t("auth.reset.success"),
         },
       });
     } catch (error) {
       setErrorMessage(
-        error instanceof Error ? error.message : "Unable to reset password",
+        error instanceof Error ? error.message : t("auth.reset.failed"),
       );
     } finally {
       setIsSubmitting(false);
@@ -93,17 +99,17 @@ export default function ResetPasswordPage() {
               to="/"
               className="mb-6 inline-flex items-center text-sm font-medium text-slate-500 transition hover:text-slate-900"
             >
-              ← Back to MoneyFlow
+              ← {t("auth.backToMoneyFlow")}
             </Link>
 
             <p className="text-sm font-semibold text-slate-500">MoneyFlow</p>
 
             <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-900">
-              Create a new password
+              {t("auth.reset.title")}
             </h1>
 
             <p className="mt-2 text-sm leading-6 text-slate-500">
-              Choose a strong password for your MoneyFlow account.
+              {t("auth.reset.subtitle")}
             </p>
           </div>
 
@@ -113,7 +119,7 @@ export default function ResetPasswordPage() {
                 htmlFor="password"
                 className="mb-2 block text-sm font-medium text-slate-700"
               >
-                New password
+                {t("auth.newPassword")}
               </label>
 
               <input
@@ -121,7 +127,7 @@ export default function ResetPasswordPage() {
                 type="password"
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
-                placeholder="Create a strong password"
+                placeholder={t("auth.newPasswordPlaceholder")}
                 autoComplete="new-password"
                 required
                 className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none transition focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
@@ -129,7 +135,7 @@ export default function ResetPasswordPage() {
 
               <div className="mt-3 rounded-xl bg-slate-50 px-4 py-3">
                 <p className="mb-2 text-xs font-semibold text-slate-600">
-                  Use a strong password with:
+                  {t("auth.rules.title")}
                 </p>
 
                 <ul className="space-y-1.5">
@@ -162,7 +168,7 @@ export default function ResetPasswordPage() {
                 htmlFor="confirm-password"
                 className="mb-2 block text-sm font-medium text-slate-700"
               >
-                Confirm new password
+                {t("auth.confirmNewPassword")}
               </label>
 
               <input
@@ -170,7 +176,7 @@ export default function ResetPasswordPage() {
                 type="password"
                 value={confirmPassword}
                 onChange={(event) => setConfirmPassword(event.target.value)}
-                placeholder="Enter your password again"
+                placeholder={t("auth.confirmPasswordPlaceholder")}
                 autoComplete="new-password"
                 required
                 className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none transition focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
@@ -191,17 +197,17 @@ export default function ResetPasswordPage() {
               disabled={isSubmitting}
               className="w-full rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {isSubmitting ? "Resetting password..." : "Reset password"}
+              {isSubmitting ? t("auth.reset.submitting") : t("auth.reset.submit")}
             </button>
           </form>
 
           <p className="mt-6 text-center text-sm text-slate-500">
-            Remember your password?{" "}
+            {t("auth.rememberPassword")}{" "}
             <Link
               to="/login"
               className="font-semibold text-slate-900 hover:underline"
             >
-              Sign in
+              {t("auth.login.submit")}
             </Link>
           </p>
         </section>

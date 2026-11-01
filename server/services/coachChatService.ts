@@ -1,4 +1,5 @@
 import { pool } from "../db.js";
+import type { LanguageCode } from "../utils/language.js";
 import {
   askMoneyFlowCoach,
   type CoachMessage,
@@ -151,14 +152,18 @@ export async function sendCoachMessage({
   userId,
   chatId,
   question,
+  language = "en",
 }: {
   userId: string;
   chatId: string;
   question: string;
+  language?: LanguageCode;
 }) {
-  const client = await pool.connect();
+  // Use the pool directly: holding a dedicated connection across the slow
+  // AI call would let a handful of concurrent chats exhaust the pool.
+  const client = pool;
 
-  try {
+  {
     const chatResult = await client.query(
       `
         SELECT
@@ -240,6 +245,7 @@ export async function sendCoachMessage({
         userId,
         question,
         conversation,
+        language,
       );
     } catch (error) {
       await client.query(
@@ -310,7 +316,23 @@ export async function sendCoachMessage({
       assistantMessage,
       title: newTitle,
     } as const;
-  } finally {
-    client.release();
   }
+}
+// Free plan Coach allowance; Pro is unlimited (still hourly rate-limited).
+export const FREE_COACH_MESSAGES_PER_MONTH = 20;
+
+export async function countCoachMessagesThisMonth(userId: string) {
+  const result = await pool.query<{ count: number }>(
+    `
+      SELECT COUNT(*)::int AS count
+      FROM public.coach_messages m
+      INNER JOIN public.coach_chats c ON c.id = m.chat_id
+      WHERE c.user_id = $1
+        AND m.role = 'user'
+        AND m.created_at >= date_trunc('month', NOW())
+    `,
+    [userId],
+  );
+
+  return result.rows[0]?.count ?? 0;
 }

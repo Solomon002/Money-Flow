@@ -90,16 +90,20 @@ router.post(
         category,
       });
     } catch (error) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : "Unable to create category";
-
       console.error("Creating category failed:", error);
+
+      // Database errors carry a `code`; never echo those to the client.
+      // Validation errors thrown by createCategory are safe to show.
+      if (!(error instanceof Error) || "code" in error) {
+        return res.status(500).json({
+          status: "error",
+          message: "Unable to create category",
+        });
+      }
 
       return res.status(400).json({
         status: "error",
-        message,
+        message: error.message,
       });
     }
   }

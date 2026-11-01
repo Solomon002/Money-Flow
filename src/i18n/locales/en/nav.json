@@ -1,0 +1,12 @@
+{
+  "dashboard": "Dashboard",
+  "transactions": "Transactions",
+  "budgets": "Budgets",
+  "goals": "Goals",
+  "reports": "Reports",
+  "insights": "Insights",
+  "coach": "MoneyFlow Coach",
+  "settings": "Settings",
+  "signOut": "Sign out",
+  "toggleMenu": "Toggle menu"
+}

@@ -1,0 +1,31 @@
+{
+  "eyebrow": "Maîtrise des dépenses",
+  "title": "Budgets",
+  "add": "Ajouter un budget",
+  "edit": "Modifier le budget",
+  "create": "Créer un budget",
+  "loading": "Chargement des budgets...",
+  "loadingOne": "Chargement du budget...",
+  "loadFailed": "Impossible de charger les budgets",
+  "loadOneFailed": "Impossible de charger le budget",
+  "notFound": "Budget introuvable",
+  "deleteFailed": "Impossible de supprimer le budget",
+  "confirmDelete": "Supprimer le budget {{category}} de {{month}} {{year}} ?",
+  "emptyTitle": "Aucun budget pour l'instant",
+  "emptyBody": "Créez un budget pour ce mois afin de maîtriser vos dépenses.",
+  "monthly": "Budget mensuel",
+  "spent": "Dépensé",
+  "percentUsed": "{{percent}} % utilisé",
+  "remaining": "{{amount}} restants",
+  "over": "{{amount}} au-dessus du budget",
+  "overWarning": "Vous avez dépassé ce budget.",
+  "closeWarning": "Vous êtes très proche de la limite de votre budget.",
+  "approachingWarning": "Vous approchez de la limite de votre budget.",
+  "form": {
+    "amountError": "Veuillez saisir un montant de budget supérieur à zéro.",
+    "createFailed": "Impossible de créer le budget",
+    "updateFailed": "Impossible de mettre à jour le budget",
+    "noChanges": "Aucune modification.",
+    "submit": "Enregistrer le budget"
+  }
+}

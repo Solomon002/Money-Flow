@@ -1,0 +1,75 @@
+{
+  "steps": {
+    "upload": "Upload file",
+    "map": "Match columns",
+    "review": "Review & import"
+  },
+  "upload": {
+    "title": "Upload your bank statement (CSV)",
+    "body": "Export your transactions as a CSV file from your bank's app or website, then choose it here. Up to 1,000 rows and 2 MB.",
+    "choose": "Choose CSV file",
+    "howTo": "Most banks offer \"Export\" or \"Download statement\" as CSV.",
+    "sample": "Download sample file"
+  },
+  "errors": {
+    "tooLarge": "That file is larger than 2 MB. Export a shorter date range and try again.",
+    "notCsv": "Please choose a .csv file.",
+    "empty": "We couldn't find any rows with column headings in that file.",
+    "tooManyRows": "That file has more than {{max}} rows. Export a shorter date range and try again.",
+    "unreadable": "We couldn't read that file.",
+    "noValidRows": "None of the rows could be read with these settings. Check the columns and date format.",
+    "failed": "Unable to import transactions"
+  },
+  "map": {
+    "title": "Match your file's columns",
+    "body_one": "{{file}}: {{count}} row found. We've guessed the columns; check they look right.",
+    "body_other": "{{file}}: {{count}} rows found. We've guessed the columns; check they look right.",
+    "none": "Not in my file",
+    "dateFormat": "Date format",
+    "formats": {
+      "YMD": "Year-month-day (2026-10-31)",
+      "DMY": "Day/month/year (31/10/2026)",
+      "MDY": "Month/day/year (10/31/2026)"
+    },
+    "dateRange": "Your file covers {{from}} to {{to}}. If that looks wrong, change the date format.",
+    "noDates": "No dates could be read with this format.",
+    "amountLayout": "How are amounts shown?",
+    "single": "One amount column",
+    "singleHint": "Money out is negative (e.g. -5,000).",
+    "split": "Separate money in / money out",
+    "splitHint": "Debit and credit are in different columns.",
+    "moneyOut": "Money out (debit)",
+    "moneyIn": "Money in (credit)",
+    "expenseCategory": "Default category for money out",
+    "incomeCategory": "Default category for money in",
+    "fileStart": "Start of your file",
+    "continue": "Continue to review"
+  },
+  "chooseAnother": "Choose another file",
+  "review": {
+    "title": "Review before importing",
+    "summary_one": "{{count}} transaction selected · in {{income}} · out {{expense}}",
+    "summary_other": "{{count}} transactions selected · in {{income}} · out {{expense}}",
+    "sorting": "Sorting into categories...",
+    "autoCategorized_one": "MoneyFlow Pro sorted {{count}} transaction into a category for you. Check it below.",
+    "autoCategorized_other": "MoneyFlow Pro sorted {{count}} transactions into categories for you. Check them below.",
+    "proHint": "MoneyFlow Pro sorts imported transactions into categories automatically and learns from your corrections.",
+    "skipDuplicates": "Skip transactions I already have",
+    "include": "Include this transaction",
+    "badDate": "Unreadable date",
+    "badAmount": "Unreadable amount",
+    "noDescription": "No description",
+    "importing": "Importing...",
+    "submit_one": "Import {{count}} transaction",
+    "submit_other": "Import {{count}} transactions"
+  },
+  "done": {
+    "title_one": "{{count}} transaction imported",
+    "title_other": "{{count}} transactions imported",
+    "skipped_one": "{{count}} was skipped because you already had it.",
+    "skipped_other": "{{count}} were skipped because you already had them.",
+    "another": "Import another file",
+    "view": "View transactions"
+  },
+  "privacy": "Your file is read in your browser. Only the transactions you choose to import are sent to MoneyFlow."
+}

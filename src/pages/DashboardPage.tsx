@@ -1,4 +1,5 @@
 import { useEffect, useState, type ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import { Link, useNavigate } from "react-router";
 import {
   ArrowDownLeft,
@@ -8,15 +9,19 @@ import {
   Plus,
   Target,
   TrendingUp,
+  Upload,
   Wallet,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext.js";
 import { getTransactionSummary } from "../api/transactions.js";
 import { getReport, type Report } from "../api/reports.js";
+import { formatMoney } from "../i18n/format.js";
+import { categoryLabel } from "../i18n/categories.js";
 
 export default function DashboardPage() {
   const { user, onboardingPreferences } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const [summary, setSummary] = useState({
     totalIncomeMinor: 0,
@@ -33,16 +38,7 @@ export default function DashboardPage() {
 
   const [spendingError, setSpendingError] = useState("");
 
-  const currencySymbols: Record<string, string> = {
-    NGN: "₦",
-    USD: "$",
-    GBP: "£",
-    EUR: "€",
-  };
-
   const currencyCode = onboardingPreferences?.currency_code || "NGN";
-
-  const currencySymbol = currencySymbols[currencyCode] || currencyCode;
 
   function formatDateInput(date: Date) {
     const year = date.getFullYear();
@@ -53,13 +49,7 @@ export default function DashboardPage() {
   }
 
   function formatAmount(amountMinor: number) {
-    return `${currencySymbol}${(Number(amountMinor) / 100).toLocaleString(
-      "en-NG",
-      {
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 2,
-      },
-    )}`;
+    return formatMoney(amountMinor, currencyCode);
   }
 
   useEffect(() => {
@@ -72,7 +62,7 @@ export default function DashboardPage() {
 
         if (!result.response.ok) {
           throw new Error(
-            result.data.message || "Unable to load your financial summary",
+            result.data.message || t("dashboard.summaryFailed"),
           );
         }
 
@@ -83,7 +73,7 @@ export default function DashboardPage() {
         setSummaryError(
           error instanceof Error
             ? error.message
-            : "Unable to load your financial summary",
+            : t("dashboard.summaryFailed"),
         );
       } finally {
         setIsLoadingSummary(false);
@@ -110,7 +100,7 @@ export default function DashboardPage() {
 
         if (!result.response.ok) {
           throw new Error(
-            result.data.message || "Unable to load spending overview",
+            result.data.message || t("dashboard.spendingFailed"),
           );
         }
 
@@ -123,7 +113,7 @@ export default function DashboardPage() {
         setSpendingError(
           error instanceof Error
             ? error.message
-            : "Unable to load spending overview",
+            : t("dashboard.spendingFailed"),
         );
       } finally {
         setIsLoadingSpending(false);
@@ -145,10 +135,10 @@ export default function DashboardPage() {
     <div className="space-y-6">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <p className="text-sm text-slate-500">Overview</p>
+          <p className="text-sm text-slate-500">{t("dashboard.overview")}</p>
 
           <h1 className="mt-1 text-2xl font-bold text-slate-900">
-            Welcome back, {user?.name}
+            {t("dashboard.welcome", { name: user?.name })}
           </h1>
         </div>
       </div>
@@ -164,10 +154,10 @@ export default function DashboardPage() {
 
       <div className="grid gap-4 md:grid-cols-3">
         <SummaryCard
-          title="Total balance"
+          title={t("dashboard.totalBalance")}
           value={
             isLoadingSummary
-              ? "Loading..."
+              ? t("common.loading")
               : formatAmount(summary.totalBalanceMinor)
           }
           valueClassName={
@@ -179,20 +169,20 @@ export default function DashboardPage() {
         />
 
         <SummaryCard
-          title="Income"
+          title={t("common.income")}
           value={
             isLoadingSummary
-              ? "Loading..."
+              ? t("common.loading")
               : formatAmount(summary.totalIncomeMinor)
           }
           icon={<ArrowDownLeft size={20} />}
         />
 
         <SummaryCard
-          title="Expenses"
+          title={t("common.expenses")}
           value={
             isLoadingSummary
-              ? "Loading..."
+              ? t("common.loading")
               : formatAmount(summary.totalExpenseMinor)
           }
           icon={<ArrowUpRight size={20} />}
@@ -204,11 +194,11 @@ export default function DashboardPage() {
           <div className="flex items-center justify-between">
             <div>
               <h2 className="font-semibold text-slate-900">
-                Spending overview
+                {t("dashboard.spendingOverview")}
               </h2>
 
               <p className="mt-1 text-sm text-slate-500">
-                Your spending this month
+                {t("dashboard.spendingThisMonth")}
               </p>
             </div>
 
@@ -216,7 +206,7 @@ export default function DashboardPage() {
               to="/app/reports"
               className="text-sm font-semibold text-slate-900 hover:underline"
             >
-              View reports
+              {t("dashboard.viewReports")}
             </Link>
           </div>
 
@@ -230,7 +220,7 @@ export default function DashboardPage() {
           ) : isLoadingSpending ? (
             <div className="mt-6 flex h-56 items-center justify-center rounded-xl bg-slate-50">
               <p className="text-sm text-slate-500">
-                Loading spending overview...
+                {t("dashboard.loadingSpending")}
               </p>
             </div>
           ) : !spendingReport ||
@@ -240,7 +230,7 @@ export default function DashboardPage() {
                 <TrendingUp size={32} className="mx-auto text-slate-400" />
 
                 <p className="mt-3 text-sm text-slate-500">
-                  No expenses recorded this month.
+                  {t("dashboard.noExpenses")}
                 </p>
 
                 <button
@@ -248,7 +238,7 @@ export default function DashboardPage() {
                   onClick={() => navigate("/app/transactions/add")}
                   className="mt-3 text-sm font-semibold text-slate-900 hover:underline"
                 >
-                  Add a transaction
+                  {t("dashboard.addTransactionLink")}
                 </button>
               </div>
             </div>
@@ -264,7 +254,7 @@ export default function DashboardPage() {
                   <div key={category.categoryId}>
                     <div className="flex items-center justify-between gap-4">
                       <p className="text-sm font-medium text-slate-700">
-                        {category.categoryName}
+                        {categoryLabel(category.categoryName)}
                       </p>
 
                       <div className="text-right">
@@ -293,7 +283,7 @@ export default function DashboardPage() {
               <div className="border-t border-slate-100 pt-4">
                 <div className="flex items-center justify-between">
                   <p className="text-sm font-medium text-slate-500">
-                    Total spending this month
+                    {t("dashboard.totalSpendingThisMonth")}
                   </p>
 
                   <p className="text-sm font-bold text-slate-900">
@@ -308,24 +298,30 @@ export default function DashboardPage() {
         </section>
 
         <section className="rounded-2xl border border-slate-200 bg-white p-6">
-          <h2 className="font-semibold text-slate-900">Quick actions</h2>
+          <h2 className="font-semibold text-slate-900">{t("dashboard.quickActions")}</h2>
 
           <div className="mt-5 space-y-3">
             <QuickAction
               icon={<Plus size={18} />}
-              label="Add transaction"
+              label={t("transactions.add")}
               onClick={() => navigate("/app/transactions/add")}
             />
 
             <QuickAction
+              icon={<Upload size={18} />}
+              label={t("transactions.import")}
+              onClick={() => navigate("/app/transactions/import")}
+            />
+
+            <QuickAction
               icon={<Target size={18} />}
-              label="Create goal"
+              label={t("dashboard.createGoal")}
               onClick={() => navigate("/app/goals/add")}
             />
 
             <QuickAction
               icon={<CreditCard size={18} />}
-              label="Set a budget"
+              label={t("dashboard.setBudget")}
               onClick={() => navigate("/app/budgets/add")}
             />
           </div>

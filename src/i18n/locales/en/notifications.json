@@ -1,0 +1,10 @@
+{
+  "title": "Notifications",
+  "loadFailed": "Unable to load notifications.",
+  "markAllRead": "Mark all as read",
+  "markRead": "Mark as read",
+  "loading": "Loading notifications...",
+  "emptyTitle": "No notifications",
+  "emptyBody": "You're all caught up.",
+  "delete": "Delete notification"
+}

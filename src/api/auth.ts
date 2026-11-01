@@ -11,6 +11,7 @@ export type RegisterInput = {
   name: string;
   email: string;
   password: string;
+  acceptTerms: boolean;
 };
 
 export type LoginInput = {

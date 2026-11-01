@@ -112,3 +112,17 @@ export async function sendCoachMessage(
 
   return result.data;
 }
+export type CoachUsage = {
+  isPro: boolean;
+  used: number;
+  // null = unlimited (Pro).
+  limit: number | null;
+};
+
+export async function getCoachUsage(): Promise<CoachUsage> {
+  const result = await apiRequest("/api/coach/usage", {
+    method: "GET",
+  });
+
+  return result.data;
+}

@@ -1,7 +1,8 @@
 import { Router } from "express";
-import { createHmac } from "node:crypto";
+import { createHmac, timingSafeEqual } from "node:crypto";
 import { pool } from "../db.js";
 import { getProPriceMinor } from "../services/paystackService.js";
+import { activateProFromPayment } from "../services/subscriptionService.js";
 
 const router = Router();
 
@@ -99,11 +100,18 @@ function isValidPaystackSignature(
   signature: string,
   secretKey: string,
 ): boolean {
-  const expectedSignature = createHmac("sha512", secretKey)
-    .update(rawBody)
-    .digest("hex");
+  const expectedSignature = Buffer.from(
+    createHmac("sha512", secretKey)
+      .update(rawBody)
+      .digest("hex"),
+  );
 
-  return expectedSignature === signature;
+  const receivedSignature = Buffer.from(signature);
+
+  return (
+    expectedSignature.length === receivedSignature.length &&
+    timingSafeEqual(expectedSignature, receivedSignature)
+  );
 }
 
 router.post("/", async (req, res) => {
@@ -235,108 +243,32 @@ router.post("/", async (req, res) => {
         });
       }
 
-      await pool.query(
-        `
-          INSERT INTO subscriptions (
-            user_id,
-            plan,
-            status,
-            provider,
-            provider_customer_id,
-            provider_subscription_id,
-            current_period_start,
-            updated_at
-          )
-          VALUES (
-            $1,
-            'pro',
-            'active',
-            'paystack',
-            $2,
-            $3,
-            $4,
-            NOW()
-          )
-          ON CONFLICT (user_id)
-          DO UPDATE SET
-            plan = 'pro',
-            status = 'active',
-            provider = 'paystack',
-            provider_customer_id = COALESCE(
-              EXCLUDED.provider_customer_id,
-              subscriptions.provider_customer_id
-            ),
-            provider_subscription_id = COALESCE(
-              EXCLUDED.provider_subscription_id,
-              subscriptions.provider_subscription_id
-            ),
-            current_period_start = COALESCE(
-              EXCLUDED.current_period_start,
-              subscriptions.current_period_start
-            ),
-            updated_at = NOW()
-        `,
-        [
-          userId,
-          data.customer?.customer_code ?? null,
-          data.subscription_code ?? null,
-          data.paid_at ?? data.created_at ?? null,
-        ],
-      );
-
-      await pool.query(
-        `
-          UPDATE subscriptions
-          SET
-            current_period_end = NOW() + INTERVAL '30 days',
-            updated_at = NOW()
-          WHERE user_id = $1
-        `,
-        [userId],
-      );
-
-      if (data.reference) {
-        await pool.query(
-          `
-            INSERT INTO subscription_payments (
-              user_id,
-              amount_minor,
-              currency,
-              status,
-              provider,
-              provider_reference,
-              provider_transaction_id,
-              channel,
-              paid_at
-            )
-            VALUES (
-              $1,
-              $2,
-              $3,
-              'success',
-              'paystack',
-              $4,
-              $5,
-              $6,
-              COALESCE($7, NOW())
-            )
-            ON CONFLICT (provider, provider_reference)
-            DO NOTHING
-          `,
-          [
-            userId,
-            data.amount ?? expectedAmountMinor,
-            data.currency ?? "NGN",
-            data.reference,
-            data.id ?? null,
-            data.channel ?? null,
-            data.paid_at ?? data.created_at ?? null,
-          ],
-        );
+      if (!data.reference) {
+        return res.status(200).json({
+          status: "ignored",
+          message: "Payment has no reference",
+        });
       }
 
+      // Paystack retries webhooks, and /verify may have already
+      // recorded this reference, so only the first one grants Pro.
+      const { alreadyProcessed } = await activateProFromPayment({
+        userId,
+        // Both were checked against the Pro price above.
+        amountMinor: expectedAmountMinor,
+        currency: "NGN",
+        reference: data.reference,
+        transactionId: data.id ?? null,
+        channel: data.channel ?? null,
+        paidAt: data.paid_at ?? data.created_at ?? null,
+        customerCode: data.customer?.customer_code ?? null,
+        subscriptionCode: data.subscription_code ?? null,
+      });
+
       console.log(
-        `MoneyFlow Pro activated through Paystack webhook for user ${userId}`,
+        alreadyProcessed
+          ? `Paystack payment ${data.reference} was already processed`
+          : `MoneyFlow Pro activated through Paystack webhook for user ${userId}`,
       );
 
       console.log("Paystack payment metadata:", {

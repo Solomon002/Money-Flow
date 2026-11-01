@@ -31,6 +31,7 @@ function createAccessToken(userId: string): string {
     { userId },
     getAccessTokenSecret(),
     {
+      algorithm: "HS256",
       expiresIn: ACCESS_TOKEN_DURATION,
     },
   );

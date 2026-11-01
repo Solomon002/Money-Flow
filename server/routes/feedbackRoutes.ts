@@ -2,16 +2,32 @@ import { Router } from "express";
 import { Resend } from "resend";
 import { pool } from "../db.js";
 
+import { feedbackRateLimiter } from "../middleware/rateLimitMiddleware.js";
+
 const router = Router();
 
 const resendApiKey = process.env.RESEND_API_KEY;
 const feedbackEmail = process.env.FEEDBACK_EMAIL;
 
+const MAX_FEEDBACK_TYPE_LENGTH = 50;
+const MAX_FEEDBACK_LENGTH = 5_000;
+const MAX_EMAIL_LENGTH = 320;
+
 const resend = resendApiKey
   ? new Resend(resendApiKey)
   : null;
 
-router.post("/", async (req, res) => {
+// Feedback is untrusted public input that ends up in an HTML email.
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+router.post("/", feedbackRateLimiter, async (req, res) => {
   try {
     const {
       feedbackType,
@@ -45,6 +61,18 @@ router.post("/", async (req, res) => {
       return res.status(400).json({
         status: "error",
         message: "Feedback is too short",
+      });
+    }
+
+    if (
+      feedbackType.trim().length > MAX_FEEDBACK_TYPE_LENGTH ||
+      feedback.trim().length > MAX_FEEDBACK_LENGTH ||
+      (typeof email === "string" &&
+        email.trim().length > MAX_EMAIL_LENGTH)
+    ) {
+      return res.status(400).json({
+        status: "error",
+        message: "Feedback is too long",
       });
     }
 
@@ -101,19 +129,19 @@ router.post("/", async (req, res) => {
             "MoneyFlow Feedback <onboarding@resend.dev>",
           to: feedbackEmail,
           subject:
-            `MoneyFlow Feedback — ${cleanFeedbackType}`,
+            `MoneyFlow Feedback — ${cleanFeedbackType.replace(/[\r\n]+/g, " ")}`,
           html: `
             <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #0f172a;">
               <h2>New MoneyFlow Feedback</h2>
 
               <p>
                 <strong>Type:</strong>
-                ${cleanFeedbackType}
+                ${escapeHtml(cleanFeedbackType)}
               </p>
 
               <p>
                 <strong>Email:</strong>
-                ${cleanEmail ?? "Not provided"}
+                ${cleanEmail ? escapeHtml(cleanEmail) : "Not provided"}
               </p>
 
               <p>
@@ -126,7 +154,7 @@ router.post("/", async (req, res) => {
                 border-radius: 8px;
                 white-space: pre-wrap;
               ">
-                ${cleanFeedback}
+                ${escapeHtml(cleanFeedback)}
               </div>
 
               <p style="color: #64748b; font-size: 13px;">

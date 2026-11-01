@@ -1,29 +1,22 @@
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
 import { ArrowLeft, Plus, Target } from "lucide-react";
 import { deleteGoal, getGoals, type Goal } from "../api/goals.js";
 import { useAuth } from "../context/AuthContext.js";
+import { formatDate, formatMoney as formatLocalMoney } from "../i18n/format.js";
 
 export default function GoalsPage() {
   const navigate = useNavigate();
   const { onboardingPreferences } = useAuth();
+  const { t } = useTranslation();
 
   const [goals, setGoals] = useState<Goal[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
   const [deletingGoalId, setDeletingGoalId] = useState("");
 
-  const currencySymbols: Record<string, string> = {
-    NGN: "₦",
-    USD: "$",
-    GBP: "£",
-    EUR: "€",
-  };
-
-  const currencySymbol =
-    currencySymbols[onboardingPreferences?.currency_code || "NGN"] ||
-    onboardingPreferences?.currency_code ||
-    "NGN";
+  const currencyCode = onboardingPreferences?.currency_code || "NGN";
 
   useEffect(() => {
     async function loadGoals() {
@@ -34,7 +27,7 @@ export default function GoalsPage() {
         const result = await getGoals();
 
         if (!result.response.ok) {
-          throw new Error(result.data.message || "Unable to load goals");
+          throw new Error(result.data.message || t("goals.loadFailed"));
         }
 
         setGoals(result.data.goals);
@@ -42,7 +35,7 @@ export default function GoalsPage() {
         console.error("Loading goals failed:", error);
 
         setErrorMessage(
-          error instanceof Error ? error.message : "Unable to load goals",
+          error instanceof Error ? error.message : t("goals.loadFailed"),
         );
       } finally {
         setIsLoading(false);
@@ -63,10 +56,7 @@ export default function GoalsPage() {
   );
 
   function formatMoney(amountMinor: number) {
-    return `${currencySymbol}${(amountMinor / 100).toLocaleString("en-NG", {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    })}`;
+    return formatLocalMoney(amountMinor, currencyCode);
   }
 
   function formatTargetDate(targetDate: string | null) {
@@ -79,7 +69,7 @@ export default function GoalsPage() {
     const match = datePart.match(/^(\d{4})-(\d{2})-(\d{2})$/);
 
     if (!match) {
-      return "Invalid date";
+      return "";
     }
 
     const year = Number(match[1]);
@@ -93,10 +83,10 @@ export default function GoalsPage() {
       date.getMonth() !== month - 1 ||
       date.getDate() !== day
     ) {
-      return "Invalid date";
+      return "";
     }
 
-    return date.toLocaleDateString("en-NG", {
+    return formatDate(date, {
       day: "numeric",
       month: "long",
       year: "numeric",
@@ -119,7 +109,7 @@ export default function GoalsPage() {
   }
 
   async function handleDeleteGoal(goal: Goal) {
-    const confirmed = window.confirm(`Delete the "${goal.name}" goal?`);
+    const confirmed = window.confirm(t("goals.confirmDelete", { name: goal.name }));
 
     if (!confirmed) {
       return;
@@ -132,7 +122,7 @@ export default function GoalsPage() {
       const result = await deleteGoal(goal.id);
 
       if (!result.response.ok) {
-        throw new Error(result.data.message || "Unable to delete goal");
+        throw new Error(result.data.message || t("goals.deleteFailed"));
       }
 
       setGoals((currentGoals) =>
@@ -142,7 +132,7 @@ export default function GoalsPage() {
       console.error("Deleting goal failed:", error);
 
       setErrorMessage(
-        error instanceof Error ? error.message : "Unable to delete goal",
+        error instanceof Error ? error.message : t("goals.deleteFailed"),
       );
     } finally {
       setDeletingGoalId("");
@@ -157,15 +147,15 @@ export default function GoalsPage() {
             type="button"
             onClick={() => navigate("/app")}
             className="rounded-lg p-2 text-slate-500 transition hover:bg-slate-100"
-            aria-label="Go back"
+            aria-label={t("common.back")}
           >
             <ArrowLeft size={20} />
           </button>
 
           <div>
-            <p className="text-sm text-slate-500">Financial planning</p>
+            <p className="text-sm text-slate-500">{t("goals.eyebrow")}</p>
 
-            <h1 className="mt-1 text-2xl font-bold text-slate-900">Goals</h1>
+            <h1 className="mt-1 text-2xl font-bold text-slate-900">{t("goals.title")}</h1>
           </div>
         </div>
 
@@ -175,7 +165,7 @@ export default function GoalsPage() {
           className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
         >
           <Plus size={18} />
-          Add goal
+          {t("goals.add")}
         </button>
       </div>
 
@@ -190,7 +180,7 @@ export default function GoalsPage() {
 
       {isLoading ? (
         <section className="rounded-2xl border border-slate-200 bg-white p-8 text-center">
-          <p className="text-sm text-slate-500">Loading goals...</p>
+          <p className="text-sm text-slate-500">{t("goals.loading")}</p>
         </section>
       ) : goals.length === 0 ? (
         <section className="rounded-2xl border border-slate-200 bg-white p-10 text-center">
@@ -199,11 +189,11 @@ export default function GoalsPage() {
           </div>
 
           <h2 className="mt-4 text-lg font-semibold text-slate-900">
-            No goals yet
+            {t("goals.emptyTitle")}
           </h2>
 
           <p className="mt-2 text-sm text-slate-500">
-            Create a financial goal and start tracking your progress.
+            {t("goals.emptyBody")}
           </p>
 
           <button
@@ -212,7 +202,7 @@ export default function GoalsPage() {
             className="mt-5 inline-flex items-center gap-2 rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
           >
             <Plus size={18} />
-            Create goal
+            {t("dashboard.createGoal")}
           </button>
         </section>
       ) : (
@@ -221,11 +211,11 @@ export default function GoalsPage() {
             <section>
               <div className="mb-4">
                 <h2 className="text-lg font-semibold text-slate-900">
-                  Active goals
+                  {t("goals.active")}
                 </h2>
 
                 <p className="mt-1 text-sm text-slate-500">
-                  Keep track of the progress you're making toward your goals.
+                  {t("goals.activeBody")}
                 </p>
               </div>
 
@@ -269,7 +259,9 @@ export default function GoalsPage() {
                           </p>
 
                           <p className="mt-1 text-sm text-slate-500">
-                            of {formatMoney(Number(goal.target_amount_minor))}
+                            {t("goals.ofTarget", {
+                              amount: formatMoney(Number(goal.target_amount_minor)),
+                            })}
                           </p>
                         </div>
 
@@ -288,7 +280,7 @@ export default function GoalsPage() {
                       </div>
 
                       <div className="mt-3 flex items-center justify-between text-sm">
-                        <span className="text-slate-500">Remaining</span>
+                        <span className="text-slate-500">{t("goals.remaining")}</span>
 
                         <span className="font-semibold text-slate-700">
                           {formatMoney(remainingAmount)}
@@ -297,7 +289,9 @@ export default function GoalsPage() {
 
                       {goal.target_date && (
                         <p className="mt-3 text-sm text-slate-500">
-                          Target date: {formatTargetDate(goal.target_date)}
+                          {t("goals.targetDateValue", {
+                            date: formatTargetDate(goal.target_date),
+                          })}
                         </p>
                       )}
 
@@ -309,7 +303,7 @@ export default function GoalsPage() {
                           }
                           className="rounded-xl bg-slate-900 px-3 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"
                         >
-                          Add money
+                          {t("goals.addMoney")}
                         </button>
 
                         <button
@@ -317,7 +311,7 @@ export default function GoalsPage() {
                           onClick={() => navigate(`/app/goals/edit/${goal.id}`)}
                           className="rounded-xl border border-slate-300 px-3 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
                         >
-                          Edit
+                          {t("common.edit")}
                         </button>
 
                         <button
@@ -326,7 +320,7 @@ export default function GoalsPage() {
                           disabled={isDeleting}
                           className="rounded-xl border border-red-200 px-3 py-2.5 text-sm font-semibold text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
                         >
-                          {isDeleting ? "Deleting..." : "Delete"}
+                          {isDeleting ? t("common.deleting") : t("common.delete")}
                         </button>
                       </div>
                     </section>
@@ -340,7 +334,7 @@ export default function GoalsPage() {
             <section>
               <div className="mb-4">
                 <h2 className="text-lg font-semibold text-slate-900">
-                  Completed goals
+                  {t("goals.completed")}
                 </h2>
               </div>
 
@@ -357,7 +351,7 @@ export default function GoalsPage() {
                         </h3>
 
                         <p className="mt-1 text-sm font-medium text-green-600">
-                          Goal completed
+                          {t("goals.goalCompleted")}
                         </p>
                       </div>
 
@@ -370,13 +364,15 @@ export default function GoalsPage() {
                       </p>
 
                       <p className="mt-1 text-sm text-slate-500">
-                        Target reached
+                        {t("goals.targetReached")}
                       </p>
                     </div>
 
                     {goal.target_date && (
                       <p className="mt-3 text-sm text-slate-500">
-                        Target date: {formatTargetDate(goal.target_date)}
+                        {t("goals.targetDateValue", {
+                            date: formatTargetDate(goal.target_date),
+                          })}
                       </p>
                     )}
 
@@ -386,7 +382,7 @@ export default function GoalsPage() {
                       disabled={deletingGoalId === goal.id}
                       className="mt-5 w-full rounded-xl border border-red-200 px-4 py-2.5 text-sm font-semibold text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
                     >
-                      {deletingGoalId === goal.id ? "Deleting..." : "Delete"}
+                      {deletingGoalId === goal.id ? t("common.deleting") : t("common.delete")}
                     </button>
                   </section>
                 ))}

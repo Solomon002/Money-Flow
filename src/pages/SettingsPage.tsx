@@ -1,4 +1,13 @@
 import { FormEvent, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
+import LanguageSwitcher from "../components/LanguageSwitcher.js";
+import AccountDataSection from "../components/AccountDataSection.js";
+import { CURRENCIES, currencyLabel } from "../i18n/currencies.js";
+import { formatDate } from "../i18n/format.js";
+import {
+  FINANCIAL_OBJECTIVES,
+  INCOME_SOURCES,
+} from "../i18n/options.js";
 import {
   Check,
   CheckCircle2,
@@ -35,6 +44,8 @@ function NotificationOption({
   enabled: boolean;
   onChange: (value: boolean) => void;
 }) {
+  const { t } = useTranslation();
+
   return (
     <div className="flex items-center justify-between gap-4 rounded-xl border border-slate-200 p-4">
       <div>
@@ -49,7 +60,7 @@ function NotificationOption({
         className={`relative h-6 w-11 shrink-0 rounded-full transition ${
           enabled ? "bg-slate-900" : "bg-slate-300"
         }`}
-        aria-label={`${label}: ${enabled ? "enabled" : "disabled"}`}
+        aria-label={`${label}: ${enabled ? t("settings.enabled") : t("settings.disabled")}`}
       >
         <span
           className={`absolute top-1 h-4 w-4 rounded-full bg-white transition ${
@@ -84,6 +95,7 @@ function PasswordRequirement({
 }
 
 export default function SettingsPage() {
+  const { t } = useTranslation();
   const [settings, setSettings] = useState<Settings | null>(null);
 
   const [subscription, setSubscription] = useState<Subscription | null>(null);
@@ -106,6 +118,12 @@ export default function SettingsPage() {
   const [monthlyInsightsEnabled, setMonthlyInsightsEnabled] = useState(true);
   const [recurringRemindersEnabled, setRecurringRemindersEnabled] =
     useState(true);
+
+  const [emailChangePassword, setEmailChangePassword] = useState("");
+
+  const emailChanged =
+    settings !== null &&
+    email.trim().toLowerCase() !== settings.email.toLowerCase();
 
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -178,7 +196,7 @@ export default function SettingsPage() {
         console.error(err);
 
         setError(
-          err instanceof Error ? err.message : "Unable to load settings",
+          err instanceof Error ? err.message : t("settings.loadFailed"),
         );
       } finally {
         setLoading(false);
@@ -198,7 +216,7 @@ export default function SettingsPage() {
 
         if (!response.response.ok) {
           throw new Error(
-            response.data.message || "Unable to load subscription",
+            response.data.message || t("pro.loadFailed"),
           );
         }
 
@@ -207,7 +225,7 @@ export default function SettingsPage() {
         console.error("Loading subscription failed:", err);
 
         setSubscriptionError(
-          err instanceof Error ? err.message : "Unable to load subscription",
+          err instanceof Error ? err.message : t("pro.loadFailed"),
         );
       } finally {
         setSubscriptionLoading(false);
@@ -221,6 +239,7 @@ export default function SettingsPage() {
     const response = await updateSettings({
       name,
       email,
+      currentPassword: emailChanged ? emailChangePassword : undefined,
       currencyCode,
       incomeSource: incomeSource.trim() || null,
       monthlyIncome: monthlyIncome.trim() === "" ? null : Number(monthlyIncome),
@@ -237,6 +256,7 @@ export default function SettingsPage() {
     });
 
     setSettings(response.data.settings);
+    setEmailChangePassword("");
   }
 
   async function handleSaveProfile(event: FormEvent) {
@@ -249,11 +269,11 @@ export default function SettingsPage() {
 
       await saveSettings();
 
-      setSuccess("Profile saved successfully.");
+      setSuccess(t("settings.profileSaved"));
     } catch (err) {
       console.error(err);
 
-      setError(err instanceof Error ? err.message : "Unable to save profile");
+      setError(err instanceof Error ? err.message : t("settings.profileFailed"));
     } finally {
       setSavingProfile(false);
     }
@@ -269,14 +289,14 @@ export default function SettingsPage() {
 
       await saveSettings();
 
-      setSuccess("Financial preferences saved successfully.");
+      setSuccess(t("settings.financialSaved"));
     } catch (err) {
       console.error(err);
 
       setError(
         err instanceof Error
           ? err.message
-          : "Unable to save financial preferences",
+          : t("settings.financialFailed"),
       );
     } finally {
       setSavingFinancial(false);
@@ -293,14 +313,14 @@ export default function SettingsPage() {
 
       await saveSettings();
 
-      setSuccess("Notification preferences saved successfully.");
+      setSuccess(t("settings.notificationsSaved"));
     } catch (err) {
       console.error(err);
 
       setError(
         err instanceof Error
           ? err.message
-          : "Unable to save notification preferences",
+          : t("settings.notificationsFailed"),
       );
     } finally {
       setSavingNotifications(false);
@@ -313,43 +333,43 @@ export default function SettingsPage() {
     setPasswordError("");
 
     if (currentPassword.length === 0) {
-      setPasswordError("Please enter your current password.");
+      setPasswordError(t("settings.password.currentRequired"));
       return;
     }
 
     if (newPassword.length < 8) {
-      setPasswordError("Password must be at least 8 characters long.");
+      setPasswordError(t("auth.rules.notMet"));
       return;
     }
 
     if (!/[A-Z]/.test(newPassword)) {
-      setPasswordError("Password must contain at least one uppercase letter.");
+      setPasswordError(t("auth.rules.notMet"));
       return;
     }
 
     if (!/[a-z]/.test(newPassword)) {
-      setPasswordError("Password must contain at least one lowercase letter.");
+      setPasswordError(t("auth.rules.notMet"));
       return;
     }
 
     if (!/[0-9]/.test(newPassword)) {
-      setPasswordError("Password must contain at least one number.");
+      setPasswordError(t("auth.rules.notMet"));
       return;
     }
 
     if (!/[^A-Za-z0-9]/.test(newPassword)) {
-      setPasswordError("Password must contain at least one special character.");
+      setPasswordError(t("auth.rules.notMet"));
       return;
     }
 
     if (newPassword !== confirmPassword) {
-      setPasswordError("New passwords do not match.");
+      setPasswordError(t("auth.passwordsDontMatch"));
       return;
     }
 
     if (currentPassword === newPassword) {
       setPasswordError(
-        "New password must be different from your current password.",
+        t("settings.password.mustDiffer"),
       );
       return;
     }
@@ -372,7 +392,7 @@ export default function SettingsPage() {
       console.error(err);
 
       setPasswordError(
-        err instanceof Error ? err.message : "Unable to change password",
+        err instanceof Error ? err.message : t("settings.password.failed"),
       );
     } finally {
       setChangingPassword(false);
@@ -389,7 +409,7 @@ export default function SettingsPage() {
 
       if (!response.response.ok) {
         throw new Error(
-          response.data.message || "Unable to cancel subscription",
+          response.data.message || t("settings.pro.cancelFailed"),
         );
       }
 
@@ -398,13 +418,13 @@ export default function SettingsPage() {
       }
 
       setCancelSuccess(
-        "Your subscription has been cancelled. You'll keep Pro until the end of your current period.",
+        t("settings.pro.cancelled"),
       );
     } catch (err) {
       console.error(err);
 
       setCancelError(
-        err instanceof Error ? err.message : "Unable to cancel subscription",
+        err instanceof Error ? err.message : t("settings.pro.cancelFailed"),
       );
     } finally {
       setCancelling(false);
@@ -421,7 +441,7 @@ export default function SettingsPage() {
 
       if (!response.response.ok) {
         throw new Error(
-          response.data.message || "Unable to reactivate subscription",
+          response.data.message || t("settings.pro.reactivateFailed"),
         );
       }
 
@@ -430,7 +450,7 @@ export default function SettingsPage() {
       }
 
       setCancelSuccess(
-        "Your subscription has been reactivated. Your Pro access will continue.",
+        t("settings.pro.reactivated"),
       );
     } catch (err) {
       console.error(err);
@@ -438,7 +458,7 @@ export default function SettingsPage() {
       setCancelError(
         err instanceof Error
           ? err.message
-          : "Unable to reactivate subscription",
+          : t("settings.pro.reactivateFailed"),
       );
     } finally {
       setReactivating(false);
@@ -468,7 +488,7 @@ export default function SettingsPage() {
     return (
       <div className="p-6">
         <div className="mx-auto max-w-4xl">
-          <p className="text-sm text-slate-500">Loading settings...</p>
+          <p className="text-sm text-slate-500">{t("settings.loading")}</p>
         </div>
       </div>
     );
@@ -479,7 +499,7 @@ export default function SettingsPage() {
       <div className="p-6">
         <div className="mx-auto max-w-4xl">
           <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-            {error || "Settings could not be loaded."}
+            {error || t("settings.loadFailed")}
           </div>
         </div>
       </div>
@@ -500,7 +520,7 @@ export default function SettingsPage() {
 
   const formattedExpiryDate =
     isExpired && subscription?.current_period_end
-      ? new Date(subscription.current_period_end).toLocaleDateString("en-NG", {
+      ? formatDate(new Date(subscription.current_period_end), {
           day: "numeric",
           month: "long",
           year: "numeric",
@@ -509,7 +529,7 @@ export default function SettingsPage() {
 
   const formattedCancellationDate =
     isCancelled && subscription?.current_period_end
-      ? new Date(subscription.current_period_end).toLocaleDateString("en-NG", {
+      ? formatDate(new Date(subscription.current_period_end), {
           day: "numeric",
           month: "long",
           year: "numeric",
@@ -521,10 +541,10 @@ export default function SettingsPage() {
       <div className="p-4 sm:p-6">
         <div className="mx-auto max-w-4xl space-y-6">
           <div>
-            <h1 className="text-2xl font-bold text-slate-900">Settings</h1>
+            <h1 className="text-2xl font-bold text-slate-900">{t("nav.settings")}</h1>
 
             <p className="mt-1 text-sm text-slate-500">
-              Manage your account and MoneyFlow preferences.
+              {t("settings.subtitle")}
             </p>
           </div>
 
@@ -546,17 +566,17 @@ export default function SettingsPage() {
             className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-6"
           >
             <div>
-              <h2 className="text-lg font-semibold text-slate-900">Profile</h2>
+              <h2 className="text-lg font-semibold text-slate-900">{t("settings.profile")}</h2>
 
               <p className="mt-1 text-sm text-slate-500">
-                Manage your personal account information.
+                {t("settings.profileBody")}
               </p>
             </div>
 
             <div className="mt-5 grid gap-5 md:grid-cols-2">
               <div>
                 <label className="mb-2 block text-sm font-medium text-slate-700">
-                  Name
+                  {t("auth.name")}
                 </label>
 
                 <input
@@ -568,7 +588,7 @@ export default function SettingsPage() {
 
               <div>
                 <label className="mb-2 block text-sm font-medium text-slate-700">
-                  Email
+                  {t("auth.email")}
                 </label>
 
                 <input
@@ -578,6 +598,36 @@ export default function SettingsPage() {
                   className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-slate-900"
                 />
               </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-medium text-slate-700">
+                  {t("common.language")}
+                </label>
+
+                <LanguageSwitcher />
+              </div>
+
+              {emailChanged && (
+                <div className="md:col-span-2">
+                  <label className="mb-2 block text-sm font-medium text-slate-700">
+                    {t("settings.password.current")}
+                  </label>
+
+                  <input
+                    type="password"
+                    autoComplete="current-password"
+                    value={emailChangePassword}
+                    onChange={(event) =>
+                      setEmailChangePassword(event.target.value)
+                    }
+                    className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-slate-900"
+                  />
+
+                  <p className="mt-2 text-xs text-slate-500">
+                    {t("settings.emailPasswordHint")}
+                  </p>
+                </div>
+              )}
             </div>
 
             <div className="mt-6 flex justify-end">
@@ -588,7 +638,7 @@ export default function SettingsPage() {
               >
                 <Save size={17} />
 
-                {savingProfile ? "Saving..." : "Save"}
+                {savingProfile ? t("common.saving") : t("common.save")}
               </button>
             </div>
           </form>
@@ -601,11 +651,11 @@ export default function SettingsPage() {
             <div className="flex items-center justify-between gap-4">
               <div>
                 <h2 className="text-lg font-semibold text-slate-900">
-                  Financial preferences
+                  {t("settings.financial")}
                 </h2>
 
                 <p className="mt-1 text-sm text-slate-500">
-                  Manage your currency and financial planning preferences.
+                  {t("settings.financialBody")}
                 </p>
               </div>
             </div>
@@ -613,7 +663,7 @@ export default function SettingsPage() {
             <div className="mt-5 grid gap-5 md:grid-cols-2">
               <div>
                 <label className="mb-2 flex items-center gap-2 text-sm font-medium text-slate-700">
-                  Currency
+                  {t("settings.currency")}
                   {currencyIsLocked && (
                     <Lock size={14} className="text-slate-400" />
                   )}
@@ -629,40 +679,49 @@ export default function SettingsPage() {
                       : "border-slate-300 bg-white focus:border-slate-900"
                   }`}
                 >
-                  <option value="NGN">Nigerian Naira (₦)</option>
-
-                  <option value="USD">US Dollar ($)</option>
-
-                  <option value="GBP">British Pound (£)</option>
-
-                  <option value="EUR">Euro (€)</option>
+                  {CURRENCIES.map((code) => (
+                    <option key={code} value={code}>
+                      {currencyLabel(code)}
+                    </option>
+                  ))}
                 </select>
 
                 {currencyIsLocked && (
                   <p className="mt-2 text-xs text-slate-500">
-                    Currency is locked because you already have financial
-                    records. This prevents existing amounts from being
-                    interpreted as a different currency.
+                    {t("settings.currencyLocked")}
                   </p>
                 )}
               </div>
 
               <div>
                 <label className="mb-2 block text-sm font-medium text-slate-700">
-                  Income source
+                  {t("settings.incomeSource")}
                 </label>
 
-                <input
+                <select
                   value={incomeSource}
                   onChange={(event) => setIncomeSource(event.target.value)}
-                  placeholder="e.g. Salary, Freelance"
-                  className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-slate-900"
-                />
+                  className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 outline-none focus:border-slate-900"
+                >
+                  <option value="">{t("options.incomeSource.placeholder")}</option>
+
+                  {INCOME_SOURCES.map((option) => (
+                    <option key={option} value={option}>
+                      {t(`options.incomeSource.${option}`)}
+                    </option>
+                  ))}
+
+                  {/* Older accounts may have typed their own answer. */}
+                  {incomeSource &&
+                    !(INCOME_SOURCES as readonly string[]).includes(incomeSource) && (
+                      <option value={incomeSource}>{incomeSource}</option>
+                    )}
+                </select>
               </div>
 
               <div>
                 <label className="mb-2 block text-sm font-medium text-slate-700">
-                  Monthly income
+                  {t("settings.monthlyIncome")}
                 </label>
 
                 <input
@@ -678,7 +737,7 @@ export default function SettingsPage() {
 
               <div>
                 <label className="mb-2 block text-sm font-medium text-slate-700">
-                  Monthly savings target
+                  {t("settings.savingsTarget")}
                 </label>
 
                 <input
@@ -696,18 +755,28 @@ export default function SettingsPage() {
 
               <div className="md:col-span-2">
                 <label className="mb-2 block text-sm font-medium text-slate-700">
-                  Financial objective
+                  {t("settings.objective")}
                 </label>
 
-                <textarea
+                <select
                   value={financialObjective}
-                  onChange={(event) =>
-                    setFinancialObjective(event.target.value)
-                  }
-                  rows={3}
-                  placeholder="What are you trying to achieve financially?"
-                  className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-slate-900"
-                />
+                  onChange={(event) => setFinancialObjective(event.target.value)}
+                  className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 outline-none focus:border-slate-900"
+                >
+                  <option value="">{t("options.objective.placeholder")}</option>
+
+                  {FINANCIAL_OBJECTIVES.map((option) => (
+                    <option key={option} value={option}>
+                      {t(`options.objective.${option}`)}
+                    </option>
+                  ))}
+
+                  {/* Older accounts may have typed their own answer. */}
+                  {financialObjective &&
+                    !(FINANCIAL_OBJECTIVES as readonly string[]).includes(financialObjective) && (
+                      <option value={financialObjective}>{financialObjective}</option>
+                    )}
+                </select>
               </div>
             </div>
 
@@ -719,7 +788,7 @@ export default function SettingsPage() {
               >
                 <Save size={17} />
 
-                {savingFinancial ? "Saving..." : "Save"}
+                {savingFinancial ? t("common.saving") : t("common.save")}
               </button>
             </div>
           </form>
@@ -751,19 +820,18 @@ export default function SettingsPage() {
                         }`}
                       >
                         {isPro && !isCancelled
-                          ? "Active"
+                          ? t("settings.pro.active")
                           : isCancelled
-                            ? "Cancelled"
+                            ? t("settings.pro.cancelledBadge")
                             : isExpired
-                              ? "Expired"
-                              : "Free plan"}
+                              ? t("settings.pro.expired")
+                              : t("settings.pro.freePlan")}
                       </span>
                     )}
                   </div>
 
                   <p className="mt-1 text-sm text-slate-500">
-                    Go deeper into your finances with advanced analysis and
-                    insights.
+                    {t("settings.pro.body")}
                   </p>
                 </div>
               </div>
@@ -772,7 +840,7 @@ export default function SettingsPage() {
             {subscriptionLoading ? (
               <div className="p-4 sm:p-6">
                 <p className="text-sm text-slate-500">
-                  Loading subscription...
+                  {t("settings.pro.loading")}
                 </p>
               </div>
             ) : subscriptionError ? (
@@ -793,13 +861,13 @@ export default function SettingsPage() {
 
                       <div>
                         <p className="font-semibold text-slate-900">
-                          Your subscription is cancelled
+                          {t("settings.pro.cancelledTitle")}
                         </p>
 
                         <p className="mt-1 text-sm leading-6 text-slate-600">
                           {formattedCancellationDate
-                            ? `You'll keep MoneyFlow Pro until ${formattedCancellationDate}. After that, your account will return to the Free plan.`
-                            : "You'll keep MoneyFlow Pro until the end of your current period. After that, your account will return to the Free plan."}
+                            ? t("settings.pro.keepUntil", { date: formattedCancellationDate })
+                            : t("settings.pro.keepUntilEnd")}
                         </p>
                       </div>
                     </div>
@@ -814,13 +882,11 @@ export default function SettingsPage() {
 
                       <div>
                         <p className="font-semibold text-emerald-900">
-                          You are using MoneyFlow Pro
+                          {t("settings.pro.usingPro")}
                         </p>
 
                         <p className="mt-1 text-sm leading-6 text-emerald-800">
-                          Your Pro access is active. You can use advanced
-                          reports and other Pro features available in your
-                          account.
+                          {t("settings.pro.usingProBody")}
                         </p>
                       </div>
                     </div>
@@ -830,21 +896,21 @@ export default function SettingsPage() {
                 <div className="mt-5 grid gap-3 sm:grid-cols-2">
                   <div className="rounded-xl border border-slate-200 p-4">
                     <p className="font-medium text-slate-900">
-                      Advanced reports
+                      {t("pro.features.advancedReports")}
                     </p>
 
                     <p className="mt-1 text-sm text-slate-500">
-                      Detailed spending and budget analysis.
+                      {t("settings.pro.advancedReportsBody")}
                     </p>
                   </div>
 
                   <div className="rounded-xl border border-slate-200 p-4">
                     <p className="font-medium text-slate-900">
-                      Deeper insights
+                      {t("pro.deeperInsights")}
                     </p>
 
                     <p className="mt-1 text-sm text-slate-500">
-                      Understand spending patterns beyond the basic dashboard.
+                      {t("settings.pro.deeperInsightsBody")}
                     </p>
                   </div>
                 </div>
@@ -869,7 +935,7 @@ export default function SettingsPage() {
                       disabled={reactivating}
                       className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
                     >
-                      {reactivating ? "Reactivating..." : "Reactivate Pro"}
+                      {reactivating ? t("settings.pro.reactivating") : t("settings.pro.reactivate")}
                     </button>
                   ) : (
                     <button
@@ -878,7 +944,7 @@ export default function SettingsPage() {
                       disabled={cancelling}
                       className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-600 transition hover:bg-slate-50 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-60"
                     >
-                      {cancelling ? "Cancelling..." : "Cancel subscription"}
+                      {cancelling ? t("settings.pro.cancelling") : t("settings.pro.cancel")}
                     </button>
                   )}
                 </div>
@@ -898,8 +964,8 @@ export default function SettingsPage() {
                     }`}
                   >
                     {isExpired
-                      ? "Your MoneyFlow Pro has expired"
-                      : "Unlock deeper financial insights"}
+                      ? t("settings.pro.expiredTitle")
+                      : t("settings.pro.unlockTitle")}
                   </p>
 
                   <p
@@ -908,8 +974,8 @@ export default function SettingsPage() {
                     }`}
                   >
                     {isExpired && formattedExpiryDate
-                      ? `Your Pro access ended on ${formattedExpiryDate}. Renew to restore advanced reports, insights, and other Pro features.`
-                      : "MoneyFlow Pro gives you advanced financial analysis to help you understand your money more deeply."}
+                      ? t("settings.pro.endedOn", { date: formattedExpiryDate })
+                      : t("settings.pro.unlockBody")}
                   </p>
 
                   <div className="mt-5 grid gap-3">
@@ -921,11 +987,11 @@ export default function SettingsPage() {
 
                       <div>
                         <p className="text-sm font-medium text-slate-900">
-                          Advanced reports
+                          {t("pro.features.advancedReports")}
                         </p>
 
                         <p className="mt-1 text-xs text-slate-500">
-                          Analyze spending, budgets, and financial performance.
+                          {t("settings.pro.analyzeBody")}
                         </p>
                       </div>
                     </div>
@@ -938,11 +1004,11 @@ export default function SettingsPage() {
 
                       <div>
                         <p className="text-sm font-medium text-slate-900">
-                          Top spending analysis
+                          {t("pro.features.topSpending")}
                         </p>
 
                         <p className="mt-1 text-xs text-slate-500">
-                          See exactly where your largest expenses are going.
+                          {t("settings.pro.topSpendingBody")}
                         </p>
                       </div>
                     </div>
@@ -955,12 +1021,11 @@ export default function SettingsPage() {
 
                       <div>
                         <p className="text-sm font-medium text-slate-900">
-                          Budget performance
+                          {t("settings.pro.budgetPerformance")}
                         </p>
 
                         <p className="mt-1 text-xs text-slate-500">
-                          Understand how your actual spending compares with your
-                          budgets.
+                          {t("settings.pro.budgetPerformanceBody")}
                         </p>
                       </div>
                     </div>
@@ -982,14 +1047,14 @@ export default function SettingsPage() {
                       <div className="min-w-0 flex-1">
                         <p className="text-sm font-medium text-slate-900">
                           {isExpired
-                            ? "Renew MoneyFlow Pro"
-                            : "Upgrade to MoneyFlow Pro"}
+                            ? t("settings.pro.renewTitle")
+                            : t("settings.pro.upgradeTitle")}
                         </p>
 
                         <p className="mt-1 text-xs leading-5 text-slate-500">
                           {isExpired
-                            ? "Restore access to advanced reports, deeper insights, and all Pro features."
-                            : "Explore advanced reports, deeper insights, and more powerful financial analysis."}
+                            ? t("settings.pro.renewBody")
+                            : t("settings.pro.upgradeBody")}
                         </p>
 
                         <button
@@ -1001,7 +1066,7 @@ export default function SettingsPage() {
                               : "bg-slate-900 hover:bg-slate-800"
                           }`}
                         >
-                          {isExpired ? "Renew Pro" : "Explore Pro"}
+                          {isExpired ? t("proExpiry.renew") : t("settings.pro.explore")}
                         </button>
                       </div>
                     </div>
@@ -1019,40 +1084,40 @@ export default function SettingsPage() {
             <div className="flex items-center justify-between gap-4">
               <div>
                 <h2 className="text-lg font-semibold text-slate-900">
-                  Notifications
+                  {t("notifications.title")}
                 </h2>
 
                 <p className="mt-1 text-sm text-slate-500">
-                  Choose which MoneyFlow notifications you want to receive.
+                  {t("settings.notificationsBody")}
                 </p>
               </div>
             </div>
 
             <div className="mt-5 space-y-3">
               <NotificationOption
-                label="Budget alerts"
-                description="Get notified when you approach or exceed a budget."
+                label={t("settings.toggles.budgetAlerts")}
+                description={t("settings.toggles.budgetAlertsBody")}
                 enabled={budgetAlertsEnabled}
                 onChange={setBudgetAlertsEnabled}
               />
 
               <NotificationOption
-                label="Goal reminders"
-                description="Receive reminders about your financial goals."
+                label={t("settings.toggles.goalReminders")}
+                description={t("settings.toggles.goalRemindersBody")}
                 enabled={goalRemindersEnabled}
                 onChange={setGoalRemindersEnabled}
               />
 
               <NotificationOption
-                label="Monthly insights"
-                description="Receive monthly summaries and spending insights."
+                label={t("settings.toggles.monthlyInsights")}
+                description={t("settings.toggles.monthlyInsightsBody")}
                 enabled={monthlyInsightsEnabled}
                 onChange={setMonthlyInsightsEnabled}
               />
 
               <NotificationOption
-                label="Recurring transaction reminders"
-                description="Get reminders about upcoming recurring transactions."
+                label={t("settings.toggles.recurring")}
+                description={t("settings.toggles.recurringBody")}
                 enabled={recurringRemindersEnabled}
                 onChange={setRecurringRemindersEnabled}
               />
@@ -1066,7 +1131,7 @@ export default function SettingsPage() {
               >
                 <Save size={17} />
 
-                {savingNotifications ? "Saving..." : "Save"}
+                {savingNotifications ? t("common.saving") : t("common.save")}
               </button>
             </div>
           </form>
@@ -1081,11 +1146,11 @@ export default function SettingsPage() {
 
               <div>
                 <h2 className="text-lg font-semibold text-slate-900">
-                  Security
+                  {t("settings.security")}
                 </h2>
 
                 <p className="mt-1 text-sm text-slate-500">
-                  Change your MoneyFlow account password.
+                  {t("settings.securityBody")}
                 </p>
               </div>
             </div>
@@ -1093,7 +1158,7 @@ export default function SettingsPage() {
             <div className="mt-6 space-y-4">
               <div>
                 <label className="mb-2 block text-sm font-medium text-slate-700">
-                  Current password
+                  {t("settings.password.current")}
                 </label>
 
                 <input
@@ -1107,7 +1172,7 @@ export default function SettingsPage() {
 
               <div>
                 <label className="mb-2 block text-sm font-medium text-slate-700">
-                  New password
+                  {t("auth.newPassword")}
                 </label>
 
                 <input
@@ -1127,35 +1192,44 @@ export default function SettingsPage() {
 
                 <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 p-4">
                   <p className="mb-3 text-sm font-medium text-slate-700">
-                    Use a strong password with:
+                    {t("auth.rules.title")}
                   </p>
 
                   <div className="grid gap-2 sm:grid-cols-2">
                     <PasswordRequirement met={passwordRequirements.length}>
-                      At least 8 characters
+                      {t("auth.rules.length")}
                     </PasswordRequirement>
 
                     <PasswordRequirement met={passwordRequirements.uppercase}>
-                      One uppercase letter
+                      {t("auth.rules.uppercase")}
                     </PasswordRequirement>
 
                     <PasswordRequirement met={passwordRequirements.lowercase}>
-                      One lowercase letter
+                      {t("auth.rules.lowercase")}
                     </PasswordRequirement>
 
                     <PasswordRequirement met={passwordRequirements.number}>
-                      One number
+                      {t("auth.rules.number")}
                     </PasswordRequirement>
 
                     <PasswordRequirement met={passwordRequirements.special}>
-                      One special character
+                      {t("auth.rules.special")}
+                    </PasswordRequirement>
+
+                    <PasswordRequirement
+                      met={
+                        confirmPassword.length > 0 &&
+                        confirmPassword === newPassword
+                      }
+                    >
+                      {t("auth.rules.match")}
                     </PasswordRequirement>
                   </div>
 
                   {newPassword.length > 0 && passwordIsStrong && (
                     <div className="mt-3 flex items-center gap-2 text-sm font-medium text-emerald-700">
                       <CheckCircle2 size={17} />
-                      Strong password
+                      {t("settings.password.strong")}
                     </div>
                   )}
                 </div>
@@ -1163,7 +1237,7 @@ export default function SettingsPage() {
 
               <div>
                 <label className="mb-2 block text-sm font-medium text-slate-700">
-                  Confirm new password
+                  {t("auth.confirmNewPassword")}
                 </label>
 
                 <input
@@ -1182,7 +1256,7 @@ export default function SettingsPage() {
                 {confirmPassword.length > 0 &&
                   confirmPassword === newPassword && (
                     <p className="mt-2 text-xs text-emerald-600">
-                      Passwords match.
+                      {t("settings.password.match")}
                     </p>
                   )}
               </div>
@@ -1200,10 +1274,15 @@ export default function SettingsPage() {
               >
                 <Lock size={17} />
 
-                {changingPassword ? "Changing password..." : "Change password"}
+                {changingPassword ? t("settings.password.changing") : t("settings.password.change")}
               </button>
             </div>
           </form>
+
+          <AccountDataSection
+            email={settings.email}
+            hasPassword={settings.has_password}
+          />
         </div>
       </div>
 
@@ -1217,12 +1296,11 @@ export default function SettingsPage() {
               </div>
 
               <h2 className="mt-4 text-xl font-semibold text-slate-900">
-                Password changed successfully
+                {t("settings.password.changedTitle")}
               </h2>
 
               <p className="mt-2 text-sm leading-6 text-slate-500">
-                Your password has been changed. Please sign in again using your
-                new password.
+                {t("settings.password.changedBody")}
               </p>
 
               <button
@@ -1230,7 +1308,7 @@ export default function SettingsPage() {
                 onClick={handleContinueToSignIn}
                 className="mt-6 w-full rounded-xl bg-slate-900 px-5 py-3 text-sm font-medium text-white transition hover:bg-slate-800"
               >
-                Continue to sign in
+                {t("settings.password.continue")}
               </button>
             </div>
           </div>

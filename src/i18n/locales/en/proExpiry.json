@@ -1,0 +1,13 @@
+{
+  "expiredToday": "Your MoneyFlow Pro subscription expired today.",
+  "expiredYesterday": "Your MoneyFlow Pro subscription expired yesterday.",
+  "expiredDaysAgo_one": "Your MoneyFlow Pro subscription expired {{count}} day ago.",
+  "expiredDaysAgo_other": "Your MoneyFlow Pro subscription expired {{count}} days ago.",
+  "expiresToday": "Your MoneyFlow Pro subscription expires today.",
+  "expiresTomorrow": "Your MoneyFlow Pro subscription expires tomorrow.",
+  "expiresInDays_one": "Your MoneyFlow Pro subscription expires in {{count}} day.",
+  "expiresInDays_other": "Your MoneyFlow Pro subscription expires in {{count}} days.",
+  "graceBody": "You're in a short grace period where your Pro features still work. Renew now to avoid losing access.",
+  "renewBody": "Renew now to keep access to advanced reports, deeper insights, and all Pro features.",
+  "renew": "Renew Pro"
+}

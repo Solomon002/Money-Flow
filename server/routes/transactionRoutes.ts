@@ -7,12 +7,20 @@ import {
   createTransaction,
   getTransactions,
   getTransactionSummary,
+  importTransactions,
+  type ImportTransactionRow,
 } from "../services/transactionService.js";
+import { importRateLimiter } from "../middleware/rateLimitMiddleware.js";
+import { requirePro } from "../middleware/proMiddleware.js";
+import { suggestCategories } from "../services/categorizationService.js";
+import { isClientInputDbError } from "../utils/validation.js";
 
 const router = Router();
 
 const MAX_AMOUNT = 10_000_000_000;
-const MAX_DESCRIPTION_LENGTH = 500;
+// Matches transactions.description VARCHAR(160).
+const MAX_DESCRIPTION_LENGTH = 160;
+const MAX_IMPORT_ROWS = 1000;
 const MAX_NOTES_LENGTH = 2_000;
 
 function isValidUuid(value: unknown): value is string {
@@ -183,7 +191,7 @@ router.post(
         return res.status(400).json({
           status: "error",
           message:
-            "Description must be 500 characters or less",
+            "Description must be 160 characters or less",
         });
       }
 
@@ -237,6 +245,14 @@ router.post(
         transaction,
       });
     } catch (error) {
+      // The category doesn't belong to this user or is the wrong kind.
+      if (isClientInputDbError(error)) {
+        return res.status(400).json({
+          status: "error",
+          message: "Invalid category for this transaction",
+        });
+      }
+
       console.error(
         "Creating transaction failed:",
         error,
@@ -245,6 +261,186 @@ router.post(
       return res.status(500).json({
         status: "error",
         message: "Unable to create transaction",
+      });
+    }
+  },
+);
+
+/*
+ * POST /api/transactions/import
+ * Body: { rows: [{ categoryId, type, amount, description, transactionDate, notes? }],
+ *         skipDuplicates?: boolean }
+ * All rows are validated first; if any row is invalid nothing is saved and
+ * the response lists the problems by row number (1-based).
+ */
+router.post(
+  "/import",
+  requireAuth,
+  importRateLimiter,
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      if (!req.userId) {
+        return res.status(401).json({
+          status: "error",
+          message: "Authentication required",
+        });
+      }
+
+      const { rows, skipDuplicates } = req.body ?? {};
+
+      if (!Array.isArray(rows) || rows.length === 0) {
+        return res.status(400).json({
+          status: "error",
+          message: "There are no transactions to import",
+        });
+      }
+
+      if (rows.length > MAX_IMPORT_ROWS) {
+        return res.status(400).json({
+          status: "error",
+          message: "You can import up to 1,000 transactions at a time",
+        });
+      }
+
+      const errors: { row: number; message: string }[] = [];
+      const validRows: ImportTransactionRow[] = [];
+
+      rows.forEach((row: unknown, index: number) => {
+        const item = (
+          row && typeof row === "object" ? row : {}
+        ) as Record<string, unknown>;
+        const amountMinor = convertToMinorUnits(item.amount);
+        const description =
+          typeof item.description === "string" ? item.description.trim() : "";
+        const notes =
+          typeof item.notes === "string" && item.notes.trim() !== ""
+            ? item.notes.trim()
+            : null;
+
+        let message: string | null = null;
+
+        if (!isValidUuid(item.categoryId)) {
+          message = "Invalid category";
+        } else if (item.type !== "income" && item.type !== "expense") {
+          message = "Transaction type must be income or expense";
+        } else if (amountMinor === null) {
+          message =
+            "Amount must be greater than zero and no more than 10 billion.";
+        } else if (!description) {
+          message = "Description is required";
+        } else if (description.length > MAX_DESCRIPTION_LENGTH) {
+          message = "Description must be 160 characters or less";
+        } else if (!isValidDate(item.transactionDate)) {
+          message =
+            "Transaction date must be a valid date in YYYY-MM-DD format";
+        } else if (notes && notes.length > MAX_NOTES_LENGTH) {
+          message = "Notes must be 2,000 characters or less";
+        }
+
+        if (message !== null || amountMinor === null) {
+          errors.push({ row: index + 1, message: message ?? "Invalid row" });
+          return;
+        }
+
+        validRows.push({
+          categoryId: item.categoryId as string,
+          type: item.type as ImportTransactionRow["type"],
+          amountMinor,
+          description,
+          transactionDate: item.transactionDate as string,
+          notes,
+        });
+      });
+
+      if (errors.length > 0) {
+        return res.status(400).json({
+          status: "error",
+          message: "Some rows are invalid. Nothing was imported.",
+          errors: errors.slice(0, 50),
+        });
+      }
+
+      const result = await importTransactions({
+        userId: req.userId,
+        rows: validRows,
+        skipDuplicates: skipDuplicates !== false,
+      });
+
+      return res.status(201).json({
+        status: "success",
+        ...result,
+      });
+    } catch (error) {
+      // A category that isn't this user's, or the wrong kind for the row.
+      if (isClientInputDbError(error)) {
+        return res.status(400).json({
+          status: "error",
+          message:
+            "One or more rows use a category that doesn't match. Nothing was imported.",
+        });
+      }
+
+      console.error("Importing transactions failed:", error);
+
+      return res.status(500).json({
+        status: "error",
+        message: "Unable to import transactions",
+      });
+    }
+  },
+);
+
+/*
+ * POST /api/transactions/suggest-categories (MoneyFlow Pro)
+ * Body: { items: [{ description, type }] }
+ * Returns { suggestions: (categoryId | null)[] } in the same order.
+ */
+router.post(
+  "/suggest-categories",
+  requireAuth,
+  requirePro,
+  importRateLimiter,
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      if (!req.userId) {
+        return res.status(401).json({
+          status: "error",
+          message: "Authentication required",
+        });
+      }
+
+      const items = req.body?.items;
+
+      if (
+        !Array.isArray(items) ||
+        items.length === 0 ||
+        items.length > MAX_IMPORT_ROWS ||
+        !items.every(
+          (item) =>
+            item &&
+            typeof item.description === "string" &&
+            item.description.length <= MAX_DESCRIPTION_LENGTH &&
+            (item.type === "income" || item.type === "expense"),
+        )
+      ) {
+        return res.status(400).json({
+          status: "error",
+          message: "Invalid request",
+        });
+      }
+
+      const suggestions = await suggestCategories(req.userId, items);
+
+      return res.json({
+        status: "success",
+        suggestions,
+      });
+    } catch (error) {
+      console.error("Suggesting categories failed:", error);
+
+      return res.status(500).json({
+        status: "error",
+        message: "Unable to suggest categories",
       });
     }
   },

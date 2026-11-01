@@ -1,14 +1,18 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router";
 import { ArrowLeft } from "lucide-react";
 import { getCategories, type Category } from "../api/categories.js";
 import { getBudgets, updateBudget, type Budget } from "../api/budgets.js";
 import { useAuth } from "../context/AuthContext.js";
+import { MONTHS, currencySymbol as getCurrencySymbol, monthName } from "../i18n/format.js";
+import { categoryLabel } from "../i18n/categories.js";
 
 export default function EditBudgetPage() {
   const navigate = useNavigate();
   const { id } = useParams();
   const { onboardingPreferences } = useAuth();
+  const { t } = useTranslation();
 
   const [budget, setBudget] = useState<Budget | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -22,17 +26,9 @@ export default function EditBudgetPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
-  const currencySymbols: Record<string, string> = {
-    NGN: "₦",
-    USD: "$",
-    GBP: "£",
-    EUR: "€",
-  };
-
-  const currencySymbol =
-    currencySymbols[onboardingPreferences?.currency_code || "NGN"] ||
-    onboardingPreferences?.currency_code ||
-    "NGN";
+  const currencySymbol = getCurrencySymbol(
+    onboardingPreferences?.currency_code || "NGN",
+  );
 
   useEffect(() => {
     async function loadData() {
@@ -47,13 +43,13 @@ export default function EditBudgetPage() {
 
         if (!budgetsResult.response.ok) {
           throw new Error(
-            budgetsResult.data.message || "Unable to load budgets",
+            budgetsResult.data.message || t("budgets.loadFailed"),
           );
         }
 
         if (!categoriesResult.response.ok) {
           throw new Error(
-            categoriesResult.data.message || "Unable to load categories",
+            categoriesResult.data.message || t("transactions.categoriesFailed"),
           );
         }
 
@@ -62,7 +58,7 @@ export default function EditBudgetPage() {
         );
 
         if (!selectedBudget) {
-          throw new Error("Budget not found");
+          throw new Error(t("budgets.notFound"));
         }
 
         const expenseCategories = categoriesResult.data.categories.filter(
@@ -81,7 +77,7 @@ export default function EditBudgetPage() {
         console.error("Loading budget failed:", error);
 
         setErrorMessage(
-          error instanceof Error ? error.message : "Unable to load budget",
+          error instanceof Error ? error.message : t("budgets.loadOneFailed"),
         );
       } finally {
         setIsLoading(false);
@@ -97,24 +93,24 @@ export default function EditBudgetPage() {
     setErrorMessage("");
 
     if (!id) {
-      setErrorMessage("Budget ID is missing.");
+      setErrorMessage(t("budgets.notFound"));
       return;
     }
 
     if (!budget) {
-      setErrorMessage("Budget could not be found.");
+      setErrorMessage(t("budgets.notFound"));
       return;
     }
 
     if (!categoryId) {
-      setErrorMessage("Please select a category.");
+      setErrorMessage(t("transactions.form.selectCategoryError"));
       return;
     }
 
     const amountNumber = Number(monthlyAmount);
 
     if (!Number.isFinite(amountNumber) || amountNumber <= 0) {
-      setErrorMessage("Please enter a budget amount greater than zero.");
+      setErrorMessage(t("budgets.form.amountError"));
       return;
     }
 
@@ -127,7 +123,7 @@ export default function EditBudgetPage() {
       year !== budget.year;
 
     if (!hasChanges) {
-      setErrorMessage("No changes made.");
+      setErrorMessage(t("budgets.form.noChanges"));
       return;
     }
 
@@ -142,7 +138,7 @@ export default function EditBudgetPage() {
       });
 
       if (!result.response.ok) {
-        throw new Error(result.data.message || "Unable to update budget");
+        throw new Error(result.data.message || t("budgets.form.updateFailed"));
       }
 
       navigate("/app/budgets");
@@ -150,33 +146,23 @@ export default function EditBudgetPage() {
       console.error("Updating budget failed:", error);
 
       setErrorMessage(
-        error instanceof Error ? error.message : "Unable to update budget",
+        error instanceof Error ? error.message : t("budgets.form.updateFailed"),
       );
     } finally {
       setIsSaving(false);
     }
   }
 
-  const monthOptions = [
-    { value: 1, label: "January" },
-    { value: 2, label: "February" },
-    { value: 3, label: "March" },
-    { value: 4, label: "April" },
-    { value: 5, label: "May" },
-    { value: 6, label: "June" },
-    { value: 7, label: "July" },
-    { value: 8, label: "August" },
-    { value: 9, label: "September" },
-    { value: 10, label: "October" },
-    { value: 11, label: "November" },
-    { value: 12, label: "December" },
-  ];
+  const monthOptions = MONTHS.map((value) => ({
+    value,
+    label: monthName(value),
+  }));
 
   if (isLoading) {
     return (
       <div className="mx-auto max-w-2xl">
         <section className="rounded-2xl border border-slate-200 bg-white p-8 text-center">
-          <p className="text-sm text-slate-500">Loading budget...</p>
+          <p className="text-sm text-slate-500">{t("budgets.loadingOne")}</p>
         </section>
       </div>
     );
@@ -189,16 +175,16 @@ export default function EditBudgetPage() {
           type="button"
           onClick={() => navigate("/app/budgets")}
           className="rounded-lg p-2 text-slate-500 transition hover:bg-slate-100"
-          aria-label="Go back"
+          aria-label={t("common.back")}
         >
           <ArrowLeft size={20} />
         </button>
 
         <div>
-          <p className="text-sm text-slate-500">Spending control</p>
+          <p className="text-sm text-slate-500">{t("budgets.eyebrow")}</p>
 
           <h1 className="mt-1 text-2xl font-bold text-slate-900">
-            Edit budget
+            {t("budgets.edit")}
           </h1>
         </div>
       </div>
@@ -220,7 +206,7 @@ export default function EditBudgetPage() {
                 htmlFor="budget-category"
                 className="block text-sm font-medium text-slate-700"
               >
-                Category
+                {t("common.category")}
               </label>
 
               <select
@@ -231,7 +217,7 @@ export default function EditBudgetPage() {
               >
                 {categories.map((category) => (
                   <option key={category.id} value={category.id}>
-                    {category.name}
+                    {categoryLabel(category.name)}
                   </option>
                 ))}
               </select>
@@ -242,7 +228,7 @@ export default function EditBudgetPage() {
                 htmlFor="monthly-amount"
                 className="block text-sm font-medium text-slate-700"
               >
-                Monthly budget
+                {t("budgets.monthly")}
               </label>
 
               <div className="relative mt-2">
@@ -268,7 +254,7 @@ export default function EditBudgetPage() {
                   htmlFor="budget-month"
                   className="block text-sm font-medium text-slate-700"
                 >
-                  Month
+                  {t("common.month")}
                 </label>
 
                 <select
@@ -290,7 +276,7 @@ export default function EditBudgetPage() {
                   htmlFor="budget-year"
                   className="block text-sm font-medium text-slate-700"
                 >
-                  Year
+                  {t("common.year")}
                 </label>
 
                 <input
@@ -310,7 +296,7 @@ export default function EditBudgetPage() {
                 onClick={() => navigate("/app/budgets")}
                 className="rounded-xl border border-slate-300 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
               >
-                Cancel
+                {t("common.cancel")}
               </button>
 
               <button
@@ -318,7 +304,7 @@ export default function EditBudgetPage() {
                 disabled={isSaving}
                 className="rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {isSaving ? "Saving..." : "Save changes"}
+                {isSaving ? t("common.saving") : t("common.saveChanges")}
               </button>
             </div>
           </form>

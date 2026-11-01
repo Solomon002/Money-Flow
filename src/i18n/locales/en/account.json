@@ -1,0 +1,15 @@
+{
+  "title": "Your data",
+  "body": "Download a copy of everything MoneyFlow stores about you, or permanently delete your account.",
+  "export": "Download my data",
+  "exporting": "Preparing download...",
+  "exportFailed": "Unable to export your data",
+  "delete": "Delete account",
+  "deleteTitle": "Delete your account permanently?",
+  "deleteWarning": "This deletes your profile, transactions, budgets, goals, Coach chats and payment history straight away. It can't be undone, and any remaining MoneyFlow Pro time is lost. Download your data first if you want a copy.",
+  "confirmPassword": "Enter your password to confirm",
+  "confirmEmail": "Type {{email}} to confirm",
+  "deleteForever": "Delete my account",
+  "deleteFailed": "Unable to delete your account",
+  "deletedNotice": "Your MoneyFlow account and all its data have been deleted."
+}

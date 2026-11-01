@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
+import LanguageSwitcher from "../components/LanguageSwitcher.js";
 import ScrollProgressBar from "../components/ScrollProgressBar.js";
 import { Link } from "react-router";
 import FadeLeft from "../components/animations/FadeLeft.js";
@@ -27,69 +29,47 @@ import {
 
 type PreviewTab = "dashboard" | "transactions" | "budgets" | "goals";
 
-const previewData: Record<
-  PreviewTab,
-  {
-    label: string;
-    title: string;
-    description: string;
-  }
-> = {
-  dashboard: {
-    label: "Dashboard",
-    title: "See your financial picture at a glance.",
-    description:
-      "Understand your income, expenses, budgets, and goals without digging through spreadsheets.",
-  },
-  transactions: {
-    label: "Transactions",
-    title: "Know where your money is going.",
-    description:
-      "Keep your income and expenses organized so you always know what you spent and why.",
-  },
-  budgets: {
-    label: "Budgets",
-    title: "Stay ahead of your spending.",
-    description:
-      "Set monthly limits and see how much you've used before your spending gets out of hand.",
-  },
-  goals: {
-    label: "Goals",
-    title: "Turn plans into progress.",
-    description:
-      "Set financial goals, track your progress, and see how much more you need to reach them.",
-  },
-};
-
-const faqs = [
-  {
-    question: "What can I use MoneyFlow for?",
-    answer:
-      "MoneyFlow helps you track income and expenses, manage budgets, set financial goals, understand spending patterns, and make better day-to-day financial decisions.",
-  },
-  {
-    question: "Do I need to be good with money to use MoneyFlow?",
-    answer:
-      "Not at all. MoneyFlow is designed to make your finances easier to understand. You can start with the basics and build better habits as you go.",
-  },
-  {
-    question: "Do I need to put real money into MoneyFlow?",
-    answer:
-      "No. MoneyFlow does not require you to deposit or transfer real money. You use the app to track and understand your finances without putting your money at risk.",
-  },
-  {
-    question: "Can I create savings goals?",
-    answer:
-      "Yes. You can create goals for things you want to save for, set a target amount and date, add money toward the goal, and track your progress.",
-  },
-  {
-    question: "What is MoneyFlow Coach?",
-    answer:
-      "MoneyFlow Coach is an Artificial Intelligence (AI) assistant that can answer questions using your MoneyFlow financial context, helping you understand your spending and make more informed decisions.",
-  },
+const PREVIEW_TABS: PreviewTab[] = [
+  "dashboard",
+  "transactions",
+  "budgets",
+  "goals",
 ];
 
+// t("landing.faq.<key>.question") / t("landing.faq.<key>.answer")
+const FAQ_KEYS = ["uses", "skills", "realMoney", "goals", "coach"];
+
+/*
+ * Demo figures on the landing page are written in naira. Other languages
+ * show a plausible amount in a currency their visitors use instead.
+ */
+const DEMO_CURRENCY: Record<string, { currency: string; factor: number }> = {
+  en: { currency: "NGN", factor: 1 },
+  fr: { currency: "EUR", factor: 1 / 400 },
+  de: { currency: "EUR", factor: 1 / 400 },
+  es: { currency: "EUR", factor: 1 / 400 },
+  pt: { currency: "BRL", factor: 1 / 100 },
+};
+
 export default function LandingPage() {
+  const { t, i18n } = useTranslation();
+
+  function demoMoney(ngn: number, compact = false) {
+    const language = i18n.resolvedLanguage ?? "en";
+    const { currency, factor } = DEMO_CURRENCY[language] ?? DEMO_CURRENCY.en;
+
+    return new Intl.NumberFormat(language, {
+      style: "currency",
+      currency,
+      maximumFractionDigits: 0,
+      notation: compact ? "compact" : "standard",
+    }).format(Math.round((ngn * factor) / 10) * 10);
+  }
+
+  const faqs = FAQ_KEYS.map((key) => ({
+    question: t(`landing.faq.${key}.question`),
+    answer: t(`landing.faq.${key}.answer`),
+  }));
   const [activeTab, setActiveTab] = useState<PreviewTab>("dashboard");
 
   const [openFaq, setOpenFaq] = useState<number | null>(null);
@@ -136,7 +116,7 @@ export default function LandingPage() {
       setFeedbackError(
         error instanceof Error
           ? error.message
-          : "Unable to submit feedback. Please try again.",
+          : t("landing.feedback.failed"),
       );
     } finally {
       setFeedbackSubmitting(false);
@@ -160,10 +140,37 @@ export default function LandingPage() {
     setIsMobileMenuOpen(false);
   }
 
-  const activePreview = previewData[activeTab];
+  const activePreview = {
+    label: t(`landing.preview.${activeTab}.label`),
+    title: t(`landing.preview.${activeTab}.title`),
+    description: t(`landing.preview.${activeTab}.description`),
+  };
+
+  // Set by Settings after the user deletes their account.
+  const [accountDeleted, setAccountDeleted] = useState(() =>
+    new URLSearchParams(window.location.search).has("accountDeleted"),
+  );
 
   return (
     <main className="min-h-screen overflow-hidden bg-slate-50 text-slate-900">
+      {accountDeleted && (
+        <div
+          role="status"
+          className="fixed inset-x-4 top-20 z-50 mx-auto flex max-w-lg items-start justify-between gap-3 rounded-xl border border-emerald-200 bg-white p-4 text-sm text-slate-700 shadow-lg"
+        >
+          <span>{t("account.deletedNotice")}</span>
+
+          <button
+            type="button"
+            onClick={() => setAccountDeleted(false)}
+            className="shrink-0 rounded-lg p-1 text-slate-400 hover:text-slate-700"
+            aria-label={t("common.close")}
+          >
+            <X size={16} />
+          </button>
+        </div>
+      )}
+
       <ScrollProgressBar />
 
       {/* Navigation */}
@@ -187,44 +194,46 @@ export default function LandingPage() {
               href="#features"
               className="text-sm font-medium text-slate-600 transition hover:text-slate-900"
             >
-              Features
+              {t("landing.nav.features")}
             </a>
 
             <a
               href="#coach"
               className="text-sm font-medium text-slate-600 transition hover:text-slate-900"
             >
-              MoneyFlow Coach
+              {t("nav.coach")}
             </a>
 
             <a
               href="#how-it-works"
               className="text-sm font-medium text-slate-600 transition hover:text-slate-900"
             >
-              How it works
+              {t("landing.nav.howItWorks")}
             </a>
 
             <a
               href="#questions"
               className="text-sm font-medium text-slate-600 transition hover:text-slate-900"
             >
-              Questions
+              {t("landing.nav.questions")}
             </a>
           </nav>
 
           <div className="hidden items-center gap-3 sm:flex">
+            <LanguageSwitcher />
+
             <Link
               to="/login"
               className="text-sm font-semibold text-slate-700 transition hover:text-slate-900"
             >
-              Sign in
+              {t("auth.login.submit")}
             </Link>
 
             <Link
               to="/register"
               className="rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white! transition hover:bg-slate-800"
             >
-              Get started
+              {t("landing.getStarted")}
             </Link>
           </div>
 
@@ -233,7 +242,7 @@ export default function LandingPage() {
             type="button"
             onClick={() => setIsMobileMenuOpen((open) => !open)}
             className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 text-slate-700 transition hover:bg-slate-100 md:hidden"
-            aria-label={isMobileMenuOpen ? "Close menu" : "Open menu"}
+            aria-label={isMobileMenuOpen ? t("landing.nav.closeMenu") : t("landing.nav.openMenu")}
             aria-expanded={isMobileMenuOpen}
           >
             {isMobileMenuOpen ? <X size={21} /> : <Menu size={21} />}
@@ -249,7 +258,7 @@ export default function LandingPage() {
                 onClick={closeMobileMenu}
                 className="border-b border-slate-100 py-3.5 text-sm font-medium text-slate-700 transition hover:text-slate-950"
               >
-                Features
+                {t("landing.nav.features")}
               </a>
 
               <a
@@ -257,7 +266,7 @@ export default function LandingPage() {
                 onClick={closeMobileMenu}
                 className="border-b border-slate-100 py-3.5 text-sm font-medium text-slate-700 transition hover:text-slate-950"
               >
-                MoneyFlow Coach
+                {t("nav.coach")}
               </a>
 
               <a
@@ -265,7 +274,7 @@ export default function LandingPage() {
                 onClick={closeMobileMenu}
                 className="border-b border-slate-100 py-3.5 text-sm font-medium text-slate-700 transition hover:text-slate-950"
               >
-                How it works
+                {t("landing.nav.howItWorks")}
               </a>
 
               <a
@@ -273,8 +282,10 @@ export default function LandingPage() {
                 onClick={closeMobileMenu}
                 className="py-3.5 text-sm font-medium text-slate-700 transition hover:text-slate-950"
               >
-                Questions
+                {t("landing.nav.questions")}
               </a>
+
+              <LanguageSwitcher className="py-3.5" />
 
               <div className="mt-3 grid grid-cols-2 gap-3 border-t border-slate-100 pt-4">
                 <Link
@@ -282,7 +293,7 @@ export default function LandingPage() {
                   onClick={closeMobileMenu}
                   className="flex items-center justify-center rounded-xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
                 >
-                  Sign in
+                  {t("auth.login.submit")}
                 </Link>
 
                 <Link
@@ -290,7 +301,7 @@ export default function LandingPage() {
                   onClick={closeMobileMenu}
                   className="flex items-center justify-center rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white! transition hover:bg-slate-800"
                 >
-                  Get started
+                  {t("landing.getStarted")}
                 </Link>
               </div>
             </nav>
@@ -307,21 +318,19 @@ export default function LandingPage() {
             <FadeUp>
               <div>
                 <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-white px-3.5 py-2 text-sm font-medium text-emerald-700 shadow-sm">
-                  <Sparkles size={16} className="text-emerald-500" />A clearer
-                  way to manage your money
+                  <Sparkles size={16} className="text-emerald-500" />
+                  {t("landing.hero.badge")}
                 </div>
 
                 <h1 className="max-w-3xl text-5xl font-bold tracking-tight text-slate-950 sm:text-6xl lg:text-7xl">
-                  Understand your money.
+                  {t("landing.hero.title1")}
                   <span className="block text-emerald-600">
-                    Control your future.
+                    {t("landing.hero.title2")}
                   </span>
                 </h1>
 
                 <p className="mt-7 max-w-xl text-lg leading-8 text-slate-600 sm:text-xl">
-                  MoneyFlow helps you see where your money goes, stay in control
-                  of your spending, plan financial goals, and make better
-                  decisions every day.
+                  {t("landing.hero.body")}
                 </p>
 
                 <div className="mt-9 flex flex-wrap gap-4">
@@ -329,7 +338,7 @@ export default function LandingPage() {
                     to="/register"
                     className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-6 py-3.5 text-sm font-semibold text-white! shadow-lg shadow-slate-900/10 transition hover:-translate-y-0.5 hover:bg-slate-800"
                   >
-                    Get started
+                    {t("landing.getStarted")}
                     <ArrowRight size={17} />
                   </Link>
 
@@ -337,24 +346,24 @@ export default function LandingPage() {
                     href="#features"
                     className="inline-flex items-center rounded-xl border border-slate-300 bg-white px-6 py-3.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
                   >
-                    Explore MoneyFlow
+                    {t("landing.hero.explore")}
                   </a>
                 </div>
 
                 <div className="mt-8 flex flex-wrap gap-x-6 gap-y-3 text-sm text-slate-500">
                   <span className="flex items-center gap-2">
                     <Check size={16} className="text-emerald-600" />
-                    Track your money
+                    {t("landing.hero.track")}
                   </span>
 
                   <span className="flex items-center gap-2">
                     <Check size={16} className="text-emerald-600" />
-                    Build better budgets
+                    {t("landing.hero.budgets")}
                   </span>
 
                   <span className="flex items-center gap-2">
                     <Check size={16} className="text-emerald-600" />
-                    Reach your goals
+                    {t("landing.hero.goals")}
                   </span>
                 </div>
               </div>
@@ -373,7 +382,7 @@ export default function LandingPage() {
                       </p>
 
                       <p className="text-sm font-semibold text-slate-900">
-                        Your financial overview
+                        {t("landing.mock.overview")}
                       </p>
                     </div>
 
@@ -384,13 +393,13 @@ export default function LandingPage() {
 
                   <div className="space-y-5 p-5">
                     <div className="rounded-2xl bg-slate-950 p-5 text-white">
-                      <p className="text-sm text-slate-400">Total balance</p>
+                      <p className="text-sm text-slate-400">{t("dashboard.totalBalance")}</p>
 
-                      <p className="mt-2 text-3xl font-bold">₦845,000</p>
+                      <p className="mt-2 text-3xl font-bold">{demoMoney(845000)}</p>
 
                       <div className="mt-4 flex items-center gap-2 text-sm text-emerald-400">
                         <TrendingUp size={15} />
-                        Your money at a glance
+                        {t("landing.mock.glance")}
                       </div>
                     </div>
 
@@ -399,20 +408,20 @@ export default function LandingPage() {
                         <div className="flex items-center gap-2 text-slate-500">
                           <ArrowRight size={15} className="-rotate-45" />
 
-                          <span className="text-xs">Income</span>
+                          <span className="text-xs">{t("common.income")}</span>
                         </div>
 
-                        <p className="mt-2 text-lg font-bold">₦420,000</p>
+                        <p className="mt-2 text-lg font-bold">{demoMoney(420000)}</p>
                       </div>
 
                       <div className="rounded-2xl border border-slate-200 p-4">
                         <div className="flex items-center gap-2 text-slate-500">
                           <ArrowRight size={15} className="rotate-135" />
 
-                          <span className="text-xs">Expenses</span>
+                          <span className="text-xs">{t("common.expenses")}</span>
                         </div>
 
-                        <p className="mt-2 text-lg font-bold">₦185,000</p>
+                        <p className="mt-2 text-lg font-bold">{demoMoney(185000)}</p>
                       </div>
                     </div>
 
@@ -420,10 +429,10 @@ export default function LandingPage() {
                       <div className="flex items-center justify-between">
                         <div>
                           <p className="text-sm font-semibold">
-                            Spending overview
+                            {t("dashboard.spendingOverview")}
                           </p>
 
-                          <p className="text-xs text-slate-500">This month</p>
+                          <p className="text-xs text-slate-500">{t("reports.periods.thisMonth")}</p>
                         </div>
 
                         <BarChart3 size={18} className="text-emerald-600" />
@@ -431,9 +440,9 @@ export default function LandingPage() {
 
                       <div className="mt-5 space-y-3">
                         {[
-                          ["Food", "₦60k", "70%"],
-                          ["Transport", "₦35k", "42%"],
-                          ["Shopping", "₦25k", "30%"],
+                          [t("categories.food"), demoMoney(60000, true), "70%"],
+                          [t("categories.transport"), demoMoney(35000, true), "42%"],
+                          [t("categories.shopping"), demoMoney(25000, true), "30%"],
                         ].map(([name, amount, width]) => (
                           <div key={name}>
                             <div className="mb-1 flex justify-between text-xs">
@@ -476,13 +485,11 @@ export default function LandingPage() {
                 </p>
 
                 <h2 className="mt-3 max-w-xl text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl lg:text-5xl">
-                  Your money should be easier to understand.
+                  {t("landing.core.title")}
                 </h2>
 
                 <p className="mt-6 max-w-xl text-lg leading-8 text-slate-600">
-                  You shouldn't need a spreadsheet full of numbers to understand
-                  what's happening with your money. MoneyFlow brings the
-                  important parts together in one place.
+                  {t("landing.core.body")}
                 </p>
               </div>
             </FadeLeft>
@@ -496,12 +503,11 @@ export default function LandingPage() {
 
                   <div>
                     <h3 className="text-xl font-semibold text-slate-950">
-                      Understand
+                      {t("landing.core.understand")}
                     </h3>
 
                     <p className="mt-2 text-base leading-7 text-slate-600">
-                      See where your money goes, compare your spending, and
-                      understand your financial patterns.
+                      {t("landing.core.understandBody")}
                     </p>
                   </div>
                 </div>
@@ -515,12 +521,11 @@ export default function LandingPage() {
 
                   <div>
                     <h3 className="text-xl font-semibold text-slate-950">
-                      Control
+                      {t("landing.core.control")}
                     </h3>
 
                     <p className="mt-2 text-base leading-7 text-slate-600">
-                      Create budgets, monitor your limits, and get alerts before
-                      your spending gets away from you.
+                      {t("landing.core.controlBody")}
                     </p>
                   </div>
                 </div>
@@ -534,12 +539,11 @@ export default function LandingPage() {
 
                   <div>
                     <h3 className="text-xl font-semibold text-slate-950">
-                      Plan
+                      {t("landing.core.plan")}
                     </h3>
 
                     <p className="mt-2 text-base leading-7 text-slate-600">
-                      Set meaningful financial goals and turn them into progress
-                      you can actually see.
+                      {t("landing.core.planBody")}
                     </p>
                   </div>
                 </div>
@@ -556,16 +560,15 @@ export default function LandingPage() {
             <FadeUp>
               <div className="lg:sticky lg:top-28">
                 <p className="text-sm font-semibold uppercase tracking-widest text-emerald-600">
-                  Everything in one place
+                  {t("landing.features.eyebrow")}
                 </p>
 
                 <h2 className="mt-3 max-w-xl text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">
-                  Tools that help you make better money decisions.
+                  {t("landing.features.title")}
                 </h2>
 
                 <p className="mt-5 max-w-xl text-lg leading-8 text-slate-600">
-                  From everyday spending to long-term goals, MoneyFlow gives you
-                  a clearer picture of your financial life.
+                  {t("landing.features.body")}
                 </p>
               </div>
             </FadeUp>
@@ -577,12 +580,11 @@ export default function LandingPage() {
                 </div>
 
                 <h3 className="mt-5 text-lg font-semibold text-slate-950">
-                  Transactions
+                  {t("nav.transactions")}
                 </h3>
 
                 <p className="mt-2 text-sm leading-6 text-slate-600">
-                  Record income and expenses and keep your financial activity
-                  organized.
+                  {t("landing.features.transactions")}
                 </p>
               </div>
 
@@ -592,11 +594,11 @@ export default function LandingPage() {
                 </div>
 
                 <h3 className="mt-5 text-lg font-semibold text-slate-950">
-                  Budgets
+                  {t("nav.budgets")}
                 </h3>
 
                 <p className="mt-2 text-sm leading-6 text-slate-600">
-                  Set monthly spending limits and know how much you have left.
+                  {t("landing.features.budgets")}
                 </p>
               </div>
 
@@ -606,12 +608,11 @@ export default function LandingPage() {
                 </div>
 
                 <h3 className="mt-5 text-lg font-semibold text-slate-950">
-                  Financial goals
+                  {t("landing.features.goalsTitle")}
                 </h3>
 
                 <p className="mt-2 text-sm leading-6 text-slate-600">
-                  Save toward the things that matter to you and track your
-                  progress.
+                  {t("landing.features.goals")}
                 </p>
               </div>
 
@@ -621,11 +622,11 @@ export default function LandingPage() {
                 </div>
 
                 <h3 className="mt-5 text-lg font-semibold text-slate-950">
-                  Reports
+                  {t("nav.reports")}
                 </h3>
 
                 <p className="mt-2 text-sm leading-6 text-slate-600">
-                  Turn your financial activity into useful summaries and trends.
+                  {t("landing.features.reports")}
                 </p>
               </div>
 
@@ -635,11 +636,11 @@ export default function LandingPage() {
                 </div>
 
                 <h3 className="mt-5 text-lg font-semibold text-slate-950">
-                  Insights
+                  {t("nav.insights")}
                 </h3>
 
                 <p className="mt-2 text-sm leading-6 text-slate-600">
-                  Discover spending patterns and changes that are easy to miss.
+                  {t("landing.features.insights")}
                 </p>
               </div>
 
@@ -649,12 +650,11 @@ export default function LandingPage() {
                 </div>
 
                 <h3 className="mt-5 text-lg font-semibold text-slate-950">
-                  MoneyFlow Coach
+                  {t("nav.coach")}
                 </h3>
 
                 <p className="mt-2 text-sm leading-6 text-slate-600">
-                  Ask questions about your finances and get helpful,
-                  personalized context.
+                  {t("landing.features.coach")}
                 </p>
               </div>
             </Stagger>
@@ -673,27 +673,24 @@ export default function LandingPage() {
               <div>
                 <div className="inline-flex items-center gap-2 rounded-full border border-emerald-400/30 bg-emerald-400/10 px-3.5 py-2 text-sm font-medium text-emerald-300">
                   <MessageCircle size={15} />
-                  Meet MoneyFlow Coach
+                  {t("landing.coach.eyebrow")}
                 </div>
 
                 <h2 className="mt-6 text-3xl font-bold tracking-tight sm:text-5xl">
-                  Don't just track your money.
-                  <span className="block text-emerald-400">Talk to it.</span>
+                  {t("landing.coach.title1")}
+                  <span className="block text-emerald-400">{t("landing.coach.title2")}</span>
                 </h2>
 
                 <p className="mt-6 max-w-xl text-lg leading-8 text-slate-400">
-                  MoneyFlow Coach is your Artificial Intelligence (AI) financial
-                  companion. Ask questions about your spending, budgets, goals,
-                  and financial activity and get answers based on your MoneyFlow
-                  context.
+                  {t("landing.coach.body")}
                 </p>
 
                 <div className="mt-8 space-y-4">
                   {[
-                    "Where did I spend the most this month?",
-                    "Why did my spending increase?",
-                    "How can I reach my goal faster?",
-                    "How am I doing financially this month?",
+                    t("landing.coach.q1"),
+                    t("landing.coach.q2"),
+                    t("landing.coach.q3"),
+                    t("landing.coach.q4"),
                   ].map((question) => (
                     <div
                       key={question}
@@ -709,9 +706,7 @@ export default function LandingPage() {
                 </div>
 
                 <p className="mt-8 text-sm text-slate-500">
-                  MoneyFlow Coach is designed to help you understand your
-                  financial information. It does not replace professional
-                  financial advice.
+                  {t("landing.coach.disclaimer")}
                 </p>
               </div>
             </FadeLeft>
@@ -731,53 +726,52 @@ export default function LandingPage() {
                       <p className="font-semibold">MoneyFlow Coach</p>
 
                       <p className="text-xs text-slate-500">
-                        Your financial context, explained
+                        {t("landing.coach.contextExplained")}
                       </p>
                     </div>
                   </div>
 
                   <div className="space-y-5 py-5">
                     <div className="ml-auto max-w-[85%] rounded-2xl rounded-tr-sm bg-emerald-600 px-4 py-3 text-sm leading-6 text-white">
-                      Why did my spending increase this month?
+                      {t("landing.coach.demoQ1")}
                     </div>
 
                     <div className="max-w-[90%] rounded-2xl rounded-tl-sm bg-slate-800 px-4 py-4 text-sm leading-6 text-slate-200">
-                      Your spending increased compared with last month.
-                      Education and Health were the biggest contributors to the
-                      change.
+                      {t("landing.coach.demoA1")}
                       <div className="mt-4 grid grid-cols-2 gap-3">
                         <div className="rounded-xl bg-slate-900 p-3">
-                          <p className="text-xs text-slate-500">Education</p>
+                          <p className="text-xs text-slate-500">{t("categories.education")}</p>
 
                           <p className="mt-1 font-semibold text-white">
-                            ₦115,000
+                            {demoMoney(115000)}
                           </p>
                         </div>
 
                         <div className="rounded-xl bg-slate-900 p-3">
-                          <p className="text-xs text-slate-500">Health</p>
+                          <p className="text-xs text-slate-500">{t("categories.health")}</p>
 
                           <p className="mt-1 font-semibold text-white">
-                            ₦80,000
+                            {demoMoney(80000)}
                           </p>
                         </div>
                       </div>
                     </div>
 
                     <div className="ml-auto max-w-[85%] rounded-2xl rounded-tr-sm bg-emerald-600 px-4 py-3 text-sm leading-6 text-white">
-                      How can I save more for my laptop goal?
+                      {t("landing.coach.demoQ2")}
                     </div>
 
                     <div className="max-w-[90%] rounded-2xl rounded-tl-sm bg-slate-800 px-4 py-4 text-sm leading-6 text-slate-200">
-                      You're making progress. Your goal is currently at ₦90,000
-                      of ₦150,000. I can help you look at your spending and
-                      identify areas where you may be able to save.
+                      {t("landing.coach.demoA2", {
+                        saved: demoMoney(90000),
+                        target: demoMoney(150000),
+                      })}
                     </div>
                   </div>
 
                   <div className="flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-950 px-4 py-3">
                     <span className="flex-1 text-sm text-slate-600">
-                      Ask MoneyFlow Coach...
+                      {t("coach.placeholder")}
                     </span>
 
                     <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-600">
@@ -798,22 +792,19 @@ export default function LandingPage() {
             <FadeLeft>
               <div>
                 <p className="text-sm font-semibold uppercase tracking-widest text-emerald-600">
-                  Start without the risk
+                  {t("landing.free.eyebrow")}
                 </p>
 
                 <h2 className="mt-3 max-w-2xl text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">
-                  Free to use. No real money required.
+                  {t("landing.free.title")}
                 </h2>
 
                 <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-600">
-                  MoneyFlow is built to help you understand and plan your
-                  finances. You don't deposit money into MoneyFlow, transfer
-                  money through the app, or put your savings at risk.
+                  {t("landing.free.body1")}
                 </p>
 
                 <p className="mt-4 max-w-2xl text-lg leading-8 text-slate-600">
-                  Start by tracking your numbers, building better habits, and
-                  learning how your financial decisions affect your goals.
+                  {t("landing.free.body2")}
                 </p>
 
                 <div className="mt-8">
@@ -821,7 +812,7 @@ export default function LandingPage() {
                     to="/register"
                     className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-6 py-3.5 text-sm font-semibold text-white! transition hover:bg-slate-800"
                   >
-                    Create your free account
+                    {t("landing.free.cta")}
                     <ArrowRight size={17} />
                   </Link>
                 </div>
@@ -836,10 +827,10 @@ export default function LandingPage() {
                   </div>
 
                   <div>
-                    <p className="font-semibold text-slate-900">No deposits</p>
+                    <p className="font-semibold text-slate-900">{t("landing.free.point1Title")}</p>
 
                     <p className="mt-1 text-sm leading-6 text-slate-500">
-                      Your real money stays with you.
+                      {t("landing.free.point1Body")}
                     </p>
                   </div>
                 </div>
@@ -853,11 +844,11 @@ export default function LandingPage() {
 
                   <div>
                     <p className="font-semibold text-slate-900">
-                      Free to start
+                      {t("landing.free.point2Title")}
                     </p>
 
                     <p className="mt-1 text-sm leading-6 text-slate-500">
-                      Create an account and get started.
+                      {t("landing.free.point2Body")}
                     </p>
                   </div>
                 </div>
@@ -871,11 +862,11 @@ export default function LandingPage() {
 
                   <div>
                     <p className="font-semibold text-slate-900">
-                      Track, don't transfer
+                      {t("landing.free.point3Title")}
                     </p>
 
                     <p className="mt-1 text-sm leading-6 text-slate-500">
-                      MoneyFlow helps you plan your money.
+                      {t("landing.free.point3Body")}
                     </p>
                   </div>
                 </div>
@@ -892,20 +883,19 @@ export default function LandingPage() {
             <FadeLeft>
               <div>
                 <p className="text-sm font-semibold uppercase tracking-widest text-emerald-600">
-                  Inside MoneyFlow
+                  {t("landing.preview.eyebrow")}
                 </p>
 
                 <h2 className="mt-3 text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">
-                  One place for the full picture.
+                  {t("landing.preview.title")}
                 </h2>
 
                 <p className="mt-5 text-lg leading-8 text-slate-600">
-                  Move between your dashboard, transactions, budgets, and goals
-                  without losing sight of the bigger picture.
+                  {t("landing.preview.body")}
                 </p>
 
                 <div className="mt-8 flex flex-wrap gap-2">
-                  {(Object.keys(previewData) as PreviewTab[]).map((tab) => (
+                  {PREVIEW_TABS.map((tab) => (
                     <button
                       key={tab}
                       type="button"
@@ -916,7 +906,7 @@ export default function LandingPage() {
                           : "bg-slate-100 text-slate-600 hover:bg-slate-200"
                       }`}
                     >
-                      {previewData[tab].label}
+                      {t(`landing.preview.${tab}.label`)}
                     </button>
                   ))}
                 </div>
@@ -943,22 +933,22 @@ export default function LandingPage() {
                   {activeTab === "dashboard" && (
                     <div className="space-y-4 p-5">
                       <div className="rounded-2xl bg-slate-950 p-5 text-white">
-                        <p className="text-xs text-slate-400">Total balance</p>
+                        <p className="text-xs text-slate-400">{t("dashboard.totalBalance")}</p>
 
-                        <p className="mt-2 text-3xl font-bold">₦845,000</p>
+                        <p className="mt-2 text-3xl font-bold">{demoMoney(845000)}</p>
                       </div>
 
                       <div className="grid grid-cols-2 gap-4">
                         <div className="rounded-2xl bg-emerald-50 p-4">
-                          <p className="text-xs text-slate-500">Income</p>
+                          <p className="text-xs text-slate-500">{t("common.income")}</p>
 
-                          <p className="mt-1 font-bold">₦420,000</p>
+                          <p className="mt-1 font-bold">{demoMoney(420000)}</p>
                         </div>
 
                         <div className="rounded-2xl bg-slate-100 p-4">
-                          <p className="text-xs text-slate-500">Expenses</p>
+                          <p className="text-xs text-slate-500">{t("common.expenses")}</p>
 
-                          <p className="mt-1 font-bold">₦185,000</p>
+                          <p className="mt-1 font-bold">{demoMoney(185000)}</p>
                         </div>
                       </div>
                     </div>
@@ -967,10 +957,10 @@ export default function LandingPage() {
                   {activeTab === "transactions" && (
                     <div className="space-y-3 p-5">
                       {[
-                        ["Groceries", "₦18,500"],
-                        ["Transport", "₦7,000"],
-                        ["Freelance income", "+₦85,000"],
-                        ["Internet", "₦12,000"],
+                        [t("landing.mock.groceries"), demoMoney(18500)],
+                        [t("categories.transport"), demoMoney(7000)],
+                        [t("landing.mock.freelanceIncome"), `+${demoMoney(85000)}`],
+                        [t("landing.mock.internet"), demoMoney(12000)],
                       ].map(([name, amount]) => (
                         <div
                           key={name}
@@ -998,9 +988,9 @@ export default function LandingPage() {
                   {activeTab === "budgets" && (
                     <div className="space-y-5 p-5">
                       {[
-                        ["Food", "₦60,000", "75%"],
-                        ["Transport", "₦35,000", "55%"],
-                        ["Entertainment", "₦18,000", "36%"],
+                        [t("categories.food"), demoMoney(60000), "75%"],
+                        [t("categories.transport"), demoMoney(35000), "55%"],
+                        [t("categories.entertainment"), demoMoney(18000), "36%"],
                       ].map(([name, amount, progress]) => (
                         <div key={name}>
                           <div className="flex justify-between text-sm">
@@ -1032,11 +1022,11 @@ export default function LandingPage() {
                         <div className="flex items-center justify-between">
                           <div>
                             <p className="text-xs text-slate-500">
-                              Financial goal
+                              {t("landing.mock.financialGoal")}
                             </p>
 
                             <h4 className="mt-1 text-lg font-bold">
-                              New Laptop
+                              {t("landing.mock.newLaptop")}
                             </h4>
                           </div>
 
@@ -1045,8 +1035,8 @@ export default function LandingPage() {
 
                         <div className="mt-6">
                           <div className="flex justify-between text-sm">
-                            <span>₦90,000 saved</span>
-                            <span>₦150,000</span>
+                            <span>{t("landing.mock.saved", { amount: demoMoney(90000) })}</span>
+                            <span>{demoMoney(150000)}</span>
                           </div>
 
                           <div className="mt-2 h-3 overflow-hidden rounded-full bg-slate-100">
@@ -1054,7 +1044,7 @@ export default function LandingPage() {
                           </div>
 
                           <p className="mt-2 text-xs text-slate-500">
-                            60% of your goal
+                            {t("landing.mock.ofGoal")}
                           </p>
                         </div>
                       </div>
@@ -1076,16 +1066,15 @@ export default function LandingPage() {
           <FadeLeft>
             <div className="max-w-2xl">
               <p className="text-sm font-semibold uppercase tracking-widest text-emerald-400">
-                How it works
+                {t("landing.nav.howItWorks")}
               </p>
 
               <h2 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">
-                Start simple. Build better habits.
+                {t("landing.how.title")}
               </h2>
 
               <p className="mt-4 text-lg leading-8 text-slate-400">
-                MoneyFlow is built around a simple cycle: track your money,
-                understand it, take control, and plan what comes next.
+                {t("landing.how.body")}
               </p>
             </div>
           </FadeLeft>
@@ -1094,23 +1083,23 @@ export default function LandingPage() {
             {[
               {
                 number: "01",
-                title: "Track your money",
-                text: "Record the income and expenses that make up your everyday financial life.",
+                title: t("landing.how.step1"),
+                text: t("landing.how.step1Body"),
               },
               {
                 number: "02",
-                title: "Understand your spending",
-                text: "See your spending patterns and discover where your money is really going.",
+                title: t("landing.how.step2"),
+                text: t("landing.how.step2Body"),
               },
               {
                 number: "03",
-                title: "Take control",
-                text: "Set budgets, watch your limits, and make more intentional spending decisions.",
+                title: t("landing.how.step3"),
+                text: t("landing.how.step3Body"),
               },
               {
                 number: "04",
-                title: "Plan what comes next",
-                text: "Set goals and turn the money you save today into progress toward tomorrow.",
+                title: t("landing.how.step4"),
+                text: t("landing.how.step4Body"),
               },
             ].map((step) => (
               <div key={step.number}>
@@ -1138,13 +1127,11 @@ export default function LandingPage() {
             </div>
 
             <h2 className="mt-7 text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">
-              Stop wondering where your money went.
+              {t("landing.statement.title")}
             </h2>
 
             <p className="mx-auto mt-5 max-w-2xl text-lg leading-8 text-slate-600">
-              Whether you're managing a monthly income, saving for something
-              important, or simply trying to spend more intentionally, MoneyFlow
-              gives you the clarity to make your next decision with confidence.
+              {t("landing.statement.body")}
             </p>
           </div>
         </FadeUp>
@@ -1161,13 +1148,11 @@ export default function LandingPage() {
                 </div>
 
                 <h2 className="mt-5 text-3xl font-bold tracking-tight text-slate-950">
-                  Help us make MoneyFlow better.
+                  {t("landing.feedback.ctaTitle")}
                 </h2>
 
                 <p className="mt-3 text-lg leading-8 text-slate-600">
-                  MoneyFlow is being built with real people in mind. Tell us
-                  what you like, what we can improve, and what features you'd
-                  love to see next.
+                  {t("landing.feedback.ctaBody")}
                 </p>
               </div>
 
@@ -1176,7 +1161,7 @@ export default function LandingPage() {
                 onClick={() => setIsFeedbackOpen(true)}
                 className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-slate-900 px-6 py-3.5 text-sm font-semibold text-white transition hover:bg-slate-800"
               >
-                Give feedback
+                {t("landing.feedback.cta")}
                 <ArrowRight size={17} />
               </button>
             </div>
@@ -1193,11 +1178,11 @@ export default function LandingPage() {
           <FadeUp>
             <div className="text-center">
               <p className="text-sm font-semibold uppercase tracking-widest text-emerald-600">
-                Questions
+                {t("landing.nav.questions")}
               </p>
 
               <h2 className="mt-3 text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">
-                The answers you need.
+                {t("landing.faqTitle")}
               </h2>
             </div>
           </FadeUp>
@@ -1245,12 +1230,11 @@ export default function LandingPage() {
         <FadeUp>
           <div className="mx-auto max-w-5xl px-6 py-20 text-center lg:py-24">
             <h2 className="text-3xl font-bold tracking-tight text-white sm:text-5xl">
-              Start understanding your money today.
+              {t("landing.final.title")}
             </h2>
 
             <p className="mx-auto mt-5 max-w-2xl text-lg leading-8 text-emerald-50">
-              Take the first step toward clearer spending, better control, and
-              financial goals you can actually see yourself reaching.
+              {t("landing.final.body")}
             </p>
 
             <div className="mt-8 flex flex-wrap justify-center gap-4">
@@ -1258,7 +1242,7 @@ export default function LandingPage() {
                 to="/register"
                 className="inline-flex items-center gap-2 rounded-xl bg-white px-6 py-3.5 text-sm font-semibold text-emerald-700 shadow-lg transition hover:-translate-y-0.5 hover:bg-emerald-50"
               >
-                Get started
+                {t("landing.getStarted")}
                 <ArrowRight size={17} />
               </Link>
 
@@ -1266,7 +1250,7 @@ export default function LandingPage() {
                 to="/login"
                 className="inline-flex items-center rounded-xl border border-emerald-400 bg-emerald-700/20 px-6 py-3.5 text-sm font-semibold text-white transition hover:bg-emerald-700"
               >
-                Sign in
+                {t("auth.login.submit")}
               </Link>
             </div>
           </div>
@@ -1284,22 +1268,30 @@ export default function LandingPage() {
             />
 
             <p className="mt-2 text-xs text-slate-500">
-              Understand your money. Control your future.
+              {t("landing.footerTagline")}
             </p>
           </div>
 
-          <div className="flex items-center gap-6 text-sm">
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
             <a href="#features" className="transition hover:text-white">
-              Features
+              {t("landing.nav.features")}
             </a>
 
             <a href="#how-it-works" className="transition hover:text-white">
-              How it works
+              {t("landing.nav.howItWorks")}
             </a>
 
             <a href="#questions" className="transition hover:text-white">
-              Questions
+              {t("landing.nav.questions")}
             </a>
+
+            <Link to="/terms" className="transition hover:text-white">
+              {t("legal.termsTitle")}
+            </Link>
+
+            <Link to="/privacy" className="transition hover:text-white">
+              {t("legal.privacyTitle")}
+            </Link>
           </div>
 
           <p className="text-xs text-slate-600">
@@ -1322,11 +1314,11 @@ export default function LandingPage() {
             <div className="flex items-center justify-between border-b border-slate-200 px-6 py-5">
               <div>
                 <h2 className="text-xl font-bold text-slate-950">
-                  Help us improve MoneyFlow
+                  {t("landing.feedback.title")}
                 </h2>
 
                 <p className="mt-1 text-sm text-slate-500">
-                  Your feedback can shape what we build next.
+                  {t("landing.feedback.subtitle")}
                 </p>
               </div>
 
@@ -1334,7 +1326,7 @@ export default function LandingPage() {
                 type="button"
                 onClick={closeFeedback}
                 className="flex h-9 w-9 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
-                aria-label="Close feedback form"
+                aria-label={t("common.close")}
               >
                 <X size={19} />
               </button>
@@ -1347,12 +1339,11 @@ export default function LandingPage() {
                 </div>
 
                 <h3 className="mt-5 text-xl font-bold text-slate-950">
-                  Thank you for your feedback.
+                  {t("landing.feedback.thanks")}
                 </h3>
 
                 <p className="mx-auto mt-3 max-w-sm leading-7 text-slate-600">
-                  Your thoughts will help us improve MoneyFlow and decide what
-                  we should build next.
+                  {t("landing.feedback.thanksBody")}
                 </p>
 
                 <button
@@ -1360,7 +1351,7 @@ export default function LandingPage() {
                   onClick={closeFeedback}
                   className="mt-7 rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
                 >
-                  Done
+                  {t("landing.feedback.done")}
                 </button>
               </div>
             ) : (
@@ -1373,7 +1364,7 @@ export default function LandingPage() {
                     htmlFor="feedbackType"
                     className="mb-2 block text-sm font-semibold text-slate-800"
                   >
-                    What would you like to tell us?
+                    {t("landing.feedback.type")}
                   </label>
 
                   <select
@@ -1382,15 +1373,15 @@ export default function LandingPage() {
                     onChange={(event) => setFeedbackType(event.target.value)}
                     className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
                   >
-                    <option>General feedback</option>
+                    <option value="General feedback">{t("landing.feedback.types.general")}</option>
 
-                    <option>Something I like</option>
+                    <option value="Something I like">{t("landing.feedback.types.like")}</option>
 
-                    <option>Something to improve</option>
+                    <option value="Something to improve">{t("landing.feedback.types.improve")}</option>
 
-                    <option>Feature request</option>
+                    <option value="Feature request">{t("landing.feedback.types.feature")}</option>
 
-                    <option>Bug or problem</option>
+                    <option value="Bug or problem">{t("landing.feedback.types.bug")}</option>
                   </select>
                 </div>
 
@@ -1399,7 +1390,7 @@ export default function LandingPage() {
                     htmlFor="feedback"
                     className="mb-2 block text-sm font-semibold text-slate-800"
                   >
-                    Your feedback
+                    {t("landing.feedback.label")}
                   </label>
 
                   <textarea
@@ -1408,7 +1399,7 @@ export default function LandingPage() {
                     onChange={(event) => setFeedback(event.target.value)}
                     required
                     rows={5}
-                    placeholder="What should we improve? What feature would you like to see?"
+                    placeholder={t("landing.feedback.placeholder")}
                     className="w-full resize-none rounded-xl border border-slate-300 px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
                   />
                 </div>
@@ -1418,7 +1409,7 @@ export default function LandingPage() {
                     htmlFor="feedbackEmail"
                     className="mb-2 block text-sm font-semibold text-slate-800"
                   >
-                    Email
+                    {t("auth.email")}
                     <span className="ml-1 font-normal text-slate-400">
                       optional
                     </span>
@@ -1429,12 +1420,12 @@ export default function LandingPage() {
                     type="email"
                     value={feedbackEmail}
                     onChange={(event) => setFeedbackEmail(event.target.value)}
-                    placeholder="you@example.com"
+                    placeholder={t("auth.emailPlaceholder")}
                     className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
                   />
 
                   <p className="mt-2 text-xs leading-5 text-slate-500">
-                    Leave your email if you'd like us to follow up with you.
+                    {t("landing.feedback.emailHint")}
                   </p>
                 </div>
 
@@ -1451,12 +1442,11 @@ export default function LandingPage() {
                 >
                   <Send size={16} />
 
-                  {feedbackSubmitting ? "Sending feedback..." : "Send feedback"}
+                  {feedbackSubmitting ? t("landing.feedback.sending") : t("landing.feedback.send")}
                 </button>
 
                 <p className="text-center text-xs leading-5 text-slate-400">
-                  We use feedback to improve MoneyFlow and decide which features
-                  to build next.
+                  {t("landing.feedback.footer")}
                 </p>
               </form>
             )}

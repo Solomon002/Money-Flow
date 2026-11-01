@@ -1,9 +1,12 @@
 import { useState } from "react";
+import { Trans, useTranslation } from "react-i18next";
+import LanguageSwitcher from "../components/LanguageSwitcher.js";
 import { Link, useNavigate } from "react-router";
 import { registerUser, getGoogleSignInUrl } from "../api/auth.js";
 
 export default function RegisterPage() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -11,27 +14,32 @@ export default function RegisterPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [acceptTerms, setAcceptTerms] = useState(false);
 
   const passwordRequirements = [
     {
-      label: "At least 8 characters",
+      label: t("auth.rules.length"),
       valid: password.length >= 8,
     },
     {
-      label: "One uppercase letter",
+      label: t("auth.rules.uppercase"),
       valid: /[A-Z]/.test(password),
     },
     {
-      label: "One lowercase letter",
+      label: t("auth.rules.lowercase"),
       valid: /[a-z]/.test(password),
     },
     {
-      label: "One number",
+      label: t("auth.rules.number"),
       valid: /[0-9]/.test(password),
     },
     {
-      label: "One special character",
+      label: t("auth.rules.special"),
       valid: /[^A-Za-z0-9]/.test(password),
+    },
+    {
+      label: t("auth.rules.match"),
+      valid: confirmPassword.length > 0 && password === confirmPassword,
     },
   ];
 
@@ -52,17 +60,21 @@ export default function RegisterPage() {
               to="/"
               className="mb-6 inline-flex items-center text-sm font-medium text-slate-500 transition hover:text-slate-900"
             >
-              ← Back to MoneyFlow
+              ← {t("auth.backToMoneyFlow")}
             </Link>
 
-            <p className="text-sm font-semibold text-slate-500">MoneyFlow</p>
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-semibold text-slate-500">MoneyFlow</p>
+
+              <LanguageSwitcher />
+            </div>
 
             <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-900">
-              Create your account
+              {t("auth.register.title")}
             </h1>
 
             <p className="mt-2 text-sm text-slate-500">
-              Start understanding and managing your money.
+              {t("auth.register.subtitle")}
             </p>
           </div>
 
@@ -89,14 +101,24 @@ export default function RegisterPage() {
                 d="M12 5.83c1.43 0 2.71.49 3.72 1.45l2.79-2.79C16.84 2.93 14.63 2 12 2a9.75 9.75 0 0 0-8.7 5.33l3.24 2.53C7.31 7.55 9.46 5.83 12 5.83Z"
               />
             </svg>
-            Continue with Google
+            {t("auth.continueWithGoogle")}
           </button>
+
+          <p className="mt-3 text-center text-xs leading-5 text-slate-500">
+            <Trans
+              i18nKey="legal.googleNotice"
+              components={{
+                terms: <Link to="/terms" className="font-medium text-emerald-700 hover:underline" />,
+                privacy: <Link to="/privacy" className="font-medium text-emerald-700 hover:underline" />,
+              }}
+            />
+          </p>
 
           <div className="my-6 flex items-center gap-3">
             <div className="h-px flex-1 bg-slate-200" />
 
             <span className="text-xs font-medium uppercase tracking-wide text-slate-400">
-              or
+              {t("auth.or")}
             </span>
 
             <div className="h-px flex-1 bg-slate-200" />
@@ -109,12 +131,12 @@ export default function RegisterPage() {
               setErrorMessage("");
 
               if (!isPasswordValid) {
-                setErrorMessage("Password does not meet all the requirements");
+                setErrorMessage(t("auth.rules.notMet"));
                 return;
               }
 
               if (password !== confirmPassword) {
-                setErrorMessage("Passwords do not match");
+                setErrorMessage(t("auth.passwordsDontMatch"));
                 return;
               }
 
@@ -125,18 +147,19 @@ export default function RegisterPage() {
                   name: name.trim(),
                   email: email.trim(),
                   password,
+                  acceptTerms,
                 });
 
                 if (!result.response.ok) {
                   throw new Error(
-                    result.data.message || "Unable to create account",
+                    result.data.message || t("auth.register.failed"),
                   );
                 }
 
                 navigate("/login", {
                   state: {
                     registrationSuccess:
-                      "Account created successfully. Please sign in.",
+                      t("auth.register.success"),
                     email: email.trim(),
                   },
                 });
@@ -144,7 +167,7 @@ export default function RegisterPage() {
                 setErrorMessage(
                   error instanceof Error
                     ? error.message
-                    : "Unable to create account",
+                    : t("auth.register.failed"),
                 );
               } finally {
                 setIsSubmitting(false);
@@ -157,7 +180,7 @@ export default function RegisterPage() {
                 htmlFor="name"
                 className="mb-2 block text-sm font-medium text-slate-700"
               >
-                Name
+                {t("auth.name")}
               </label>
 
               <input
@@ -165,7 +188,7 @@ export default function RegisterPage() {
                 type="text"
                 value={name}
                 onChange={(event) => setName(event.target.value)}
-                placeholder="Your name"
+                placeholder={t("auth.namePlaceholder")}
                 autoComplete="name"
                 required
                 className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none transition focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
@@ -177,7 +200,7 @@ export default function RegisterPage() {
                 htmlFor="email"
                 className="mb-2 block text-sm font-medium text-slate-700"
               >
-                Email
+                {t("auth.email")}
               </label>
 
               <input
@@ -185,7 +208,7 @@ export default function RegisterPage() {
                 type="email"
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
-                placeholder="you@example.com"
+                placeholder={t("auth.emailPlaceholder")}
                 autoComplete="email"
                 required
                 className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none transition focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
@@ -197,7 +220,7 @@ export default function RegisterPage() {
                 htmlFor="password"
                 className="mb-2 block text-sm font-medium text-slate-700"
               >
-                Password
+                {t("auth.password")}
               </label>
 
               <input
@@ -205,7 +228,7 @@ export default function RegisterPage() {
                 type="password"
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
-                placeholder="Create a strong password"
+                placeholder={t("auth.newPasswordPlaceholder")}
                 autoComplete="new-password"
                 required
                 className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none transition focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
@@ -213,7 +236,7 @@ export default function RegisterPage() {
 
               <div className="mt-3 rounded-xl bg-slate-50 px-4 py-3">
                 <p className="mb-2 text-xs font-semibold text-slate-600">
-                  Use a strong password with:
+                  {t("auth.rules.title")}
                 </p>
 
                 <ul className="space-y-1.5">
@@ -246,7 +269,7 @@ export default function RegisterPage() {
                 htmlFor="confirm-password"
                 className="mb-2 block text-sm font-medium text-slate-700"
               >
-                Confirm password
+                {t("auth.confirmPassword")}
               </label>
 
               <input
@@ -254,12 +277,32 @@ export default function RegisterPage() {
                 type="password"
                 value={confirmPassword}
                 onChange={(event) => setConfirmPassword(event.target.value)}
-                placeholder="Enter your password again"
+                placeholder={t("auth.confirmPasswordPlaceholder")}
                 autoComplete="new-password"
                 required
                 className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none transition focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
               />
             </div>
+
+            <label className="flex items-start gap-3 text-sm leading-6 text-slate-600">
+              <input
+                type="checkbox"
+                checked={acceptTerms}
+                onChange={(event) => setAcceptTerms(event.target.checked)}
+                required
+                className="mt-1 h-4 w-4 accent-emerald-600"
+              />
+
+              <span>
+                <Trans
+                  i18nKey="legal.acceptLabel"
+                  components={{
+                    terms: <Link to="/terms" target="_blank" className="font-medium text-emerald-700 hover:underline" />,
+                    privacy: <Link to="/privacy" target="_blank" className="font-medium text-emerald-700 hover:underline" />,
+                  }}
+                />
+              </span>
+            </label>
 
             {errorMessage && (
               <div
@@ -275,17 +318,17 @@ export default function RegisterPage() {
               disabled={isSubmitting}
               className="w-full rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {isSubmitting ? "Creating account..." : "Create account"}
+              {isSubmitting ? t("auth.register.submitting") : t("auth.register.submit")}
             </button>
           </form>
 
           <p className="mt-6 text-center text-sm text-slate-500">
-            Already have an account?{" "}
+            {t("auth.register.haveAccount")}{" "}
             <Link
               to="/login"
               className="font-semibold text-slate-900 hover:underline"
             >
-              Sign in
+              {t("auth.login.submit")}
             </Link>
           </p>
         </section>

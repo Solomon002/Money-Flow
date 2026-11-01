@@ -1,0 +1,17 @@
+{
+  "overview": "Aperçu",
+  "welcome": "Bon retour, {{name}}",
+  "totalBalance": "Solde total",
+  "summaryFailed": "Impossible de charger votre résumé financier",
+  "spendingFailed": "Impossible de charger l'aperçu des dépenses",
+  "spendingOverview": "Aperçu des dépenses",
+  "spendingThisMonth": "Vos dépenses ce mois-ci",
+  "viewReports": "Voir les rapports",
+  "loadingSpending": "Chargement de l'aperçu des dépenses...",
+  "noExpenses": "Aucune dépense enregistrée ce mois-ci.",
+  "addTransactionLink": "Ajouter une transaction",
+  "totalSpendingThisMonth": "Total des dépenses ce mois-ci",
+  "quickActions": "Actions rapides",
+  "createGoal": "Créer un objectif",
+  "setBudget": "Définir un budget"
+}

@@ -1,5 +1,6 @@
 import jwt from 'jsonwebtoken';
 import { Request, Response, NextFunction } from 'express';
+import { isValidUuid } from '../utils/validation.js';
 
 export type AuthenticatedRequest = Request & {
   userId?: string;
@@ -39,15 +40,17 @@ export async function requireAuth(
       });
     }
 
+    // Pin the algorithm so a token signed any other way is rejected.
     const decoded = jwt.verify(
       token,
-      getAccessTokenSecret()
+      getAccessTokenSecret(),
+      { algorithms: ['HS256'] }
     );
 
     if (
       typeof decoded !== 'object' ||
       decoded === null ||
-      typeof decoded.userId !== 'string'
+      !isValidUuid(decoded.userId)
     ) {
       return res.status(401).json({
         status: 'error',

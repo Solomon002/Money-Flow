@@ -1,0 +1,17 @@
+{
+  "overview": "Overview",
+  "welcome": "Welcome back, {{name}}",
+  "totalBalance": "Total balance",
+  "summaryFailed": "Unable to load your financial summary",
+  "spendingFailed": "Unable to load spending overview",
+  "spendingOverview": "Spending overview",
+  "spendingThisMonth": "Your spending this month",
+  "viewReports": "View reports",
+  "loadingSpending": "Loading spending overview...",
+  "noExpenses": "No expenses recorded this month.",
+  "addTransactionLink": "Add a transaction",
+  "totalSpendingThisMonth": "Total spending this month",
+  "quickActions": "Quick actions",
+  "createGoal": "Create goal",
+  "setBudget": "Set a budget"
+}

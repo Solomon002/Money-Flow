@@ -1,7 +1,9 @@
+import crypto from "crypto";
 import { Router } from "express";
 import { OAuth2Client } from "google-auth-library";
 
 import {
+  claimAccountWithVerifiedEmail,
   createGoogleUser,
   findUserByEmail,
 } from "../services/authService.js";
@@ -14,6 +16,8 @@ import {
   createGoogleAuthCode,
   exchangeGoogleAuthCode,
 } from "../services/googleAuthService.js";
+
+import { LEGAL_VERSION } from "../utils/legal.js";
 
 const router = Router();
 
@@ -46,6 +50,50 @@ const googleClient = new OAuth2Client(
   googleRedirectUri,
 );
 
+/*
+ * OAuth `state` ties the Google callback to the browser that started
+ * the sign-in, so an attacker cannot log a victim into the attacker's
+ * account by sending them a callback URL with the attacker's code.
+ */
+const GOOGLE_STATE_COOKIE = "moneyflow_google_state";
+const GOOGLE_STATE_MAX_AGE_MS = 10 * 60 * 1000;
+
+function readCookie(
+  cookieHeader: string | undefined,
+  name: string,
+): string | null {
+  if (!cookieHeader) {
+    return null;
+  }
+
+  for (const part of cookieHeader.split(";")) {
+    const [key, ...rest] = part.trim().split("=");
+
+    if (key === name) {
+      return decodeURIComponent(rest.join("="));
+    }
+  }
+
+  return null;
+}
+
+function statesMatch(
+  expected: string | null,
+  received: unknown,
+): boolean {
+  if (!expected || typeof received !== "string") {
+    return false;
+  }
+
+  const expectedBuffer = Buffer.from(expected);
+  const receivedBuffer = Buffer.from(received);
+
+  return (
+    expectedBuffer.length === receivedBuffer.length &&
+    crypto.timingSafeEqual(expectedBuffer, receivedBuffer)
+  );
+}
+
 router.get("/google", (_req, res) => {
   if (
     !googleClientId ||
@@ -58,6 +106,16 @@ router.get("/google", (_req, res) => {
     });
   }
 
+  const state = crypto.randomBytes(32).toString("hex");
+
+  res.cookie(GOOGLE_STATE_COOKIE, state, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    maxAge: GOOGLE_STATE_MAX_AGE_MS,
+    path: "/api/auth/google",
+  });
+
   const authorizationUrl =
     googleClient.generateAuthUrl({
       access_type: "offline",
@@ -67,6 +125,7 @@ router.get("/google", (_req, res) => {
         "profile",
       ],
       prompt: "select_account",
+      state,
     });
 
   return res.redirect(
@@ -78,6 +137,21 @@ router.get(
   "/google/callback",
   async (req, res) => {
     try {
+      const expectedState = readCookie(
+        req.headers.cookie,
+        GOOGLE_STATE_COOKIE,
+      );
+
+      res.clearCookie(GOOGLE_STATE_COOKIE, {
+        path: "/api/auth/google",
+      });
+
+      if (!statesMatch(expectedState, req.query.state)) {
+        return res.redirect(
+          `${frontendUrl}/login?error=google_auth_failed`,
+        );
+      }
+
       const code =
         typeof req.query.code === "string"
           ? req.query.code
@@ -142,7 +216,11 @@ router.get(
           await createGoogleUser({
             name: googleName,
             email: googleEmail,
+            // The sign-in pages say continuing with Google accepts the terms.
+            termsVersion: LEGAL_VERSION,
           });
+      } else {
+        await claimAccountWithVerifiedEmail(user.id);
       }
 
       /*

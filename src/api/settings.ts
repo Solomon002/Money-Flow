@@ -22,6 +22,8 @@ export type Settings = {
   recurring_reminders_enabled: boolean;
 
   has_financial_records: boolean;
+  // false for Google-only accounts.
+  has_password: boolean;
 };
 
 export async function getSettings() {
@@ -33,6 +35,8 @@ export async function getSettings() {
 export async function updateSettings(data: {
   name: string;
   email: string;
+  // Required by the server only when the email is being changed.
+  currentPassword?: string;
   currencyCode: string;
   incomeSource: string | null;
   monthlyIncome: number | null;
@@ -58,5 +62,19 @@ export async function changePassword(data: {
   return apiRequest("/api/settings/password", {
     method: "PUT",
     body: JSON.stringify(data),
+  });
+}
+export async function exportAccountData() {
+  return apiRequest("/api/settings/export", {
+    method: "GET",
+  });
+}
+
+export async function deleteAccount(
+  confirmation: { password: string } | { confirmEmail: string },
+) {
+  return apiRequest("/api/settings/account", {
+    method: "DELETE",
+    body: JSON.stringify(confirmation),
   });
 }

@@ -1,0 +1,17 @@
+{
+  "overview": "Überblick",
+  "welcome": "Willkommen zurück, {{name}}",
+  "totalBalance": "Gesamtsaldo",
+  "summaryFailed": "Deine Finanzübersicht konnte nicht geladen werden",
+  "spendingFailed": "Ausgabenübersicht konnte nicht geladen werden",
+  "spendingOverview": "Ausgabenübersicht",
+  "spendingThisMonth": "Deine Ausgaben in diesem Monat",
+  "viewReports": "Berichte ansehen",
+  "loadingSpending": "Ausgabenübersicht wird geladen...",
+  "noExpenses": "In diesem Monat wurden keine Ausgaben erfasst.",
+  "addTransactionLink": "Transaktion hinzufügen",
+  "totalSpendingThisMonth": "Gesamtausgaben in diesem Monat",
+  "quickActions": "Schnellaktionen",
+  "createGoal": "Ziel erstellen",
+  "setBudget": "Budget festlegen"
+}

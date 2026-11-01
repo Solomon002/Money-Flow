@@ -1,0 +1,176 @@
+{
+  "getStarted": "Começar",
+  "faqTitle": "As respostas de que você precisa.",
+  "footerTagline": "Entenda seu dinheiro. Controle seu futuro.",
+  "nav": {
+    "features": "Recursos",
+    "howItWorks": "Como funciona",
+    "questions": "Perguntas",
+    "openMenu": "Abrir menu",
+    "closeMenu": "Fechar menu"
+  },
+  "hero": {
+    "badge": "Um jeito mais claro de cuidar do seu dinheiro",
+    "title1": "Entenda seu dinheiro.",
+    "title2": "Controle seu futuro.",
+    "body": "O MoneyFlow ajuda você a ver para onde vai seu dinheiro, controlar seus gastos, planejar metas e tomar decisões melhores todos os dias.",
+    "explore": "Conhecer o MoneyFlow",
+    "track": "Acompanhe seu dinheiro",
+    "budgets": "Crie orçamentos melhores",
+    "goals": "Alcance suas metas"
+  },
+  "mock": {
+    "overview": "Seu resumo financeiro",
+    "glance": "Seu dinheiro num relance",
+    "groceries": "Mercado",
+    "freelanceIncome": "Renda de freelancer",
+    "internet": "Internet",
+    "financialGoal": "Meta financeira",
+    "newLaptop": "Notebook novo",
+    "saved": "{{amount}} economizados",
+    "ofGoal": "60% da sua meta"
+  },
+  "core": {
+    "title": "Seu dinheiro deveria ser mais fácil de entender.",
+    "body": "Você não deveria precisar de uma planilha cheia de números para entender o que acontece com seu dinheiro. O MoneyFlow reúne o essencial em um só lugar.",
+    "understand": "Entender",
+    "understandBody": "Veja para onde vai seu dinheiro, compare seus gastos e entenda seus padrões financeiros.",
+    "control": "Controlar",
+    "controlBody": "Crie orçamentos, acompanhe seus limites e receba alertas antes que os gastos saiam do controle.",
+    "plan": "Planejar",
+    "planBody": "Defina metas financeiras importantes e transforme-as em progresso que você consegue ver."
+  },
+  "features": {
+    "eyebrow": "Tudo em um só lugar",
+    "title": "Ferramentas para decisões financeiras melhores.",
+    "body": "Dos gastos do dia a dia às metas de longo prazo, o MoneyFlow dá uma visão mais clara da sua vida financeira.",
+    "transactions": "Registre receitas e despesas e mantenha suas finanças organizadas.",
+    "budgets": "Defina limites mensais e saiba quanto ainda resta.",
+    "goalsTitle": "Metas financeiras",
+    "goals": "Economize para o que importa e acompanhe seu progresso.",
+    "reports": "Transforme sua atividade financeira em resumos e tendências úteis.",
+    "insights": "Descubra padrões e mudanças nos gastos que passam despercebidos.",
+    "coach": "Faça perguntas sobre suas finanças e receba respostas úteis e personalizadas."
+  },
+  "coach": {
+    "eyebrow": "Conheça o Coach MoneyFlow",
+    "title1": "Não apenas acompanhe seu dinheiro.",
+    "title2": "Converse com ele.",
+    "body": "O Coach MoneyFlow é seu companheiro financeiro com inteligência artificial (IA). Pergunte sobre gastos, orçamentos, metas e atividade financeira e receba respostas com base nos seus dados do MoneyFlow.",
+    "q1": "Onde gastei mais este mês?",
+    "q2": "Por que meus gastos aumentaram?",
+    "q3": "Como alcanço minha meta mais rápido?",
+    "q4": "Como estou financeiramente este mês?",
+    "disclaimer": "O Coach MoneyFlow ajuda você a entender suas informações financeiras. Ele não substitui aconselhamento financeiro profissional.",
+    "contextExplained": "Seu contexto financeiro, explicado",
+    "demoQ1": "Por que meus gastos aumentaram este mês?",
+    "demoA1": "Seus gastos aumentaram em relação ao mês passado. Educação e Saúde foram os que mais contribuíram.",
+    "demoQ2": "Como posso economizar mais para meu notebook?",
+    "demoA2": "Você está progredindo. Sua meta está em {{saved}} de {{target}}. Posso ajudar a analisar seus gastos e encontrar onde economizar."
+  },
+  "free": {
+    "eyebrow": "Comece sem riscos",
+    "title": "Grátis. Sem dinheiro de verdade.",
+    "body1": "O MoneyFlow ajuda você a entender e planejar suas finanças. Você não deposita dinheiro no MoneyFlow, não faz transferências pelo app e não arrisca suas economias.",
+    "body2": "Comece acompanhando seus números, criando hábitos melhores e vendo como suas decisões afetam suas metas.",
+    "cta": "Crie sua conta grátis",
+    "point1Title": "Sem depósitos",
+    "point1Body": "Seu dinheiro fica com você.",
+    "point2Title": "Grátis para começar",
+    "point2Body": "Crie uma conta e comece.",
+    "point3Title": "Acompanhe, não transfira",
+    "point3Body": "O MoneyFlow ajuda você a planejar seu dinheiro."
+  },
+  "preview": {
+    "eyebrow": "Por dentro do MoneyFlow",
+    "title": "Um só lugar para ver tudo.",
+    "body": "Navegue entre painel, transações, orçamentos e metas sem perder a visão geral.",
+    "dashboard": {
+      "label": "Painel",
+      "title": "Sua situação financeira num relance.",
+      "description": "Entenda receitas, despesas, orçamentos e metas sem vasculhar planilhas."
+    },
+    "transactions": {
+      "label": "Transações",
+      "title": "Saiba para onde vai seu dinheiro.",
+      "description": "Mantenha receitas e despesas organizadas para sempre saber o que gastou e por quê."
+    },
+    "budgets": {
+      "label": "Orçamentos",
+      "title": "Fique à frente dos seus gastos.",
+      "description": "Defina limites mensais e veja quanto já usou antes que os gastos fujam do controle."
+    },
+    "goals": {
+      "label": "Metas",
+      "title": "Transforme planos em progresso.",
+      "description": "Defina metas, acompanhe o progresso e veja quanto falta para alcançá-las."
+    }
+  },
+  "how": {
+    "title": "Comece simples. Crie hábitos melhores.",
+    "body": "O MoneyFlow segue um ciclo simples: acompanhe seu dinheiro, entenda-o, assuma o controle e planeje o próximo passo.",
+    "step1": "Acompanhe seu dinheiro",
+    "step1Body": "Registre as receitas e despesas do seu dia a dia.",
+    "step2": "Entenda seus gastos",
+    "step2Body": "Veja seus padrões de gasto e descubra para onde seu dinheiro realmente vai.",
+    "step3": "Assuma o controle",
+    "step3Body": "Defina orçamentos, acompanhe seus limites e gaste com mais intenção.",
+    "step4": "Planeje o próximo passo",
+    "step4Body": "Defina metas e transforme o que você economiza hoje em progresso para amanhã."
+  },
+  "statement": {
+    "title": "Pare de se perguntar para onde foi seu dinheiro.",
+    "body": "Seja administrando uma renda mensal, economizando para algo importante ou só querendo gastar com mais intenção, o MoneyFlow traz a clareza para decidir com confiança."
+  },
+  "final": {
+    "title": "Comece hoje a entender seu dinheiro.",
+    "body": "Dê o primeiro passo rumo a gastos mais claros, mais controle e metas que você realmente se vê alcançando."
+  },
+  "faq": {
+    "uses": {
+      "question": "Para que posso usar o MoneyFlow?",
+      "answer": "O MoneyFlow ajuda você a acompanhar receitas e despesas, gerenciar orçamentos, definir metas, entender padrões de gasto e tomar decisões melhores no dia a dia."
+    },
+    "skills": {
+      "question": "Preciso entender de dinheiro para usar o MoneyFlow?",
+      "answer": "De jeito nenhum. O MoneyFlow foi feito para facilitar o entendimento das suas finanças. Comece pelo básico e crie hábitos melhores aos poucos."
+    },
+    "realMoney": {
+      "question": "Preciso colocar dinheiro de verdade no MoneyFlow?",
+      "answer": "Não. O MoneyFlow não exige depósito nem transferência de dinheiro real. Você usa o app para acompanhar e entender suas finanças sem arriscar seu dinheiro."
+    },
+    "goals": {
+      "question": "Posso criar metas de economia?",
+      "answer": "Sim. Você pode criar metas para o que quer economizar, definir valor e data, adicionar dinheiro e acompanhar o progresso."
+    },
+    "coach": {
+      "question": "O que é o Coach MoneyFlow?",
+      "answer": "O Coach MoneyFlow é um assistente de inteligência artificial (IA) que responde perguntas com base nos seus dados do MoneyFlow, ajudando você a entender seus gastos e decidir melhor."
+    }
+  },
+  "feedback": {
+    "failed": "Não foi possível enviar seu feedback. Tente novamente.",
+    "ctaTitle": "Ajude-nos a melhorar o MoneyFlow.",
+    "ctaBody": "O MoneyFlow é feito pensando em pessoas reais. Conte o que você gosta, o que podemos melhorar e que recursos gostaria de ver.",
+    "cta": "Enviar feedback",
+    "title": "Ajude-nos a melhorar o MoneyFlow",
+    "subtitle": "Seu feedback pode definir o que construiremos a seguir.",
+    "thanks": "Obrigado pelo seu feedback.",
+    "thanksBody": "Suas ideias vão nos ajudar a melhorar o MoneyFlow e decidir o que construir a seguir.",
+    "done": "Pronto",
+    "type": "O que você gostaria de nos contar?",
+    "label": "Seu feedback",
+    "placeholder": "O que devemos melhorar? Que recurso você gostaria de ver?",
+    "emailHint": "Deixe seu e-mail se quiser que entremos em contato.",
+    "send": "Enviar feedback",
+    "sending": "Enviando...",
+    "footer": "Usamos o feedback para melhorar o MoneyFlow e decidir quais recursos criar.",
+    "types": {
+      "general": "Feedback geral",
+      "like": "Algo de que gosto",
+      "improve": "Algo a melhorar",
+      "feature": "Pedido de recurso",
+      "bug": "Erro ou problema"
+    }
+  }
+}

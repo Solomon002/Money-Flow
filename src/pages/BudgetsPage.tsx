@@ -1,13 +1,21 @@
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
 import { ArrowLeft, Plus } from "lucide-react";
 import { deleteBudget, getBudgets, type Budget } from "../api/budgets.js";
 import { getTransactions, type Transaction } from "../api/transactions.js";
 import { useAuth } from "../context/AuthContext.js";
+import {
+  MONTHS,
+  formatMoney as formatLocalMoney,
+  monthName,
+} from "../i18n/format.js";
+import { categoryLabel } from "../i18n/categories.js";
 
 export default function BudgetsPage() {
   const navigate = useNavigate();
   const { onboardingPreferences } = useAuth();
+  const { t } = useTranslation();
 
   const [budgets, setBudgets] = useState<Budget[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -15,17 +23,7 @@ export default function BudgetsPage() {
   const [errorMessage, setErrorMessage] = useState("");
   const [deletingBudgetId, setDeletingBudgetId] = useState("");
 
-  const currencySymbols: Record<string, string> = {
-    NGN: "₦",
-    USD: "$",
-    GBP: "£",
-    EUR: "€",
-  };
-
-  const currencySymbol =
-    currencySymbols[onboardingPreferences?.currency_code || "NGN"] ||
-    onboardingPreferences?.currency_code ||
-    "NGN";
+  const currencyCode = onboardingPreferences?.currency_code || "NGN";
 
   const currentDate = new Date();
   const currentMonth = currentDate.getMonth() + 1;
@@ -47,13 +45,13 @@ export default function BudgetsPage() {
 
         if (!budgetsResult.response.ok) {
           throw new Error(
-            budgetsResult.data.message || "Unable to load budgets",
+            budgetsResult.data.message || t("budgets.loadFailed"),
           );
         }
 
         if (!transactionsResult.response.ok) {
           throw new Error(
-            transactionsResult.data.message || "Unable to load transactions",
+            transactionsResult.data.message || t("transactions.loadFailed"),
           );
         }
 
@@ -63,7 +61,7 @@ export default function BudgetsPage() {
         console.error("Loading budgets failed:", error);
 
         setErrorMessage(
-          error instanceof Error ? error.message : "Unable to load budgets",
+          error instanceof Error ? error.message : t("budgets.loadFailed"),
         );
       } finally {
         setIsLoading(false);
@@ -109,10 +107,7 @@ export default function BudgetsPage() {
   }
 
   function formatMoney(amountMinor: number) {
-    return `${currencySymbol}${(amountMinor / 100).toLocaleString("en-NG", {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    })}`;
+    return formatLocalMoney(amountMinor, currencyCode);
   }
 
   function goToAddBudget() {
@@ -121,7 +116,11 @@ export default function BudgetsPage() {
 
   async function handleDeleteBudget(budget: Budget) {
     const confirmed = window.confirm(
-      `Delete the ${budget.category_name} budget for ${budget.month}/${budget.year}?`,
+      t("budgets.confirmDelete", {
+        category: categoryLabel(budget.category_name),
+        month: monthName(budget.month),
+        year: budget.year,
+      }),
     );
 
     if (!confirmed) {
@@ -135,7 +134,7 @@ export default function BudgetsPage() {
       const result = await deleteBudget(budget.id);
 
       if (!result.response.ok) {
-        throw new Error(result.data.message || "Unable to delete budget");
+        throw new Error(result.data.message || t("budgets.deleteFailed"));
       }
 
       setBudgets((currentBudgets) =>
@@ -147,7 +146,7 @@ export default function BudgetsPage() {
       console.error("Deleting budget failed:", error);
 
       setErrorMessage(
-        error instanceof Error ? error.message : "Unable to delete budget",
+        error instanceof Error ? error.message : t("budgets.deleteFailed"),
       );
     } finally {
       setDeletingBudgetId("");
@@ -162,15 +161,15 @@ export default function BudgetsPage() {
             type="button"
             onClick={() => navigate("/app")}
             className="rounded-lg p-2 text-slate-500 transition hover:bg-slate-100"
-            aria-label="Go back"
+            aria-label={t("common.back")}
           >
             <ArrowLeft size={20} />
           </button>
 
           <div>
-            <p className="text-sm text-slate-500">Spending control</p>
+            <p className="text-sm text-slate-500">{t("budgets.eyebrow")}</p>
 
-            <h1 className="mt-1 text-2xl font-bold text-slate-900">Budgets</h1>
+            <h1 className="mt-1 text-2xl font-bold text-slate-900">{t("budgets.title")}</h1>
           </div>
         </div>
 
@@ -180,7 +179,7 @@ export default function BudgetsPage() {
           className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
         >
           <Plus size={18} />
-          Add budget
+          {t("budgets.add")}
         </button>
       </div>
 
@@ -199,18 +198,11 @@ export default function BudgetsPage() {
           onChange={(event) => setSelectedMonth(Number(event.target.value))}
           className="rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none focus:border-slate-900"
         >
-          <option value={1}>January</option>
-          <option value={2}>February</option>
-          <option value={3}>March</option>
-          <option value={4}>April</option>
-          <option value={5}>May</option>
-          <option value={6}>June</option>
-          <option value={7}>July</option>
-          <option value={8}>August</option>
-          <option value={9}>September</option>
-          <option value={10}>October</option>
-          <option value={11}>November</option>
-          <option value={12}>December</option>
+          {MONTHS.map((month) => (
+            <option key={month} value={month}>
+              {monthName(month)}
+            </option>
+          ))}
         </select>
 
         <select
@@ -228,16 +220,16 @@ export default function BudgetsPage() {
 
       {isLoading ? (
         <section className="rounded-2xl border border-slate-200 bg-white p-8 text-center">
-          <p className="text-sm text-slate-500">Loading budgets...</p>
+          <p className="text-sm text-slate-500">{t("budgets.loading")}</p>
         </section>
       ) : currentBudgets.length === 0 ? (
         <section className="rounded-2xl border border-slate-200 bg-white p-10 text-center">
           <h2 className="text-lg font-semibold text-slate-900">
-            No budgets yet
+            {t("budgets.emptyTitle")}
           </h2>
 
           <p className="mt-2 text-sm text-slate-500">
-            Create a budget for this month to start controlling your spending.
+            {t("budgets.emptyBody")}
           </p>
 
           <button
@@ -246,7 +238,7 @@ export default function BudgetsPage() {
             className="mt-5 inline-flex items-center gap-2 rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
           >
             <Plus size={18} />
-            Create budget
+            {t("budgets.create")}
           </button>
         </section>
       ) : (
@@ -270,13 +262,13 @@ export default function BudgetsPage() {
             let warningClass = "text-slate-500";
 
             if (percentageUsed >= 100) {
-              warningMessage = "You are over this budget.";
+              warningMessage = t("budgets.overWarning");
               warningClass = "text-red-600";
             } else if (percentageUsed >= 90) {
-              warningMessage = "You are very close to your budget limit.";
+              warningMessage = t("budgets.closeWarning");
               warningClass = "text-orange-600";
             } else if (percentageUsed >= 70) {
-              warningMessage = "You are approaching your budget limit.";
+              warningMessage = t("budgets.approachingWarning");
               warningClass = "text-amber-600";
             }
 
@@ -290,11 +282,11 @@ export default function BudgetsPage() {
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <h2 className="text-lg font-semibold text-slate-900">
-                      {budget.category_name}
+                      {categoryLabel(budget.category_name)}
                     </h2>
 
                     <p className="mt-1 text-sm text-slate-500">
-                      Monthly budget
+                      {t("budgets.monthly")}
                     </p>
                   </div>
 
@@ -305,7 +297,7 @@ export default function BudgetsPage() {
 
                 <div className="mt-6">
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-slate-500">Spent</span>
+                    <span className="text-slate-500">{t("budgets.spent")}</span>
 
                     <span className="font-semibold text-slate-900">
                       {formatMoney(spentAmount)}
@@ -329,7 +321,7 @@ export default function BudgetsPage() {
 
                   <div className="mt-3 flex items-center justify-between text-sm">
                     <span className="text-slate-500">
-                      {percentageUsed.toFixed(0)}% used
+                      {t("budgets.percentUsed", { percent: percentageUsed.toFixed(0) })}
                     </span>
 
                     <span
@@ -340,10 +332,10 @@ export default function BudgetsPage() {
                       }
                     >
                       {remainingAmount >= 0
-                        ? `${formatMoney(remainingAmount)} remaining`
-                        : `${formatMoney(
-                            Math.abs(remainingAmount),
-                          )} over budget`}
+                        ? t("budgets.remaining", { amount: formatMoney(remainingAmount) })
+                        : t("budgets.over", {
+                            amount: formatMoney(Math.abs(remainingAmount)),
+                          })}
                     </span>
                   </div>
 
@@ -353,7 +345,7 @@ export default function BudgetsPage() {
                       onClick={() => navigate(`/app/budgets/edit/${budget.id}`)}
                       className="flex-1 rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
                     >
-                      Edit
+                      {t("common.edit")}
                     </button>
 
                     <button
@@ -362,7 +354,7 @@ export default function BudgetsPage() {
                       disabled={isDeleting}
                       className="flex-1 rounded-xl border border-red-200 px-4 py-2.5 text-sm font-semibold text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
                     >
-                      {isDeleting ? "Deleting..." : "Delete"}
+                      {isDeleting ? t("common.deleting") : t("common.delete")}
                     </button>
                   </div>
                 </div>

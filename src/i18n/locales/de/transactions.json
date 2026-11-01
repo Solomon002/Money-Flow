@@ -1,0 +1,26 @@
+{
+  "eyebrow": "Geldbewegungen",
+  "title": "Transaktionen",
+  "subtitle": "Sieh dir deine Einnahmen und Ausgaben an.",
+  "add": "Transaktion hinzufügen",
+  "import": "Transaktionen importieren",
+  "loading": "Transaktionen werden geladen...",
+  "loadFailed": "Transaktionen konnten nicht geladen werden",
+  "categoriesFailed": "Kategorien konnten nicht geladen werden",
+  "emptyTitle": "Noch keine Transaktionen",
+  "emptyBody": "Deine Einnahmen und Ausgaben erscheinen hier, sobald du deine erste Transaktion hinzufügst oder importierst.",
+  "form": {
+    "type": "Transaktionsart",
+    "loadingCategories": "Kategorien werden geladen...",
+    "selectCategory": "Kategorie auswählen",
+    "selectCategoryError": "Bitte wähle eine Kategorie aus.",
+    "subcategory": "Unterkategorie",
+    "noSubcategory": "Keine Unterkategorie",
+    "amountError": "Bitte gib einen Betrag größer als null ein.",
+    "descriptionError": "Bitte gib eine Beschreibung ein.",
+    "descriptionPlaceholder": "z. B. Lebensmittel",
+    "notesPlaceholder": "Optionale Notizen",
+    "createFailed": "Transaktion konnte nicht erstellt werden",
+    "submit": "Transaktion speichern"
+  }
+}

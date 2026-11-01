@@ -104,6 +104,8 @@ export async function resetPassword(
         UPDATE public.users
         SET
           password_hash = $1,
+          -- Using the emailed link proves they own the address.
+          email_verified_at = COALESCE(email_verified_at, NOW()),
           updated_at = NOW()
         WHERE id = $2
       `,

@@ -1,0 +1,75 @@
+{
+  "steps": {
+    "upload": "Datei hochladen",
+    "map": "Spalten zuordnen",
+    "review": "Prüfen & importieren"
+  },
+  "upload": {
+    "title": "Lade deinen Kontoauszug hoch (CSV)",
+    "body": "Exportiere deine Umsätze als CSV-Datei aus der App oder Website deiner Bank und wähle sie hier aus. Bis zu 1.000 Zeilen und 2 MB.",
+    "choose": "CSV-Datei auswählen",
+    "howTo": "Die meisten Banken bieten „Exportieren“ oder „Kontoauszug herunterladen“ als CSV an.",
+    "sample": "Beispieldatei herunterladen"
+  },
+  "errors": {
+    "tooLarge": "Die Datei ist größer als 2 MB. Exportiere einen kürzeren Zeitraum und versuche es erneut.",
+    "notCsv": "Bitte wähle eine .csv-Datei.",
+    "empty": "In dieser Datei wurden keine Zeilen mit Spaltenüberschriften gefunden.",
+    "tooManyRows": "Die Datei hat mehr als {{max}} Zeilen. Exportiere einen kürzeren Zeitraum und versuche es erneut.",
+    "unreadable": "Die Datei konnte nicht gelesen werden.",
+    "noValidRows": "Mit diesen Einstellungen konnte keine Zeile gelesen werden. Prüfe die Spalten und das Datumsformat.",
+    "failed": "Transaktionen konnten nicht importiert werden"
+  },
+  "map": {
+    "title": "Ordne die Spalten deiner Datei zu",
+    "body_one": "{{file}}: {{count}} Zeile gefunden. Wir haben die Spalten erraten; bitte prüfe sie.",
+    "body_other": "{{file}}: {{count}} Zeilen gefunden. Wir haben die Spalten erraten; bitte prüfe sie.",
+    "none": "Nicht in meiner Datei",
+    "dateFormat": "Datumsformat",
+    "formats": {
+      "YMD": "Jahr-Monat-Tag (2026-10-31)",
+      "DMY": "Tag.Monat.Jahr (31.10.2026)",
+      "MDY": "Monat/Tag/Jahr (10/31/2026)"
+    },
+    "dateRange": "Deine Datei umfasst {{from}} bis {{to}}. Falls das nicht stimmt, ändere das Datumsformat.",
+    "noDates": "Mit diesem Format konnten keine Daten gelesen werden.",
+    "amountLayout": "Wie werden Beträge angezeigt?",
+    "single": "Eine Betragsspalte",
+    "singleHint": "Ausgaben sind negativ (z. B. -5.000).",
+    "split": "Getrennte Ein- und Ausgänge",
+    "splitHint": "Soll und Haben stehen in verschiedenen Spalten.",
+    "moneyOut": "Ausgänge (Soll)",
+    "moneyIn": "Eingänge (Haben)",
+    "expenseCategory": "Standardkategorie für Ausgänge",
+    "incomeCategory": "Standardkategorie für Eingänge",
+    "fileStart": "Anfang deiner Datei",
+    "continue": "Weiter zur Prüfung"
+  },
+  "chooseAnother": "Andere Datei wählen",
+  "review": {
+    "title": "Vor dem Import prüfen",
+    "summary_one": "{{count}} Transaktion ausgewählt · ein {{income}} · aus {{expense}}",
+    "summary_other": "{{count}} Transaktionen ausgewählt · ein {{income}} · aus {{expense}}",
+    "sorting": "Wird kategorisiert...",
+    "autoCategorized_one": "MoneyFlow Pro hat {{count}} Transaktion für dich kategorisiert. Prüfe sie unten.",
+    "autoCategorized_other": "MoneyFlow Pro hat {{count}} Transaktionen für dich kategorisiert. Prüfe sie unten.",
+    "proHint": "MoneyFlow Pro kategorisiert importierte Transaktionen automatisch und lernt aus deinen Korrekturen.",
+    "skipDuplicates": "Bereits vorhandene Transaktionen überspringen",
+    "include": "Diese Transaktion einbeziehen",
+    "badDate": "Datum unlesbar",
+    "badAmount": "Betrag unlesbar",
+    "noDescription": "Keine Beschreibung",
+    "importing": "Wird importiert...",
+    "submit_one": "{{count}} Transaktion importieren",
+    "submit_other": "{{count}} Transaktionen importieren"
+  },
+  "done": {
+    "title_one": "{{count}} Transaktion importiert",
+    "title_other": "{{count}} Transaktionen importiert",
+    "skipped_one": "{{count}} wurde übersprungen, weil sie schon vorhanden war.",
+    "skipped_other": "{{count}} wurden übersprungen, weil sie schon vorhanden waren.",
+    "another": "Weitere Datei importieren",
+    "view": "Transaktionen ansehen"
+  },
+  "privacy": "Deine Datei wird in deinem Browser gelesen. Nur die Transaktionen, die du importierst, werden an MoneyFlow gesendet."
+}

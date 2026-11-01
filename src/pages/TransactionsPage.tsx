@@ -1,28 +1,28 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
-import { ArrowDownLeft, ArrowUpRight, CreditCard, Plus } from "lucide-react";
+import {
+  ArrowDownLeft,
+  ArrowUpRight,
+  CreditCard,
+  Plus,
+  Upload,
+} from "lucide-react";
 import { getTransactions, type Transaction } from "../api/transactions.js";
 import { useAuth } from "../context/AuthContext.js";
+import { formatDate as formatLocalDate, formatMoney } from "../i18n/format.js";
+import { categoryLabel } from "../i18n/categories.js";
 
 export default function TransactionsPage() {
   const { onboardingPreferences } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
 
-  const currencySymbols: Record<string, string> = {
-    NGN: "₦",
-    USD: "$",
-    GBP: "£",
-    EUR: "€",
-  };
-
-  const currencySymbol =
-    currencySymbols[onboardingPreferences?.currency_code || "NGN"] ||
-    onboardingPreferences?.currency_code ||
-    "NGN";
+  const currencyCode = onboardingPreferences?.currency_code || "NGN";
 
   useEffect(() => {
     async function loadTransactions() {
@@ -33,7 +33,7 @@ export default function TransactionsPage() {
         const result = await getTransactions();
 
         if (!result.response.ok) {
-          throw new Error(result.data.message || "Unable to load transactions");
+          throw new Error(result.data.message || t("transactions.loadFailed"));
         }
 
         setTransactions(result.data.transactions);
@@ -43,7 +43,7 @@ export default function TransactionsPage() {
         setErrorMessage(
           error instanceof Error
             ? error.message
-            : "Unable to load transactions",
+            : t("transactions.loadFailed"),
         );
       } finally {
         setIsLoading(false);
@@ -54,55 +54,47 @@ export default function TransactionsPage() {
   }, []);
 
   function formatAmount(amountMinor: number) {
-    return `${currencySymbol}${(amountMinor / 100).toLocaleString("en-NG", {
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 2,
-    })}`;
+    return formatMoney(amountMinor, currencyCode);
   }
 
   function formatDate(dateString: string) {
-    if (!dateString) {
-      return "Unknown date";
-    }
-
-    const date = dateString.includes("T")
-      ? new Date(dateString)
-      : new Date(`${dateString}T00:00:00`);
-
-    if (Number.isNaN(date.getTime())) {
-      return "Unknown date";
-    }
-
-    return date.toLocaleDateString("en-NG", {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-    });
+    return formatLocalDate(dateString) || t("common.unknownDate");
   }
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <p className="text-sm text-slate-500">Money activity</p>
+          <p className="text-sm text-slate-500">{t("transactions.eyebrow")}</p>
 
           <h1 className="mt-1 text-2xl font-bold text-slate-900">
-            Transactions
+            {t("transactions.title")}
           </h1>
 
           <p className="mt-2 text-sm text-slate-500">
-            View your income and expenses.
+            {t("transactions.subtitle")}
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={() => navigate("/app/transactions/add")}
-          className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
-        >
-          <Plus size={18} />
-          Add transaction
-        </button>
+        <div className="flex flex-col gap-3 sm:flex-row">
+          <button
+            type="button"
+            onClick={() => navigate("/app/transactions/import")}
+            className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+          >
+            <Upload size={18} />
+            {t("transactions.import")}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => navigate("/app/transactions/add")}
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
+          >
+            <Plus size={18} />
+            {t("transactions.add")}
+          </button>
+        </div>
       </div>
 
       {errorMessage && (
@@ -117,7 +109,7 @@ export default function TransactionsPage() {
       <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
         {isLoading ? (
           <div className="flex min-h-64 items-center justify-center p-6">
-            <p className="text-sm text-slate-500">Loading transactions...</p>
+            <p className="text-sm text-slate-500">{t("transactions.loading")}</p>
           </div>
         ) : transactions.length === 0 ? (
           <div className="flex min-h-64 flex-col items-center justify-center px-6 text-center">
@@ -126,12 +118,11 @@ export default function TransactionsPage() {
             </div>
 
             <h2 className="mt-4 font-semibold text-slate-900">
-              No transactions yet
+              {t("transactions.emptyTitle")}
             </h2>
 
             <p className="mt-2 max-w-md text-sm text-slate-500">
-              Your income and expenses will appear here after you add your first
-              transaction.
+              {t("transactions.emptyBody")}
             </p>
           </div>
         ) : (
@@ -162,12 +153,12 @@ export default function TransactionsPage() {
                     </p>
 
                     <p className="mt-1 text-sm text-slate-500">
-                      {transaction.category_name}
+                      {categoryLabel(transaction.category_name)}
 
                       {transaction.parent_category_name && (
                         <>
                           <span className="mx-1">·</span>
-                          {transaction.parent_category_name}
+                          {categoryLabel(transaction.parent_category_name)}
                         </>
                       )}
 

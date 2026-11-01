@@ -1,0 +1,15 @@
+{
+  "title": "Seus dados",
+  "body": "Baixe uma cópia de tudo o que o MoneyFlow guarda sobre você ou exclua sua conta definitivamente.",
+  "export": "Baixar meus dados",
+  "exporting": "Preparando download...",
+  "exportFailed": "Não foi possível exportar seus dados",
+  "delete": "Excluir conta",
+  "deleteTitle": "Excluir sua conta definitivamente?",
+  "deleteWarning": "Isso exclui imediatamente seu perfil, transações, orçamentos, metas, conversas com o Coach e histórico de pagamentos. Não pode ser desfeito e o tempo restante do Pro é perdido. Baixe seus dados antes se quiser uma cópia.",
+  "confirmPassword": "Digite sua senha para confirmar",
+  "confirmEmail": "Digite {{email}} para confirmar",
+  "deleteForever": "Excluir minha conta",
+  "deleteFailed": "Não foi possível excluir sua conta",
+  "deletedNotice": "Sua conta MoneyFlow e todos os seus dados foram excluídos."
+}

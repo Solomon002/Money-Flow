@@ -24,6 +24,7 @@ export async function getSettings(userId: string) {
         u.name,
         u.email,
         u.created_at,
+        (u.password_hash IS NOT NULL) AS has_password,
 
         fp.currency_code,
         fp.income_source,
@@ -100,7 +101,12 @@ export async function updateSettings({
         UPDATE public.users
         SET
           name = $1,
-          email = $2,
+          email = $2::varchar,
+          -- A new address hasn't been proven yet.
+          email_verified_at = CASE
+            WHEN lower(email) = lower($2::varchar) THEN email_verified_at
+            ELSE NULL
+          END,
           updated_at = NOW()
         WHERE id = $3
         RETURNING

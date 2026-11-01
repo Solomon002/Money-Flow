@@ -7,7 +7,26 @@ import {
 
 import {
   changePassword,
+  verifyEmailChange,
 } from "../services/authService.js";
+
+import {
+  accountDataRateLimiter,
+  passwordCheckRateLimiter,
+} from "../middleware/rateLimitMiddleware.js";
+
+import {
+  deleteAccount,
+  exportUserData,
+} from "../services/accountService.js";
+
+import {
+  ALLOWED_CURRENCIES,
+  MAX_NAME_LENGTH,
+  MAX_SHORT_TEXT_LENGTH,
+  isValidEmail,
+  toMinorUnits,
+} from "../utils/validation.js";
 
 import {
   revokeAllUserSessions,
@@ -62,6 +81,7 @@ router.get(
 router.put(
   "/",
   requireAuth,
+  passwordCheckRateLimiter,
   async (req: AuthenticatedRequest, res) => {
     try {
       if (!req.userId) {
@@ -96,6 +116,13 @@ router.put(
         });
       }
 
+      if (name.trim().length > MAX_NAME_LENGTH) {
+        return res.status(400).json({
+          status: "error",
+          message: `Name must be ${MAX_NAME_LENGTH} characters or less`,
+        });
+      }
+
       if (
         typeof email !== "string" ||
         email.trim().length === 0
@@ -106,16 +133,16 @@ router.put(
         });
       }
 
-      const allowedCurrencies = [
-        "NGN",
-        "USD",
-        "GBP",
-        "EUR",
-      ];
+      if (!isValidEmail(email.trim().toLowerCase())) {
+        return res.status(400).json({
+          status: "error",
+          message: "Please enter a valid email address",
+        });
+      }
 
       if (
         typeof currencyCode !== "string" ||
-        !allowedCurrencies.includes(currencyCode)
+        !ALLOWED_CURRENCIES.includes(currencyCode)
       ) {
         return res.status(400).json({
           status: "error",
@@ -155,7 +182,8 @@ router.put(
       if (
         incomeSource !== null &&
         incomeSource !== undefined &&
-        typeof incomeSource !== "string"
+        (typeof incomeSource !== "string" ||
+          incomeSource.trim().length > MAX_SHORT_TEXT_LENGTH)
       ) {
         return res.status(400).json({
           status: "error",
@@ -166,9 +194,7 @@ router.put(
       if (
         monthlyIncome !== null &&
         monthlyIncome !== undefined &&
-        (typeof monthlyIncome !== "number" ||
-          !Number.isFinite(monthlyIncome) ||
-          monthlyIncome < 0)
+        toMinorUnits(monthlyIncome, { allowZero: true }) === null
       ) {
         return res.status(400).json({
           status: "error",
@@ -179,9 +205,8 @@ router.put(
       if (
         monthlySavingsTarget !== null &&
         monthlySavingsTarget !== undefined &&
-        (typeof monthlySavingsTarget !== "number" ||
-          !Number.isFinite(monthlySavingsTarget) ||
-          monthlySavingsTarget < 0)
+        toMinorUnits(monthlySavingsTarget, { allowZero: true }) ===
+          null
       ) {
         return res.status(400).json({
           status: "error",
@@ -193,12 +218,40 @@ router.put(
       if (
         financialObjective !== null &&
         financialObjective !== undefined &&
-        typeof financialObjective !== "string"
+        (typeof financialObjective !== "string" ||
+          financialObjective.trim().length > MAX_SHORT_TEXT_LENGTH)
       ) {
         return res.status(400).json({
           status: "error",
           message:
             "Invalid financial objective",
+        });
+      }
+
+      /*
+       * Changing the email needs the current password. Otherwise a
+       * stolen session could switch the email to the attacker's and
+       * then use "forgot password" to take the account over.
+       */
+      const emailCheck = await verifyEmailChange({
+        userId: req.userId,
+        newEmail: email.trim().toLowerCase(),
+        currentPassword: req.body.currentPassword,
+      });
+
+      if (emailCheck === "password_required") {
+        return res.status(403).json({
+          status: "error",
+          message:
+            "Enter your current password to change your email address",
+        });
+      }
+
+      if (emailCheck === "password_not_set") {
+        return res.status(400).json({
+          status: "error",
+          message:
+            "Set a password first (use \"Forgot password\") before changing your email address",
         });
       }
 
@@ -280,6 +333,7 @@ monthlySavingsTargetMinor:
 router.put(
   "/password",
   requireAuth,
+  passwordCheckRateLimiter,
   async (req: AuthenticatedRequest, res) => {
     try {
       if (!req.userId) {
@@ -406,7 +460,7 @@ router.put(
         result.reason ===
           "invalid_current_password"
       ) {
-        return res.status(401).json({
+        return res.status(403).json({
           status: "error",
           message:
             "Current password is incorrect",
@@ -432,6 +486,109 @@ router.put(
         status: "error",
         message:
           "Unable to change password",
+      });
+    }
+  },
+);
+
+/*
+ * GET /api/settings/export
+ * Downloads everything stored about the signed-in user as JSON.
+ */
+router.get(
+  "/export",
+  requireAuth,
+  accountDataRateLimiter,
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      if (!req.userId) {
+        return res.status(401).json({
+          status: "error",
+          message: "Authentication required",
+        });
+      }
+
+      const data = await exportUserData(req.userId);
+
+      if (!data) {
+        return res.status(404).json({
+          status: "error",
+          message: "User not found",
+        });
+      }
+
+      res.setHeader("Cache-Control", "no-store");
+
+      return res.json({
+        status: "success",
+        data,
+      });
+    } catch (error) {
+      console.error("Exporting account data failed:", error);
+
+      return res.status(500).json({
+        status: "error",
+        message: "Unable to export your data",
+      });
+    }
+  },
+);
+
+/*
+ * DELETE /api/settings/account
+ * Body: { password } for password accounts, { confirmEmail } for
+ * Google-only accounts. Permanently deletes the account and all its data.
+ */
+router.delete(
+  "/account",
+  requireAuth,
+  passwordCheckRateLimiter,
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      if (!req.userId) {
+        return res.status(401).json({
+          status: "error",
+          message: "Authentication required",
+        });
+      }
+
+      const result = await deleteAccount({
+        userId: req.userId,
+        password: req.body?.password,
+        confirmEmail: req.body?.confirmEmail,
+      });
+
+      if (result === "password_incorrect") {
+        return res.status(403).json({
+          status: "error",
+          message: "Current password is incorrect",
+        });
+      }
+
+      if (result === "confirmation_incorrect") {
+        return res.status(400).json({
+          status: "error",
+          message: "Type your email address exactly to confirm",
+        });
+      }
+
+      if (result === "not_found") {
+        return res.status(404).json({
+          status: "error",
+          message: "User not found",
+        });
+      }
+
+      return res.json({
+        status: "success",
+        message: "Your account has been deleted",
+      });
+    } catch (error) {
+      console.error("Deleting account failed:", error);
+
+      return res.status(500).json({
+        status: "error",
+        message: "Unable to delete your account",
       });
     }
   },
