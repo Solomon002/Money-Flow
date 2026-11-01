@@ -53,6 +53,7 @@ function CoachPage() {
   );
 
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const composerRef = useRef<HTMLTextAreaElement | null>(null);
 
   // A chat created by sending its first message already has its messages in
   // state; reloading it from the server would wipe the question just sent.
@@ -71,6 +72,18 @@ function CoachPage() {
   useEffect(() => {
     scrollToBottom();
   }, [messages, sending, scrollToBottom]);
+
+  // Grow the message box with its text, up to about 8 lines.
+  useEffect(() => {
+    const box = composerRef.current;
+
+    if (!box) {
+      return;
+    }
+
+    box.style.height = "auto";
+    box.style.height = `${Math.min(box.scrollHeight, 200)}px`;
+  }, [question]);
   const [creatingChat, setCreatingChat] = useState(false);
   const [deletingChat, setDeletingChat] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -270,7 +283,7 @@ function CoachPage() {
   const selectedChat = chats.find((chat) => chat.id === selectedChatId) ?? null;
 
   return (
-    <div className="flex h-[calc(100dvh-0px)] min-h-0 flex-col overflow-hidden bg-slate-50 text-slate-900 lg:flex-row">
+    <div className="flex h-full min-h-0 flex-col overflow-hidden bg-slate-50 text-slate-900 lg:flex-row">
       {/* Desktop sidebar */}
       <aside className="hidden w-80 shrink-0 flex-col border-r border-slate-200 bg-white lg:flex">
         <div className="flex items-center justify-between border-b border-slate-200 p-4">
@@ -597,13 +610,14 @@ function CoachPage() {
           )}
         </div>
 
-        {/* Composer */}
-        <div className="shrink-0 border-t border-slate-200 bg-white px-3 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:p-4">
+        {/* Composer: pinned under the scrolling messages, like a chat app. */}
+        <div className="shrink-0 bg-gradient-to-t from-slate-50 via-slate-50 to-slate-50/0 px-3 pt-2 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:px-6">
           <form
             onSubmit={handleSubmit}
-            className="mx-auto flex w-full max-w-4xl items-end gap-2 sm:gap-3"
+            className="mx-auto flex w-full max-w-3xl items-end gap-2 rounded-3xl border border-slate-200 bg-white p-2 pl-4 shadow-sm transition focus-within:border-emerald-400 focus-within:shadow-md"
           >
             <textarea
+              ref={composerRef}
               value={question}
               onChange={(event) => setQuestion(event.target.value)}
               onKeyDown={(event) => {
@@ -616,14 +630,14 @@ function CoachPage() {
               placeholder={t("coach.placeholder")}
               rows={1}
               maxLength={1000}
-              disabled={sending || limitReached}
-              className="mf-caret min-h-11 min-w-0 flex-1 resize-none rounded-xl border border-slate-300 bg-white px-3.5 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 disabled:bg-slate-50 sm:px-4"
+              disabled={limitReached}
+              className="mf-caret max-h-[200px] min-h-10 min-w-0 flex-1 resize-none bg-transparent py-2.5 text-sm leading-6 text-slate-900 outline-none placeholder:text-slate-400 disabled:cursor-not-allowed"
             />
 
             <button
               type="submit"
               disabled={sending || limitReached || !question.trim()}
-              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-600 text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-40"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-40"
               title={t("coach.send")}
             >
               {sending ? (
@@ -636,7 +650,7 @@ function CoachPage() {
 
           {messagesLeft !== null && (
             <p
-              className={`mx-auto mt-2 max-w-4xl text-xs ${
+              className={`mx-auto mt-2 max-w-3xl text-center text-xs ${
                 limitReached ? "font-medium text-amber-700" : "text-slate-500"
               }`}
             >
@@ -655,7 +669,7 @@ function CoachPage() {
             </p>
           )}
 
-          <p className="mx-auto mt-2 hidden max-w-4xl text-xs text-slate-400 sm:block">
+          <p className="mx-auto mt-2 hidden max-w-3xl text-center text-xs text-slate-400 sm:block">
             {t("coach.disclaimer")}
           </p>
         </div>
